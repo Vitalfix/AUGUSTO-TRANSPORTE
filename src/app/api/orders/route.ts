@@ -278,11 +278,22 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
     const password = getPassword(request);
-    if (!await authenticate(password)) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const isAdmin = await authenticate(password);
 
     const body = await request.json();
+
+    if (!isAdmin) {
+        // Allow driver updates for specific fields ONLY (GPS, Status, Wait Time)
+        const isTryingToChangeAdminFields =
+            body.price !== undefined ||
+            body.customerName !== undefined ||
+            body.vehicle !== undefined ||
+            body.driverName !== undefined; // drivers shouldn't reassign themselves here
+
+        if (isTryingToChangeAdminFields) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+    }
     const {
         id, status, lat, lng, price, driverName, driverPhone, licensePlate,
         waitingMinutes, driverId, origin, destination, vehicle, travelDate,
