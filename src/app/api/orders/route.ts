@@ -19,15 +19,29 @@ function getPassword(request: Request) {
 }
 
 export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const driverId = searchParams.get('driverId');
+    const driverName = searchParams.get('driverName');
+
     const password = getPassword(request);
-    if (!await authenticate(password)) {
+    const isAuthenticatedAdmin = await authenticate(password);
+
+    if (!isAuthenticatedAdmin && !driverId) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+    let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
+
+    // If it's a driver fetching, limit results
+    if (!isAuthenticatedAdmin && driverId) {
+        if (driverName) {
+            query = query.or(`driver_id.eq.${driverId},driver_name.eq.${driverName}`);
+        } else {
+            query = query.eq('driver_id', driverId);
+        }
+    }
+
+    const { data, error } = await query;
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

@@ -52,14 +52,18 @@ export default function DriverDashboardPage() {
 
         const fetchMyOrders = async () => {
             try {
-                const res = await fetch('/api/orders');
-                const allOrders: Order[] = await res.json();
-                // Filter orders assigned to this driver: match by ID (preferred) or by name if ID is missing
-                const myOrders = allOrders.filter((o: any) =>
-                    o.driverId === driverData.id ||
-                    (o.driverName === driverData.name && !o.driverId)
-                );
-                setOrders(myOrders);
+                const res = await fetch(`/api/orders?driverId=${driverData.id}&driverName=${encodeURIComponent(driverData.name)}`);
+                if (res.ok) {
+                    const allOrders: Order[] = await res.json();
+                    // Filter again locally just in case, or trust the backend
+                    const myOrders = allOrders.filter((o: any) =>
+                        o.driverId === driverData.id ||
+                        (o.driverName === driverData.name && !o.driverId)
+                    );
+                    setOrders(myOrders);
+                } else {
+                    console.error("No se pudieron cargar los viajes. Status:", res.status);
+                }
             } catch (e) {
                 console.error("Error fetching driver orders:", e);
             } finally {
