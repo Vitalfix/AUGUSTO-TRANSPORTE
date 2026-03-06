@@ -9,6 +9,7 @@ export default function Home() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
+  const [adminClicks, setAdminClicks] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -17,22 +18,26 @@ export default function Home() {
   const handleLogoClick = () => {
     setLogoClicks(prev => {
       const newClicks = prev + 1;
-
       if (newClicks === 5) {
         router.push('/chofer');
         return 0;
-      } else if (newClicks === 10) {
+      }
+      return newClicks;
+    });
+    const timer = setTimeout(() => setLogoClicks(0), 2000);
+    return () => clearTimeout(timer);
+  };
+
+  const handleAdminClick = () => {
+    setAdminClicks(prev => {
+      const newClicks = prev + 1;
+      if (newClicks === 5) {
         router.push('/admin');
         return 0;
       }
       return newClicks;
     });
-
-    // Reset if no activity for 2 seconds
-    const timer = setTimeout(() => {
-      setLogoClicks(0);
-    }, 2000);
-
+    const timer = setTimeout(() => setAdminClicks(0), 2000);
     return () => clearTimeout(timer);
   };
 
@@ -100,16 +105,20 @@ export default function Home() {
       {/* Social / Admin Row */}
       <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 
-        <div style={{
-          fontSize: '0.65rem',
-          color: 'var(--text-secondary)',
-          textAlign: 'center',
-          maxWidth: '600px',
-          opacity: 0.6,
-          lineHeight: '1.4',
-          marginTop: '20px',
-          padding: '0 10px'
-        }}>
+        <div
+          onClick={handleAdminClick}
+          style={{
+            fontSize: '0.65rem',
+            color: 'var(--text-secondary)',
+            textAlign: 'center',
+            maxWidth: '600px',
+            opacity: 0.6,
+            lineHeight: '1.4',
+            marginTop: '20px',
+            padding: '0 10px',
+            cursor: 'default',
+            userSelect: 'none'
+          }}>
           <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
         </div>
 
