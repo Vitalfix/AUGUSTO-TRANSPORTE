@@ -11,6 +11,99 @@ interface Location {
     icon: string;
 }
 
+interface NominatimSuggestion {
+    display_name: string;
+    lat: string;
+    lon: string;
+}
+
+function AddressSearch({ onSelect, placeholder }: { onSelect: (lat: number, lng: number, address: string) => void, placeholder: string }) {
+    const [query, setQuery] = useState('');
+    const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            if (query.length < 4) {
+                setSuggestions([]);
+                return;
+            }
+            setLoading(true);
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5&countrycodes=ar`);
+                const data = await res.json();
+                setSuggestions(data);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(fetchSuggestions, 600);
+        return () => clearTimeout(timeoutId);
+    }, [query]);
+
+    return (
+        <div style={{ position: 'relative', width: '100%' }}>
+            <div style={{ position: 'relative' }}>
+                <input
+                    className="glass-input"
+                    placeholder={placeholder}
+                    value={query}
+                    onChange={(e) => {
+                        setQuery(e.target.value);
+                        setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                />
+                {loading && (
+                    <div style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)' }}>
+                        <span className="animate-pulse-slow">🔍</span>
+                    </div>
+                )}
+            </div>
+            {showSuggestions && suggestions.length > 0 && (
+                <div className="glass-panel" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    right: 0,
+                    zIndex: 100,
+                    marginTop: '8px',
+                    padding: '8px',
+                    maxHeight: '250px',
+                    overflowY: 'auto',
+                    background: 'var(--bg-color)',
+                    border: '1px solid var(--glass-border)',
+                    boxShadow: 'var(--glass-shadow)'
+                }}>
+                    {suggestions.map((s, idx) => (
+                        <div
+                            key={idx}
+                            style={{
+                                padding: '12px',
+                                cursor: 'pointer',
+                                borderBottom: idx === suggestions.length - 1 ? 'none' : '1px solid var(--glass-border)',
+                                fontSize: '0.85rem'
+                            }}
+                            onClick={() => {
+                                onSelect(parseFloat(s.lat), parseFloat(s.lon), s.display_name);
+                                setQuery(s.display_name);
+                                setShowSuggestions(false);
+                            }}
+                        >
+                            {s.display_name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function AdminLocationsPage() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
@@ -159,34 +252,51 @@ export default function AdminLocationsPage() {
                     {editingLocation ? '✏️ Editar Ubicación' : '➕ Nueva Ubicación Registrada'}
                 </h3>
                 <form onSubmit={handleSave} className="flex-col gap-20">
+                    <div className="flex-col gap-15">
+                        <label className="glass-label">Buscador Inteligente de Direcciones</label>
+                        <AddressSearch
+                            placeholder="Ej: Av. del Libertador 1200, CABA..."
+                            onSelect={(lat, lng, address) => {
+                                setForm(prev => ({
+                                    ...prev,
+                                    lat: lat.toString(),
+                                    lng: lng.toString(),
+                                    name: prev.name || address.split(',')[0]
+                                }));
+                            }}
+                        />
+                    </div>
+
                     <div className="grid-cols-2 gap-20">
                         <div style={{ flex: '2 1 300px' }}>
-                            <label className="glass-label">Nombre de la Ubicación (ej: Ezeiza Base)</label>
+                            <label className="glass-label">Nombre de Referencia (Cómo se verá en la lista)</label>
                             <input
                                 className="glass-input"
                                 value={form.name}
                                 onChange={e => setForm({ ...form, name: e.target.value })}
-                                placeholder="Nombre descriptivo"
+                                placeholder="Ezeiza Base, Punto Sur, etc."
                                 required
                             />
                         </div>
                         <div style={{ flex: '1 1 80px' }}>
-                            <label className="glass-label">Icono</label>
+                            <label className="glass-label">Icono (Opcional)</label>
                             <input
                                 className="glass-input"
                                 value={form.icon}
                                 onChange={e => setForm({ ...form, icon: e.target.value })}
-                                placeholder="Emoji"
+                                placeholder="Emoji (ej: 🏠)"
                             />
                         </div>
                     </div>
-                    <div className="flex gap-15" style={{ flexWrap: 'wrap' }}>
+
+                    <div className="flex gap-15 opacity-50 transition-all hover:opacity-100" style={{ flexWrap: 'wrap', borderTop: '1px solid var(--glass-border)', paddingTop: '15px' }}>
                         <div style={{ flex: 1 }}>
-                            <label className="glass-label">Latitud</label>
+                            <label className="glass-label">Coordenada Latitud</label>
                             <input
                                 type="number"
                                 step="any"
                                 className="glass-input"
+                                style={{ fontSize: '0.8rem', padding: '10px' }}
                                 value={form.lat}
                                 onChange={e => setForm({ ...form, lat: e.target.value })}
                                 placeholder="-34.815"
@@ -194,11 +304,12 @@ export default function AdminLocationsPage() {
                             />
                         </div>
                         <div style={{ flex: 1 }}>
-                            <label className="glass-label">Longitud</label>
+                            <label className="glass-label">Coordenada Longitud</label>
                             <input
                                 type="number"
                                 step="any"
                                 className="glass-input"
+                                style={{ fontSize: '0.8rem', padding: '10px' }}
                                 value={form.lng}
                                 onChange={e => setForm({ ...form, lng: e.target.value })}
                                 placeholder="-58.535"
