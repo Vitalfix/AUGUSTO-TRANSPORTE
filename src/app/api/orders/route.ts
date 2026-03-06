@@ -310,15 +310,11 @@ export async function POST(request: Request) {
                 <p style="margin-top: 0; margin-bottom: 15px;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
                 
                 <p style="margin-top: 0; margin-bottom: 15px;"><strong>📍 Origen:</strong><br/>
-                    <ul style="margin: 5px 0; padding-left: 20px;">
-                        ${body.origin.split(' | ').map((addr: string) => `<li>${addr}</li>`).join('')}
-                    </ul>
+                    ${body.origin.split(' | ').join('<br/>')}
                 </p>
                 
                 <p style="margin-top: 0; margin-bottom: 15px;"><strong>🏁 Destino:</strong><br/>
-                    <ul style="margin: 5px 0; padding-left: 20px;">
-                        ${body.destination.split(' | ').map((addr: string) => `<li>${addr}</li>`).join('')}
-                    </ul>
+                    ${body.destination.split(' | ').join('<br/>')}
                 </p>
 
                 <p style="margin-bottom: 0;"><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
@@ -365,21 +361,15 @@ export async function POST(request: Request) {
                             
                             <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
                                 <p style="margin-top: 0; margin-bottom: 10px;"><strong>📍 Origen:</strong><br/>
-                                    <ul style="margin: 5px 0; padding-left: 20px;">
-                                        ${body.origin.split(' | ').map((addr: string) => `<li>${addr}</li>`).join('')}
-                                    </ul>
+                                    ${body.origin.split(' | ').join('<br/>')}
                                 </p>
                                 <p style="margin-bottom: 0;"><strong>🏁 Destino:</strong><br/>
-                                    <ul style="margin: 5px 0; padding-left: 20px;">
-                                        ${body.destination.split(' | ').map((addr: string) => `<li>${addr}</li>`).join('')}
-                                    </ul>
+                                    ${body.destination.split(' | ').join('<br/>')}
                                 </p>
                             </div>
 
-                            <p style="background: #fffbeb; padding: 20px; border-radius: 12px; border: 1px solid #fde68a; color: #92400e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">📢 NOTA IMPORTANTE:</strong>
-                                El presupuesto de <strong style="color: #059669; font-size: 1.1rem;">$${body.price.toLocaleString('es-AR')}</strong> es de carácter <strong>inicial y estimativo</strong>. <br/>
-                                <span style="display: block; margin-top: 10px;">Nuestro equipo de logística evaluará los detalles (distancia real, pesos, peajes y requerimientos específicos) manualmente y te contactará a la brevedad para informarte el valor definitivo y confirmar la reserva.</span>
+                            <p style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; color: #92400e;">
+                                <strong>Nota Importante:</strong> El presupuesto de <strong style="color: #059669;">$${body.price.toLocaleString('es-AR')}</strong> es de carácter <strong>estimativo</strong>. Nuestro equipo evaluará los detalles manualmente y te contactará a la brevedad para confirmar el valor definitivo y la disponibilidad.
                             </p>
                             
                             <div style="margin: 30px 0; text-align: center;">
@@ -388,10 +378,8 @@ export async function POST(request: Request) {
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 25px; margin-top: 30px;">
-                                Ni el prestador del servicio ni los desarrolladores de la plataforma se responsabilizan por errores tipográficos, variaciones en las tarifas del mercado o fallos técnicos temporales. El presupuesto final oficial será el acordado y confirmado manualmente con la empresa EL CASAL.
-                                <br/><br/>
-                                <em>Plataforma Premium desarrollada por <strong>VitalFix</strong></em>
+                            <p style="font-size: 0.85rem; color: #94a3b8; text-align: center;">
+                                Ni el prestador ni los desarrolladores de la plataforma se responsabilizan por errores tipográficos o fallos técnicos temporales. El presupuesto final será el acordado manualmente con la empresa.
                             </p>
                             <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
@@ -546,10 +534,7 @@ export async function PATCH(request: Request) {
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p style="font-size: 0.8rem; color: #94a3b8; text-align: center;">
-                                <em>Plataforma Premium desarrollada por <strong>VitalFix</strong></em>
-                            </p>
-                            <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
+                            <p>Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
                     </div>
                 `
