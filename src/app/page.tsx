@@ -1,15 +1,40 @@
 "use client";
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import InstallPrompt from '@/components/InstallPrompt';
 
 export default function Home() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleLogoClick = () => {
+    setLogoClicks(prev => {
+      const newClicks = prev + 1;
+
+      if (newClicks === 5) {
+        router.push('/chofer');
+        return 0;
+      } else if (newClicks === 10) {
+        router.push('/admin');
+        return 0;
+      }
+      return newClicks;
+    });
+
+    // Reset if no activity for 2 seconds
+    const timer = setTimeout(() => {
+      setLogoClicks(0);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  };
 
   if (!mounted) return null;
 
@@ -20,7 +45,8 @@ export default function Home() {
           src="/logo.jpg"
           alt="EL CASAL"
           className="main-logo"
-          style={{ maxWidth: '300px' }}
+          style={{ maxWidth: '300px', cursor: 'pointer' }}
+          onClick={handleLogoClick}
         />
       </header>
 
