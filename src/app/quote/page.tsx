@@ -370,6 +370,15 @@ export default function QuotePageV2() {
         e.preventDefault();
         setLoading(true);
         try {
+            // Recopilar todos los puntos para el historial de ruta (stops)
+            const allPoints: { lat: number, lng: number, label: string }[] = [];
+            originCoordsList.forEach((c, idx) => {
+                if (c) allPoints.push({ ...c, label: `Origen ${idx + 1}: ${customOrigins[idx]}` });
+            });
+            destCoordsList.forEach((c, idx) => {
+                if (c) allPoints.push({ ...c, label: `Destino ${idx + 1}: ${customDestinations[idx]}` });
+            });
+
             const res = await fetch('/api/orders', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -388,8 +397,9 @@ export default function QuotePageV2() {
                     taxStatus,
                     originLat: originCoordsList[0]?.lat || 0,
                     originLng: originCoordsList[0]?.lng || 0,
-                    destLat: destCoordsList[0]?.lat || 0,
-                    destLng: destCoordsList[0]?.lng || 0,
+                    destLat: destCoordsList[destCoordsList.length - 1]?.lat || 0,
+                    destLng: destCoordsList[destCoordsList.length - 1]?.lng || 0,
+                    stops: allPoints,
                     observations,
                     distanceKm,
                     travelHours,

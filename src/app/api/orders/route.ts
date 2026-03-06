@@ -219,6 +219,7 @@ export async function POST(request: Request) {
         origin2_lng: body.origin2Lng,
         dest_lat: body.destLat,
         dest_lng: body.destLng,
+        stops: body.stops || [],
         observations: body.observations,
         distance_km: body.distanceKm,
         travel_hours: body.travelHours,

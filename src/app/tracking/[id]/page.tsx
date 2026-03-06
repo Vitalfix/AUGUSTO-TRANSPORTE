@@ -24,6 +24,7 @@ export interface Order {
     destLng?: number;
     origin2Lat?: number;
     origin2Lng?: number;
+    stops?: { lat: number, lng: number, label: string }[];
     startedAt?: string;
     finishedAt?: string;
     activityLog?: { type: string, label: string, time: string, user?: string }[];
@@ -192,50 +193,59 @@ export default function TrackingPage() {
         }
 
         // Draw Route Tracing (Actual streets)
-        if (currentOrder.originLat && currentOrder.destLat && !routeLayerRef.current) {
+        if (!routeLayerRef.current) {
             try {
-                const points = [
-                    { lat: currentOrder.originLat, lng: currentOrder.originLng }
-                ];
+                const points: { lat: number, lng: number }[] = [];
 
-                // Add middle point if exists (Origin 2)
-                if (currentOrder.origin2Lat && currentOrder.origin2Lng) {
-                    points.push({ lat: currentOrder.origin2Lat, lng: currentOrder.origin2Lng });
+                if (currentOrder.stops && Array.isArray(currentOrder.stops) && currentOrder.stops.length >= 2) {
+                    // Use stops list if available
+                    currentOrder.stops.forEach((stop, i) => {
+                        points.push({ lat: Number(stop.lat), lng: Number(stop.lng) });
 
-                    // Add a marker for Origin 2
-                    L.marker([currentOrder.origin2Lat, currentOrder.origin2Lng], {
-                        icon: L.divIcon({ html: '📍', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-                    }).addTo(mapRef.current).bindPopup('Origen 2');
+                        // Add markers for intermediate points
+                        if (i > 0 && i < (currentOrder.stops?.length || 0) - 1) {
+                            L.marker([stop.lat, stop.lng], {
+                                icon: L.divIcon({ html: '📍', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
+                            }).addTo(mapRef.current).bindPopup(stop.label || `Parada ${i + 1}`);
+                        }
+                    });
+                } else if (currentOrder.originLat && currentOrder.destLat) {
+                    // Fallback to legacy single origin/destination
+                    points.push({ lat: Number(currentOrder.originLat), lng: Number(currentOrder.originLng) });
+                    if (currentOrder.origin2Lat && currentOrder.origin2Lng) {
+                        points.push({ lat: Number(currentOrder.origin2Lat), lng: Number(currentOrder.origin2Lng) });
+                    }
+                    points.push({ lat: Number(currentOrder.destLat), lng: Number(currentOrder.destLng) });
                 }
 
-                points.push({ lat: currentOrder.destLat, lng: currentOrder.destLng });
+                if (points.length >= 2) {
+                    const res = await fetch('/api/route', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ points })
+                    });
 
-                const res = await fetch('/api/route', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ points })
-                });
+                    if (res.ok) {
+                        const routeData = await res.json();
+                        if (routeData.geometry) {
+                            // Drawing real road route (Bright vibrant blue and dashed)
+                            const route = L.geoJSON(routeData.geometry, {
+                                style: {
+                                    color: '#00e5ff', // Bright Cyan/Blue
+                                    weight: 6,
+                                    opacity: 0.9,
+                                    dashArray: '10, 15',
+                                    lineCap: 'round'
+                                }
+                            }).addTo(mapRef.current);
+                            routeLayerRef.current = route;
+                            if (routeData.distance) setTripDistance(routeData.distance);
 
-                if (res.ok) {
-                    const routeData = await res.json();
-                    if (routeData.geometry) {
-                        // Drawing real road route (Bright vibrant blue and dashed)
-                        const route = L.geoJSON(routeData.geometry, {
-                            style: {
-                                color: '#00e5ff', // Bright Cyan/Blue
-                                weight: 6,
-                                opacity: 0.9,
-                                dashArray: '10, 15',
-                                lineCap: 'round'
-                            }
-                        }).addTo(mapRef.current);
-                        routeLayerRef.current = route;
-                        if (routeData.distance) setTripDistance(routeData.distance);
-
-                        // Fit bounds to show the whole route
-                        const bounds = route.getBounds();
-                        if (currentOrder.lat) bounds.extend([currentOrder.lat, currentOrder.lng]);
-                        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+                            // Fit bounds to show the whole route
+                            const bounds = route.getBounds();
+                            if (currentOrder.lat) bounds.extend([currentOrder.lat, currentOrder.lng]);
+                            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+                        }
                     }
                 }
             } catch (e) {
