@@ -244,10 +244,19 @@ export default function AdminPage() {
     };
 
     useEffect(() => {
+        if (!isAuthenticated) return;
+
         fetchOrders();
-        const interval = setInterval(fetchOrders, 3000); // Polling every 3s
+
+        // Polling only if no modal is open and tab is active
+        const interval = setInterval(() => {
+            if (!editingOrder && document.visibilityState === 'visible') {
+                fetchOrders();
+            }
+        }, 3000);
+
         return () => clearInterval(interval);
-    }, [fetchOrders]);
+    }, [fetchOrders, isAuthenticated, editingOrder]);
 
     const updateStatus = async (id: string, newStatus: string) => {
         try {
@@ -422,8 +431,12 @@ export default function AdminPage() {
                 method: 'DELETE',
                 headers: { 'x-admin-password': (password || sessionStorage.getItem('admin_password') || '') }
             });
-            if (res.ok) fetchOrders();
-            else alert('Error al eliminar');
+            if (res.ok) {
+                fetchOrders();
+            } else {
+                const err = await res.json();
+                alert('Error al eliminar: ' + (err.error || 'Desconocido'));
+            }
         } catch (e) { console.error(e); }
     };
 
@@ -820,12 +833,7 @@ export default function AdminPage() {
 
                                                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '5px' }}>
                                                                     <button className="glass-button" onClick={() => handleEditClick(order)} style={{ fontSize: '0.75rem', padding: '10px' }}>✏️ Editar</button>
-                                                                    <button className="glass-button" onClick={() => sendWhatsApp(order)} style={{ fontSize: '0.75rem', padding: '10px', background: '#25d366', border: 'none' }}>🟢 WA</button>
-                                                                    <button className="glass-button" onClick={() => copyToClipboard(order.id)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.1)' }}>{copiedLink === order.id ? '✅ Link' : '🔗 Link'}</button>
-                                                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                                                        <button className="glass-button" onClick={() => updateStatus(order.id, 'PENDING')} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', flex: 1 }}>🔄 Reset</button>
-                                                                        <button className="glass-button" onClick={() => confirmDeleteOrder(order.id, order.customerName)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', flex: 1 }}>🗑️ Borrar</button>
-                                                                    </div>
+                                                                    <button className="glass-button" onClick={() => confirmDeleteOrder(order.id, order.customerName)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>🗑️ Borrar</button>
                                                                 </div>
                                                             </div>
                                                         </div>

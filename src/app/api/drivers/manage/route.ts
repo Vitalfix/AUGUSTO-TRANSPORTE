@@ -97,11 +97,17 @@ export async function DELETE(request: Request) {
         });
     }
 
-    const { error } = await supabase
+    const { data: deletedRows, error } = await supabase
         .from('drivers')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    if (!deletedRows || deletedRows.length === 0) {
+        return NextResponse.json({ error: 'No se pudo borrar el registro (posible problema de permisos en la DB)' }, { status: 403 });
+    }
+
     return NextResponse.json({ success: true });
 }
