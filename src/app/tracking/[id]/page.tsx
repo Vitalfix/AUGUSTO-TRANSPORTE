@@ -26,7 +26,7 @@ export interface Order {
     origin2Lng?: number;
     startedAt?: string;
     finishedAt?: string;
-    activityLog?: { type: string, label: string, time: string }[];
+    activityLog?: { type: string, label: string, time: string, user?: string }[];
 }
 
 const formatDestination = (d: string) => {
@@ -398,17 +398,39 @@ export default function TrackingPage() {
 
                     {/* History Log */}
                     <div className="glass-panel" style={{ padding: '15px', fontSize: '0.8rem' }}>
-                        <div style={{ fontWeight: 'bold', marginBottom: '10px', fontSize: '0.7rem', color: 'var(--text-secondary)' }}>HISTORIAL DE ACTIVIDAD</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: '15px', fontSize: '0.7rem', color: 'var(--text-secondary)', letterSpacing: '1px' }}>HISTORIAL DE ACTIVIDAD</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                             {order.activityLog && order.activityLog.length > 0 ? (
-                                order.activityLog.map((log, i) => (
-                                    <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                                        <div style={{ minWidth: '60px', color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
-                                            {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                order.activityLog.slice().reverse().map((log, i) => (
+                                    <div key={i} style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                                        <div style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            borderRadius: '50%',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.9rem',
+                                            flexShrink: 0,
+                                            border: '1px solid rgba(255,255,255,0.05)'
+                                        }}>
+                                            {log.type === 'CREATED' ? '✨' :
+                                                log.type === 'APPROVED' ? '✅' :
+                                                    log.type === 'CONFIRMED' ? '📅' :
+                                                        log.type === 'STARTED' ? '🚀' :
+                                                            log.type === 'FINISHED' ? '🏁' :
+                                                                log.type === 'INVOICED' ? '📄' :
+                                                                    log.type === 'PAID' ? '💰' : '📍'}
                                         </div>
-                                        <div style={{ width: '2px', height: '20px', background: 'var(--glass-border)', marginTop: '4px' }}></div>
-                                        <div>
-                                            <div style={{ fontWeight: i === order.activityLog!.length - 1 ? 'bold' : 'normal' }}>{log.label}</div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                                                <div style={{ fontWeight: i === 0 ? 'bold' : 'normal', color: i === 0 ? 'white' : 'var(--text-secondary)' }}>{log.label}</div>
+                                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
+                                                    {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                            </div>
+                                            {i === 0 && <div style={{ fontSize: '0.65rem', color: 'var(--accent-color)', fontWeight: 'bold' }}>ÚLTIMO EVENTO</div>}
                                         </div>
                                     </div>
                                 ))

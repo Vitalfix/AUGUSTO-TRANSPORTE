@@ -154,10 +154,12 @@ export default function AdminLocationsPage() {
                 </div>
             </header>
 
-            <div className="glass-panel mb-30" style={{ padding: '20px' }}>
-                <h3 className="mb-20">{editingLocation ? '✏️ Editar Ubicación' : '➕ Nueva Ubicación'}</h3>
-                <form onSubmit={handleSave} className="flex-col gap-15">
-                    <div className="flex gap-15" style={{ flexWrap: 'wrap' }}>
+            <div className="glass-panel mb-30 animate-fade-in" style={{ padding: '30px' }}>
+                <h3 className="mb-25 flex items-center gap-10">
+                    {editingLocation ? '✏️ Editar Ubicación' : '➕ Nueva Ubicación Registrada'}
+                </h3>
+                <form onSubmit={handleSave} className="flex-col gap-20">
+                    <div className="grid-cols-2 gap-20">
                         <div style={{ flex: '2 1 300px' }}>
                             <label className="glass-label">Nombre de la Ubicación (ej: Ezeiza Base)</label>
                             <input
@@ -231,11 +233,25 @@ export default function AdminLocationsPage() {
             {loading ? (
                 <div style={{ textAlign: 'center', padding: '50px' }}>Cargando direcciones...</div>
             ) : (
-                <div style={{ display: 'grid', gap: '15px' }}>
-                    {locations.map(loc => (
-                        <div key={loc.id} className="glass-panel flex justify-between items-center" style={{ padding: '15px 25px' }}>
+                <div className="grid-cols-1 gap-15">
+                    {locations.map((loc, i) => (
+                        <div
+                            key={loc.id}
+                            className="glass-panel animate-fade-in flex justify-between items-center"
+                            style={{ padding: '20px 30px', animationDelay: `${i * 100}ms` }}
+                        >
                             <div className="flex items-center gap-20">
-                                <div style={{ fontSize: '1.5rem', background: 'rgba(255,255,255,0.05)', width: '50px', height: '50px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}>
+                                <div style={{
+                                    fontSize: '1.5rem',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    width: '60px',
+                                    height: '60px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid rgba(255,255,255,0.05)'
+                                }}>
                                     {loc.icon || '📍'}
                                 </div>
                                 <div>

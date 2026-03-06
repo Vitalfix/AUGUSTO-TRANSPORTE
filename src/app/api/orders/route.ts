@@ -367,22 +367,24 @@ export async function PATCH(request: Request) {
         updateData.finished_at = new Date().toISOString();
     }
 
+    const userLabel = isAdmin ? 'Administración' : (driverName || 'Chofer');
+
     if (status === 'STARTED') {
-        currentLog = [...currentLog, { type: 'STARTED', label: 'Viaje Iniciado', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'STARTED', label: 'Viaje Iniciado', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'FINISHED') {
-        currentLog = [...currentLog, { type: 'FINISHED', label: 'Viaje Finalizado', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'FINISHED', label: 'Viaje Finalizado', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'CONFIRMED') {
-        currentLog = [...currentLog, { type: 'CONFIRMED', label: 'PEDIDO PROGRAMADO', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'CONFIRMED', label: 'PEDIDO PROGRAMADO', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'APPROVED') {
-        currentLog = [...currentLog, { type: 'APPROVED', label: 'PRESUPUESTO APROBADO', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'APPROVED', label: 'PRESUPUESTO APROBADO', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'INVOICED') {
-        currentLog = [...currentLog, { type: 'INVOICED', label: 'ORDEN FACTURADA', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'INVOICED', label: 'ORDEN FACTURADA', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'PAID') {
-        currentLog = [...currentLog, { type: 'PAID', label: 'PAGO RECIBIDO / COBRADO', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'PAID', label: 'PAGO RECIBIDO / COBRADO', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'ARRIVED_ORIGIN') {
-        currentLog = [...currentLog, { type: 'ARRIVED_ORIGIN', label: 'Chofer llegó a Origen', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'ARRIVED_ORIGIN', label: 'Chofer llegó a Origen', time: new Date().toISOString(), user: userLabel }];
     } else if (status === 'ARRIVED_DESTINATION') {
-        currentLog = [...currentLog, { type: 'ARRIVED_DESTINATION', label: 'Chofer llegó a Destino', time: new Date().toISOString() }];
+        currentLog = [...currentLog, { type: 'ARRIVED_DESTINATION', label: 'Chofer llegó a Destino', time: new Date().toISOString(), user: userLabel }];
     }
 
     updateData.activity_log = currentLog;

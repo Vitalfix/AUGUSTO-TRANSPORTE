@@ -173,6 +173,9 @@ export default function Home() {
         >
           🛡️
         </button>
+        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', opacity: 0.3, marginTop: '5px' }}>
+          v1.2 Premium Logistics System
+        </div>
       </footer>
 
       <style jsx>{`

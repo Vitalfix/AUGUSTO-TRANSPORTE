@@ -625,25 +625,24 @@ export default function AdminPage() {
                         if (groupOrders.length === 0) return null;
 
                         return (
-                            <div key={group.id} className="status-section">
-                                <h2 style={{ fontSize: '1rem', color: group.color, marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div key={group.id} className="status-section animate-fade-in">
+                                <h2 className="text-sm text-secondary mb-15 flex items-center gap-10" style={{ color: group.color }}>
                                     {group.label}
-                                    <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '10px', color: 'var(--text-secondary)' }}>{groupOrders.length}</span>
+                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>{groupOrders.length}</span>
                                 </h2>
                                 <div style={{ display: 'grid', gap: '15px' }}>
                                     {groupOrders.map(order => {
                                         const isExpanded = expandedOrders.includes(order.id);
 
                                         return (
-                                            <div key={order.id} className="glass-panel" style={{ padding: '0', overflow: 'hidden', border: '1px solid var(--glass-border)', transition: 'all 0.3s ease' }}>
-                                                {/* Header - Simple View */}
+                                            <div
+                                                key={order.id}
+                                                className="glass-panel animate-fade-in over-hidden mb-10"
+                                                style={{ borderLeft: `5px solid ${group.color}` }}
+                                            >
                                                 <div
-                                                    className="glass-panel"
+                                                    className="pointer"
                                                     onClick={() => toggleExpand(order.id)}
-                                                    style={{
-                                                        cursor: 'pointer',
-                                                        borderLeft: `5px solid ${group.color}`
-                                                    }}
                                                 >
                                                     <div className="flex justify-between items-start w-full p-15">
                                                         <div className="flex-1 min-w-0">
@@ -868,6 +867,50 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        {/* Activity History Section */}
+                                                        {order.activityLog && order.activityLog.length > 0 && (
+                                                            <div style={{ padding: '0 20px 20px' }}>
+                                                                <div className="glass-label" style={{ fontSize: '0.6rem', marginBottom: '15px' }}>📜 HISTORIAL DE ACTIVIDAD</div>
+                                                                <div className="flex-col gap-10">
+                                                                    {order.activityLog.slice().reverse().map((log: any, idx: number) => (
+                                                                        <div key={idx} className="flex gap-15 items-start p-10 rounded-12" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                                            <div style={{
+                                                                                width: '32px',
+                                                                                height: '32px',
+                                                                                borderRadius: '50%',
+                                                                                background: 'rgba(255,255,255,0.05)',
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                justifyContent: 'center',
+                                                                                fontSize: '0.9rem',
+                                                                                flexShrink: 0
+                                                                            }}>
+                                                                                {log.type === 'CREATED' ? '✨' :
+                                                                                    log.type === 'APPROVED' ? '✅' :
+                                                                                        log.type === 'CONFIRMED' ? '📅' :
+                                                                                            log.type === 'STARTED' ? '🚀' :
+                                                                                                log.type === 'FINISHED' ? '🏁' :
+                                                                                                    log.type === 'INVOICED' ? '📄' :
+                                                                                                        log.type === 'PAID' ? '💰' : '📝'}
+                                                                            </div>
+                                                                            <div className="flex-col" style={{ flex: 1 }}>
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <span className="text-white text-bold" style={{ fontSize: '0.8rem' }}>{log.label}</span>
+                                                                                    <span className="text-secondary text-xs">{new Date(log.time).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}hs</span>
+                                                                                </div>
+                                                                                {log.observations_fallback && (
+                                                                                    <div className="text-secondary text-xs mt-4">Obs: {log.observations_fallback}</div>
+                                                                                )}
+                                                                                {log.user && (
+                                                                                    <div className="text-accent text-xs mt-2" style={{ opacity: 0.7 }}>Acción por: {log.user}</div>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
