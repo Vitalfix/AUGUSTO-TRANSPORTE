@@ -108,19 +108,16 @@ export async function POST(request: Request) {
 
     let id = 'A0001';
     if (allIds.length > 0) {
-        // Encontrar el valor numérico más alto por letra, ignorando padding o sufijos
-        let maxLetter = 'A';
+        // Encontrar el valor numérico más alto para el prefijo 'A'
         let maxNum = 0;
         let foundAny = false;
 
         for (const currentId of allIds) {
-            const m = currentId.match(/^([A-Z])(\d+)/);
+            const m = currentId.match(/^A(\d+)/);
             if (m) {
                 foundAny = true;
-                const l = m[1];
                 const n = parseInt(m[2], 10);
-                if (l > maxLetter || (l === maxLetter && n > maxNum)) {
-                    maxLetter = l;
+                if (n > maxNum) {
                     maxNum = n;
                 }
             }
@@ -128,17 +125,11 @@ export async function POST(request: Request) {
 
         if (foundAny) {
             if (maxNum < 9999) {
-                // Incrementar número manteniendo el padding estándar de 4
-                id = maxLetter + (maxNum + 1).toString().padStart(4, '0');
+                id = 'A' + (maxNum + 1).toString().padStart(4, '0');
             } else {
-                // Siguiente letra
-                const nextLetter = String.fromCharCode(maxLetter.charCodeAt(0) + 1);
-                id = nextLetter + '0001';
+                // Si llegamos a A9999, pasar a B0001
+                id = 'B0001';
             }
-        } else {
-            // Si nada tiene formato A123, usar el mayor lexicográfico + 1 asumiendo A0001
-            const last = allIds.sort().reverse()[0];
-            id = last.startsWith('Z') ? 'ZA0001' : 'A0001'; // Fallback extremo
         }
     }
 
@@ -298,19 +289,42 @@ export async function POST(request: Request) {
             bcc: bccEmails.length > 0 ? bccEmails : undefined,
             subject: `Nueva Solicitud: ${id}`,
             html: `
-        <h2 style="color: #3b82f6;">Nueva solicitud de presupuesto (A Confirmar)</h2>
-        <p><strong>ID de Pedido:</strong> ${id}</p>
-        <p><strong>Cliente:</strong> ${body.customerName} (CUIT: ${body.cuit || 'N/A'})</p>
-        <p><strong>Condición IVA:</strong> ${body.taxStatus || 'No especificado'}</p>
-        <p><strong>Contacto:</strong> ${body.customerPhone}</p>
-        <p><strong>Vehículo(s):</strong> ${body.vehicle}</p>
-        <p><strong>Ruta:</strong> ${body.origin} -> ${body.destination}</p>
-        <p><strong>Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
-        <p><strong>Observaciones:</strong> ${body.observations || 'Sin observaciones'}</p>
-        <p style="font-size: 1.2rem; font-weight: bold; color: #10b981;">Total Estimado (Cálculo Web): $${body.price.toLocaleString('es-AR')}</p>
-        <hr/>
-        <p><strong>Acción necesaria:</strong> Revisar detalles de la carga, ajustar el precio si es necesario y contactar al cliente para confirmar el servicio.</p>
-        <a href="https://transport-app-lilac-beta.vercel.app/admin" style="display: inline-block; padding: 10px 20px; background: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">Ir al Panel Admin</a>
+        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+            <h2 style="color: #3b82f6; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">Nueva solicitud de presupuesto</h2>
+            <p style="font-size: 1.1rem;"><strong>ID de Pedido:</strong> <span style="color: #2563eb;">${id}</span></p>
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
+            
+            <p><strong>Cliente:</strong> ${body.customerName} (CUIT: ${body.cuit || 'N/A'})</p>
+            <p><strong>Condición IVA:</strong> ${body.taxStatus || 'No especificado'}</p>
+            <p><strong>Contacto:</strong> ${body.customerPhone}</p>
+            <p><strong>Email:</strong> ${body.customerEmail || 'No provisto'}</p>
+            
+            <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                <p style="margin-top: 0;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
+                
+                <p><strong>📍 Origen:</strong><br/>
+                    ${body.origin.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                </p>
+                
+                <p><strong>🏁 Destino:</strong><br/>
+                    ${body.destination.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                </p>
+
+                <p><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
+            </div>
+
+            <p><strong>📝 Observaciones:</strong><br/>
+               ${(body.observations || 'Sin observaciones').replace(/\n/g, '<br/>')}
+            </p>
+
+            <div style="margin-top: 25px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #10b981;">
+                <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #065f46;">Total Estimado: $${body.price.toLocaleString('es-AR')}</p>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <a href="https://transport-app-lilac-beta.vercel.app/admin" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Abrir Panel de Administración</a>
+            </div>
+        </div>
       `
         });
 
@@ -330,16 +344,26 @@ export async function POST(request: Request) {
                         <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
                             <h2 style="color: #3b82f6; margin-top: 0;">¡Gracias por tu solicitud!</h2>
                             <p>Hola <strong>${body.customerName}</strong>,</p>
-                            <p>Hemos recibido tu pedido de presupuesto estimativo con el ID: <strong>${id}</strong>.</p>
-                            <p><strong>Aviso importante:</strong> El presupuesto de <strong>$${body.price.toLocaleString('es-AR')}</strong> es <strong>estimativo</strong>. Nuestro equipo evaluará los detalles y te contactará para confirmar el presupuesto definitivo.</p>
+                            <p>Hemos recibido tu pedido de presupuesto estimativo con el ID: <strong><span style="color: #2563eb;">${id}</span></strong>.</p>
+                            
+                            <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 14px;">
+                                <p style="margin-top: 0;"><strong>📍 Origen:</strong><br/>
+                                    ${body.origin.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                                </p>
+                                <p style="margin-bottom: 0;"><strong>🏁 Destino:</strong><br/>
+                                    ${body.destination.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                                </p>
+                            </div>
+
+                            <p><strong>Aviso importante:</strong> El presupuesto de <strong style="color: #10b981;">$${body.price.toLocaleString('es-AR')}</strong> es <strong>estimativo</strong>. Nuestro equipo evaluará los detalles y te contactará para confirmar el valor definitivo.</p>
                             
                             <div style="margin: 30px 0; text-align: center;">
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podes ver los detalles de tu solicitud aquí:</p>
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">Ver Estado del Pedido</a>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés seguir el estado de tu pedido aquí:</p>
+                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">Seguir mi Pedido</a>
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p>Cualquier duda, podés escribirnos por WhatsApp.</p>
+                            <p>Ante cualquier duda, estamos a tu disposición por WhatsApp.</p>
                             <p>Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
                     </div>
