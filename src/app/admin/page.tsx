@@ -501,7 +501,7 @@ export default function AdminPage() {
                                 { label: '👷 Choferes', href: '/admin/drivers' },
                                 { label: '🚘 Vehículos', href: '/admin/vehicles' },
                                 { label: '📍 Direcciones', href: '/admin/locations' },
-                                { label: '⚙️ Tarifas', href: '/admin/config' },
+                                { label: '⚙️ Configuración', href: '/admin/config' },
                                 { label: '📥 Backup', action: handleBackup },
                                 { label: '🗑️ Papelera', href: '/admin/recycle-bin' }
                             ].map((item, idx) => (

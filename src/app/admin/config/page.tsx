@@ -247,8 +247,8 @@ export default function PricingConfigPage() {
         <div className="page-container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Panel de Tarifas</h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>Ajuste de valores para cálculo automático</p>
+                    <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Configuración General</h1>
+                    <p style={{ color: 'var(--text-secondary)' }}>Ajuste de cálculos, contraseñas y alertas</p>
                 </div>
                 <div style={{
                     display: 'grid',

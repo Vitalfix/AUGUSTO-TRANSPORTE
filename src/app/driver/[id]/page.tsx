@@ -184,7 +184,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                                     );
                                 }
                             },
-                            { enableHighAccuracy: true, timeout: 15000 }
+                            { enableHighAccuracy: true, timeout: 20000 }
                         );
                     }, 30000);
                 } else {
@@ -255,7 +255,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                     );
                 }
             },
-            { enableHighAccuracy: true, timeout: 8000 }
+            { enableHighAccuracy: true, timeout: 15000 }
         );
     };
 
