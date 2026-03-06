@@ -91,6 +91,16 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'Falta el ID del vehículo' }, { status: 400 });
 
+    // Move to recycle bin before deleting
+    const { data: vehicle } = await supabase.from('pricing_config').select('*').eq('id', id).single();
+    if (vehicle) {
+        await supabase.from('recycle_bin').insert({
+            original_id: vehicle.id.toString(),
+            table_name: 'pricing_config',
+            data: vehicle
+        });
+    }
+
     const { data, error } = await supabase
         .from('pricing_config')
         .delete()

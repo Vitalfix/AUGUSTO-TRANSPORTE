@@ -28,6 +28,17 @@ create table if not exists orders (
   waiting_minutes integer,
   activity_log jsonb default '[]'::jsonb
 );
+-- Tabla de papelera de reciclaje
+create table if not exists recycle_bin (
+  id uuid primary key default gen_random_uuid(),
+  original_id text not null,
+  table_name text not null,
+  data jsonb not null,
+  deleted_at timestamp with time zone default now()
+);
+-- Habilitar RLS
+alter table recycle_bin enable row level security;
+create policy "Enable access to all users for recycle_bin" on recycle_bin for all using (true);
 -- Habilitar RLS (Seguridad a nivel de fila)
 alter table orders enable row level security;
 -- Políticas de acceso

@@ -94,6 +94,16 @@ export async function DELETE(request: Request) {
 
         if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
+        // Move to recycle bin before deleting
+        const { data: customer } = await supabase.from('customers').select('*').eq('id', id).single();
+        if (customer) {
+            await supabase.from('recycle_bin').insert({
+                original_id: customer.id.toString(),
+                table_name: 'customers',
+                data: customer
+            });
+        }
+
         const { error } = await supabase
             .from('customers')
             .delete()

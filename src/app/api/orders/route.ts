@@ -482,3 +482,37 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(data);
 }
+
+export async function DELETE(request: Request) {
+    try {
+        const password = getPassword(request);
+        if (!await authenticate(password)) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
+
+        // Move to recycle bin before deleting
+        const { data: order } = await supabase.from('orders').select('*').eq('id', id).single();
+        if (order) {
+            await supabase.from('recycle_bin').insert({
+                original_id: order.id,
+                table_name: 'orders',
+                data: order
+            });
+        }
+
+        const { error } = await supabase
+            .from('orders')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

@@ -87,6 +87,16 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Move to recycle bin before deleting
+    const { data: driver } = await supabase.from('drivers').select('*').eq('id', id).single();
+    if (driver) {
+        await supabase.from('recycle_bin').insert({
+            original_id: driver.id.toString(),
+            table_name: 'drivers',
+            data: driver
+        });
+    }
+
     const { error } = await supabase
         .from('drivers')
         .delete()

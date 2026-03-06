@@ -415,6 +415,18 @@ export default function AdminPage() {
         }
     };
 
+    const confirmDeleteOrder = async (id: string, name: string) => {
+        if (!confirm(`¿Seguro que quieres eliminar el pedido de ${name}? Se guardará en la papelera por 48hs.`)) return;
+        try {
+            const res = await fetch(`/api/orders?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-password': (password || sessionStorage.getItem('admin_password') || '') }
+            });
+            if (res.ok) fetchOrders();
+            else alert('Error al eliminar');
+        } catch (e) { console.error(e); }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('admin_password');
         setIsAuthenticated(false);
@@ -470,6 +482,11 @@ export default function AdminPage() {
                         </div>
                         <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestore} />
                     </label>
+                    <Link href="/admin/recycle-bin" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid #ef4444', color: '#ef4444', width: '100%' }}>
+                            🗑️ Papelera
+                        </button>
+                    </Link>
                     <button onClick={handleLogout} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
                         🚪 Salir
                     </button>
@@ -571,49 +588,58 @@ export default function AdminPage() {
                                                 <div
                                                     onClick={() => toggleExpand(order.id)}
                                                     style={{
-                                                        padding: '16px 20px',
+                                                        padding: '20px',
                                                         background: isExpanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
                                                         borderBottom: isExpanded ? '1px solid var(--glass-border)' : '1px solid transparent',
                                                         display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        alignItems: 'center',
+                                                        flexDirection: 'column',
+                                                        gap: '12px',
                                                         cursor: 'pointer',
                                                         transition: 'background 0.3s ease'
                                                     }}
                                                 >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
-                                                        <div style={{
-                                                            minWidth: '100px',
-                                                            padding: '4px 10px',
-                                                            borderRadius: '20px',
-                                                            fontSize: '0.65rem',
-                                                            fontWeight: 'bold',
-                                                            background: `${group.color}22`,
-                                                            color: group.color,
-                                                            border: `1px solid ${group.color}44`,
-                                                            textAlign: 'center'
-                                                        }}>
-                                                            {group.label.split(' ')[1] || group.label}
-                                                        </div>
-                                                        <div style={{ overflow: 'hidden' }}>
-                                                            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.customerName}</div>
-                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', gap: '10px' }}>
-                                                                <span>ID: {order.id.substring(0, 8)}...</span>
-                                                                <span style={{ color: 'var(--accent-color)' }}>{order.travelDate || 'A coordinar'}</span>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                                                                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'white' }}>{order.customerName}</span>
+                                                                <div style={{
+                                                                    padding: '2px 10px',
+                                                                    borderRadius: '12px',
+                                                                    fontSize: '0.6rem',
+                                                                    fontWeight: 'bold',
+                                                                    background: `${group.color}22`,
+                                                                    color: group.color,
+                                                                    border: `1px solid ${group.color}44`,
+                                                                    textTransform: 'uppercase'
+                                                                }}>
+                                                                    {group.label.split(' ')[1] || group.label}
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>#{order.id.substring(0, 8)}</span>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontWeight: '600' }}>📅 {order.travelDate || 'Pendiente'}</span>
+                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>🚛 {formatVehicle(order.vehicle)}</span>
                                                             </div>
                                                         </div>
-                                                    </div>
-
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                        <div style={{ textAlign: 'right' }}>
-                                                            <div style={{ color: group.color, fontWeight: '800', fontSize: '1rem' }}>${order.price.toLocaleString('es-AR')}</div>
-                                                            <div style={{ fontSize: '0.65rem', color: 'var(--success-color)', opacity: 0.8 }}>{order.driverName ? `🚚 ${order.driverName.split(' ')[0]}` : '⏳ Sin chofer'}</div>
+                                                        <div style={{ textAlign: 'right', minWidth: '100px' }}>
+                                                            <div style={{ fontSize: '1.2rem', fontWeight: '900', color: group.color, marginBottom: '4px' }}>
+                                                                ${order.price.toLocaleString('es-AR')}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--success-color)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                                {order.driverName ? (
+                                                                    <>🚚 <span style={{ fontWeight: '600' }}>{order.driverName}</span></>
+                                                                ) : (
+                                                                    <>⏳ <span style={{ opacity: 0.7 }}>Sin chofer</span></>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <span style={{
+                                                            paddingLeft: '10px',
                                                             fontSize: '1.2rem',
                                                             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
                                                             transition: 'transform 0.3s ease',
-                                                            opacity: 0.5
+                                                            opacity: 0.3,
+                                                            alignSelf: 'center'
                                                         }}>⌄</span>
                                                     </div>
                                                 </div>
@@ -796,7 +822,10 @@ export default function AdminPage() {
                                                                     <button className="glass-button" onClick={() => handleEditClick(order)} style={{ fontSize: '0.75rem', padding: '10px' }}>✏️ Editar</button>
                                                                     <button className="glass-button" onClick={() => sendWhatsApp(order)} style={{ fontSize: '0.75rem', padding: '10px', background: '#25d366', border: 'none' }}>🟢 WA</button>
                                                                     <button className="glass-button" onClick={() => copyToClipboard(order.id)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.1)' }}>{copiedLink === order.id ? '✅ Link' : '🔗 Link'}</button>
-                                                                    <button className="glass-button" onClick={() => updateStatus(order.id, 'PENDING')} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>🗑️ Reset</button>
+                                                                    <div style={{ display: 'flex', gap: '5px' }}>
+                                                                        <button className="glass-button" onClick={() => updateStatus(order.id, 'PENDING')} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', flex: 1 }}>🔄 Reset</button>
+                                                                        <button className="glass-button" onClick={() => confirmDeleteOrder(order.id, order.customerName)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444', flex: 1 }}>🗑️ Borrar</button>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
