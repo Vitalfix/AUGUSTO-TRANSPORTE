@@ -174,11 +174,14 @@ export default function QuotePageV2() {
                     const custData = await custRes.json();
                     // Ordenar: SIEMENS primero, luego el resto alfabético
                     const sorted = [...custData].sort((a, b) => {
-                        const aSiemens = a.name.toUpperCase().includes('SIEMENS');
-                        const bSiemens = b.name.toUpperCase().includes('SIEMENS');
+                        const nameA = (a.name || '').toUpperCase();
+                        const nameB = (b.name || '').toUpperCase();
+                        const aSiemens = nameA.includes('SIEMENS');
+                        const bSiemens = nameB.includes('SIEMENS');
+
                         if (aSiemens && !bSiemens) return -1;
                         if (!aSiemens && bSiemens) return 1;
-                        return a.name.localeCompare(b.name);
+                        return nameA.localeCompare(nameB);
                     });
                     setCustomers(sorted);
                 }
@@ -379,9 +382,9 @@ export default function QuotePageV2() {
             setCuit('');
             setTaxStatus('responsable_inscripto');
         } else {
-            const c = customers.find(x => x.id === customerId);
+            const c = customers.find(x => String(x.id) === customerId);
             if (c) {
-                setCustomerName(c.name);
+                setCustomerName(c.name || '');
                 setCustomerEmail(c.email || '');
                 setCustomerPhone(c.phone || '');
                 setCuit(c.cuit || '');
