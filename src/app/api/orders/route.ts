@@ -344,6 +344,10 @@ export async function POST(request: Request) {
             <div style="margin-top: 30px; text-align: center;">
                 <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 16px 32px; background: #3b82f6; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">ABRIR PANEL</a>
             </div>
+
+            <div style="margin-top: 40px; padding: 15px; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4;">
+                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+            </div>
         </div>
       `
         });
@@ -387,9 +391,10 @@ export async function POST(request: Request) {
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p style="font-size: 0.85rem; color: #94a3b8; text-align: center;">
-                                Ni el prestador ni los desarrolladores de la plataforma se responsabilizan por errores tipográficos o fallos técnicos temporales. El presupuesto final será el acordado manualmente con la empresa.
-                            </p>
+                            
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; margin-bottom: 20px;">
+                                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                            </div>
                             <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
                     </div>
@@ -543,7 +548,12 @@ export async function PATCH(request: Request) {
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p>Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
+                            
+                            <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; margin-bottom: 20px;">
+                                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                            </div>
+
+                            <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
                     </div>
                 `
