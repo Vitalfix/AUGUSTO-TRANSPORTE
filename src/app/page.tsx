@@ -85,10 +85,12 @@ export default function Home() {
           padding: '0 10px'
         }}>
           <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+          <br /><br />
+          <span style={{ opacity: 0.8 }}>Plataforma diseñada y desarrollada por <strong>VitalFix</strong></span>
         </div>
 
         <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', opacity: 0.2, marginTop: '2px' }}>
-          v1.3 Premium Logistics
+          v1.4 Premium Logistics
         </div>
       </footer>
 
