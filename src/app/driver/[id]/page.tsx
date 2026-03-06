@@ -27,6 +27,9 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
     const [lastUpdate, setLastUpdate] = useState<string | null>(null);
     const [gpsError, setGpsError] = useState<string | null>(null);
 
+    const [extraWaitInput, setExtraWaitInput] = useState('');
+    const [observationsInput, setObservationsInput] = useState('');
+
     const addLog = (msg: string) => {
         setGpsLogs(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
     };
@@ -288,10 +291,20 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
     const handleFinishTrip = async () => {
         setTripStage('FINISHED');
         setStatus('idle');
+
+        // Allow driver to send a final log with observations
+        const finalActivityLog = observationsInput
+            ? [{ type: 'FINISHED', label: 'Viaje Finalizado (Nota: ' + observationsInput + ')', time: new Date().toISOString(), user: 'Chofer' }]
+            : undefined;
+
         await fetch('/api/orders', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status: 'FINISHED' }),
+            body: JSON.stringify({
+                id,
+                status: 'FINISHED',
+                activityLog: finalActivityLog
+            }),
         });
     };
 
@@ -315,51 +328,120 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                     <div style={{ fontSize: '0.9rem', color: 'var(--success-color)' }}>{order.destination}</div>
                 </div>
 
-                {/* STAGE ACTIONS */}
-                {tripStage === 'START' && (
-                    <button className="glass-button" style={{ width: '100%', padding: '18px', background: 'var(--accent-gradient)' }} onClick={handleStartTrip}>
-                        🚀 INICIAR VIAJE Y GPS
+                {/* TIMELINE STAGE ACTIONS */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', width: '100%' }}>
+                    {/* START */}
+                    <button
+                        className="glass-button"
+                        style={{
+                            width: '100%', padding: '15px',
+                            background: tripStage === 'START' ? 'var(--accent-gradient)' : 'rgba(255,255,255,0.05)',
+                            color: tripStage === 'START' ? 'white' : 'var(--text-secondary)',
+                            opacity: tripStage === 'START' ? 1 : 0.5,
+                            border: '1px solid var(--glass-border)'
+                        }}
+                        onClick={tripStage === 'START' ? handleStartTrip : undefined}
+                        disabled={tripStage !== 'START'}
+                    >
+                        🚀 1. INICIAR VIAJE
                     </button>
-                )}
 
-                {tripStage === 'TO_ORIGIN' && (
-                    <button className="glass-button" style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }} onClick={handleArrivedAtOrigin}>
-                        🏁 LLEGUÉ AL ORIGEN
+                    {/* TO_ORIGIN */}
+                    <button
+                        className="glass-button"
+                        style={{
+                            width: '100%', padding: '15px',
+                            background: tripStage === 'TO_ORIGIN' ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' : 'rgba(255,255,255,0.05)',
+                            color: tripStage === 'TO_ORIGIN' ? 'white' : 'var(--text-secondary)',
+                            opacity: tripStage === 'TO_ORIGIN' ? 1 : 0.5,
+                            border: '1px solid var(--glass-border)'
+                        }}
+                        onClick={tripStage === 'TO_ORIGIN' ? handleArrivedAtOrigin : undefined}
+                        disabled={tripStage !== 'TO_ORIGIN'}
+                    >
+                        📍 2. LLEGUÉ AL ORIGEN (PUNTO DE CARGA)
                     </button>
-                )}
 
-                {tripStage === 'WAITING' && (
-                    <div style={{ padding: '20px', border: '2px solid #f59e0b', borderRadius: '15px', background: 'rgba(245, 158, 11, 0.1)' }}>
-                        <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.8rem', marginBottom: '10px' }}>TIEMPO DE ESPERA EN CLIENTE</div>
-                        <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>{waitMinutes} <small style={{ fontSize: '1rem' }}>min</small></div>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>El tiempo se sumará automáticamente a la factura.</p>
-                        <button className="glass-button" style={{ width: '100%', background: 'var(--accent-color)', color: 'white' }} onClick={handleFinishWaiting}>
-                            CONTINUAR VIAJE (Cargado)
+                    {/* WAITING */}
+                    <div style={{
+                        background: tripStage === 'WAITING' ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                        border: tripStage === 'WAITING' ? '2px solid #f59e0b' : '1px solid rgba(255,255,255,0.05)',
+                        opacity: tripStage === 'WAITING' || tripStage === 'TO_DEST' || tripStage === 'ARRIVED_DEST' || tripStage === 'FINISHED' ? 1 : 0.5,
+                        padding: '15px', borderRadius: '12px', textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '0.8rem', color: tripStage === 'WAITING' ? '#f59e0b' : 'var(--text-secondary)' }}>
+                            ⏳ DEMORA: <strong>{waitMinutes} min</strong>
+                        </div>
+                        <button
+                            className="glass-button"
+                            style={{
+                                width: '100%', padding: '12px', marginTop: '10px',
+                                background: tripStage === 'WAITING' ? '#f59e0b' : 'rgba(255,255,255,0.05)',
+                                color: tripStage === 'WAITING' ? 'white' : 'var(--text-secondary)'
+                            }}
+                            onClick={tripStage === 'WAITING' ? handleFinishWaiting : undefined}
+                            disabled={tripStage !== 'WAITING'}
+                        >
+                            🚚 3. CONTINUAR VIAJE (CARGADO)
                         </button>
                     </div>
-                )}
 
-                {tripStage === 'TO_DEST' && (
-                    <button className="glass-button" style={{ width: '100%', padding: '18px', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }} onClick={handleArrivedAtDest}>
-                        🏁 LLEGUÉ AL DESTINO
+                    {/* TO_DEST */}
+                    <button
+                        className="glass-button"
+                        style={{
+                            width: '100%', padding: '15px',
+                            background: tripStage === 'TO_DEST' ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'rgba(255,255,255,0.05)',
+                            color: tripStage === 'TO_DEST' ? 'white' : 'var(--text-secondary)',
+                            opacity: tripStage === 'TO_DEST' ? 1 : 0.5,
+                            border: '1px solid var(--glass-border)'
+                        }}
+                        onClick={tripStage === 'TO_DEST' ? handleArrivedAtDest : undefined}
+                        disabled={tripStage !== 'TO_DEST'}
+                    >
+                        🏁 4. LLEGUÉ AL DESTINO
                     </button>
-                )}
 
-                {tripStage === 'ARRIVED_DEST' && (
-                    <button className="glass-button" style={{ width: '100%', padding: '18px', background: 'var(--success-color)' }} onClick={handleFinishTrip}>
-                        📦 ENTREGUÉ EL PEDIDO (Finalizar)
-                    </button>
-                )}
+                    {/* ARRIVED_DEST / FINISHED */}
+                    <div style={{
+                        border: '1px solid rgba(255,255,255,0.05)',
+                        padding: '15px', borderRadius: '12px', textAlign: 'center',
+                        display: (tripStage === 'ARRIVED_DEST' || tripStage === 'FINISHED') ? 'block' : 'none',
+                        background: tripStage === 'FINISHED' ? 'rgba(16, 185, 129, 0.1)' : 'transparent'
+                    }} className="mb-10">
+                        {tripStage === 'ARRIVED_DEST' && (
+                            <div style={{ marginBottom: '15px' }}>
+                                <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Observaciones o Demoras extra</label>
+                                <input
+                                    type="text"
+                                    className="glass-input"
+                                    value={observationsInput}
+                                    onChange={(e) => setObservationsInput(e.target.value)}
+                                    placeholder="Peajes, esperas extras..."
+                                    style={{ marginTop: '5px', textAlign: 'center' }}
+                                />
+                            </div>
+                        )}
 
-                {tripStage === 'FINISHED' && (
-                    <div style={{ padding: '20px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '12px', border: '1px solid var(--success-color)' }}>
-                        <div style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>✅ VIAJE FINALIZADO</div>
-                        <div style={{ fontSize: '0.9rem', marginTop: '10px', color: 'var(--text-secondary)' }}>Total espera: {waitMinutes} min.</div>
-                        <Link href="/admin">
-                            <button className="glass-button" style={{ marginTop: '20px', width: '100%' }}>Volver al Panel</button>
-                        </Link>
+                        {tripStage === 'FINISHED' && (
+                            <div style={{ color: 'var(--success-color)', fontWeight: 'bold', marginBottom: '15px' }}>✅ VIAJE FINALIZADO</div>
+                        )}
+
+                        <button
+                            className="glass-button"
+                            style={{
+                                width: '100%', padding: '15px',
+                                background: tripStage === 'ARRIVED_DEST' ? 'var(--success-color)' : 'rgba(255,255,255,0.05)',
+                                color: tripStage === 'ARRIVED_DEST' ? 'white' : 'var(--text-secondary)',
+                                display: tripStage === 'FINISHED' ? 'none' : 'block'
+                            }}
+                            onClick={tripStage === 'ARRIVED_DEST' ? handleFinishTrip : undefined}
+                            disabled={tripStage !== 'ARRIVED_DEST'}
+                        >
+                            📦 5. ENTREGUÉ EL PEDIDO (FINALIZAR)
+                        </button>
                     </div>
-                )}
+                </div>
 
                 {gpsError && (
                     <div className="glass-panel" style={{ marginTop: '20px', padding: '20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid var(--error-color)', color: 'var(--error-color)', fontSize: '0.9rem', textAlign: 'left' }}>

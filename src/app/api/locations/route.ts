@@ -3,6 +3,20 @@ import { supabase } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
+async function authenticate(password: string | null) {
+    if (!password) return false;
+    const { data: dbPass } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('id', 'master_password')
+        .single();
+    return (dbPass?.value || '1234') === password;
+}
+
+function getPassword(request: Request) {
+    return request.headers.get('x-admin-password');
+}
+
 // GET: List all locations
 export async function GET() {
     try {
@@ -21,6 +35,10 @@ export async function GET() {
 // POST: Add new location
 export async function POST(req: Request) {
     try {
+        const password = getPassword(req);
+        const isAdmin = await authenticate(password);
+        if (!isAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
         const body = await req.json();
         const { name, lat, lng, icon } = body;
 
@@ -39,6 +57,10 @@ export async function POST(req: Request) {
 // PATCH: Update location
 export async function PATCH(req: Request) {
     try {
+        const password = getPassword(req);
+        const isAdmin = await authenticate(password);
+        if (!isAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
         const body = await req.json();
         const { id, name, lat, lng, icon } = body;
 
@@ -58,6 +80,10 @@ export async function PATCH(req: Request) {
 // DELETE: Remove location
 export async function DELETE(req: Request) {
     try {
+        const password = getPassword(req);
+        const isAdmin = await authenticate(password);
+        if (!isAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
 

@@ -25,6 +25,7 @@ export interface Order {
     taxStatus?: string;
     distanceKm?: number;
     travelHours?: number;
+    waitingMinutes?: number;
     activityLog?: { type: string; timestamp: string;[key: string]: any }[];
 }
 
@@ -40,6 +41,7 @@ interface VehiclePricing {
     name: string;
     priceKm: number;
     priceHour: number;
+    priceWaitHour?: number;
 }
 
 const formatVehicle = (v: string) => {
@@ -63,7 +65,7 @@ export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [copiedLink, setCopiedLink] = useState<string | null>(null);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-    const [activeTab, setActiveTab] = useState<'CLIENT' | 'ROUTE' | 'LOGISTICS'>('CLIENT');
+    const [activeTab, setActiveTab] = useState<'CLIENT' | 'ROUTE' | 'LOGISTICS' | 'ADJUST'>('CLIENT');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<Order['status'] | 'ALL'>('ALL');
     const [editForm, setEditForm] = useState({
@@ -83,7 +85,8 @@ export default function AdminPage() {
         travelDate: '',
         travelTime: '',
         distanceKm: 0,
-        travelHours: 0
+        travelHours: 0,
+        waitingMinutes: 0
     });
     const [vehiclesData, setVehiclesData] = useState<VehiclePricing[]>([]);
     const [saving, setSaving] = useState(false);
@@ -123,10 +126,10 @@ export default function AdminPage() {
 
     // Stats calculations
     const stats = {
-        totalRevenue: orders.filter(o => o.status === 'FINISHED').reduce((acc, o) => acc + o.price, 0),
+        totalRevenue: orders.filter(o => o.status === 'FINISHED' || o.status === 'INVOICED' || o.status === 'PAID').reduce((acc, o) => acc + (o.price || 0), 0),
         activeTrips: orders.filter(o => o.status === 'STARTED').length,
         pendingTrips: orders.filter(o => o.status === 'PENDING').length,
-        completedTrips: orders.filter(o => o.status === 'FINISHED').length
+        completedTrips: orders.filter(o => o.status === 'FINISHED' || o.status === 'INVOICED' || o.status === 'PAID').length
     };
 
     const filteredOrders = orders.filter(o => {
@@ -386,7 +389,8 @@ export default function AdminPage() {
             travelDate: order.travelDate || '',
             travelTime: order.travelTime || '',
             distanceKm: order.distanceKm || 0,
-            travelHours: order.travelHours || 0
+            travelHours: order.travelHours || 0,
+            waitingMinutes: order.waitingMinutes || 0
         });
     };
 
@@ -445,6 +449,7 @@ export default function AdminPage() {
         sessionStorage.removeItem('admin_password');
         setIsAuthenticated(false);
         setPassword('');
+        window.location.href = '/';
     };
 
     return (
@@ -837,7 +842,7 @@ export default function AdminPage() {
                                                                     <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Origen:</strong> {order.origin}</div>
                                                                     <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Destino:</strong> {order.destination}</div>
                                                                     <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'var(--text-secondary)' }}>
-                                                                        {order.distanceKm} Km | {order.travelHours} hs est.
+                                                                        {Math.round(order.distanceKm || 0)} Km | {order.travelHours} hs est.
                                                                     </div>
                                                                 </div>
 
@@ -857,7 +862,12 @@ export default function AdminPage() {
                                                                     {order.status === 'APPROVED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'CONFIRMED')} style={{ background: '#10b981', fontWeight: '800', fontSize: '0.75rem' }}>📅 PROGRAMAR (PENDIENTE)</button>}
                                                                     {order.status === 'CONFIRMED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'STARTED')} style={{ background: 'var(--accent-gradient)', fontWeight: '800', fontSize: '0.75rem' }}>🚀 INICIAR VIAJE</button>}
                                                                     {order.status === 'STARTED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'FINISHED')} style={{ background: '#8b5cf6', fontWeight: '800', fontSize: '0.75rem' }}>🏁 FINALIZAR VIAJE</button>}
-                                                                    {order.status === 'FINISHED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'INVOICED')} style={{ background: '#ec4899', fontWeight: '800', fontSize: '0.75rem' }}>📄 MARCAR FACTURADO</button>}
+                                                                    {order.status === 'FINISHED' && (
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                                            <button className="glass-button" onClick={() => { handleEditClick(order); setActiveTab('ADJUST'); }} style={{ background: 'var(--accent-gradient)', fontWeight: '800', fontSize: '0.75rem' }}>💰 AJUSTAR PRECIO FINAL</button>
+                                                                            <button className="glass-button" onClick={() => updateStatus(order.id, 'INVOICED')} style={{ background: '#ec4899', fontWeight: '800', fontSize: '0.75rem' }}>📄 MARCAR FACTURADO</button>
+                                                                        </div>
+                                                                    )}
                                                                     {order.status === 'INVOICED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'PAID')} style={{ background: '#059669', fontWeight: '800', fontSize: '0.75rem' }}>💰 MARCAR COBRADO</button>}
                                                                 </div>
 
@@ -937,6 +947,9 @@ export default function AdminPage() {
                             <button className={`filter-btn ${activeTab === 'CLIENT' ? 'active' : ''}`} onClick={() => setActiveTab('CLIENT')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>👤 Cliente e IVA</button>
                             <button className={`filter-btn ${activeTab === 'ROUTE' ? 'active' : ''}`} onClick={() => setActiveTab('ROUTE')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>📍 Ruta y Precio</button>
                             <button className={`filter-btn ${activeTab === 'LOGISTICS' ? 'active' : ''}`} onClick={() => setActiveTab('LOGISTICS')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>🚚 Chofer y Logística</button>
+                            {(editingOrder.status === 'FINISHED' || editingOrder.status === 'INVOICED' || editingOrder.status === 'PAID') && (
+                                <button className={`filter-btn ${activeTab === 'ADJUST' ? 'active' : ''}`} onClick={() => setActiveTab('ADJUST')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap', border: '1px solid var(--accent-color)' }}>💰 ADJUSTE FINAL</button>
+                            )}
                         </div>
 
                         {/* TAB: CLIENT */}
@@ -1107,6 +1120,65 @@ export default function AdminPage() {
                                     <div>
                                         <label className="glass-label">Teléfono Chofer</label>
                                         <input type="tel" className="glass-input" value={editForm.driverPhone} onChange={e => setEditForm(p => ({ ...p, driverPhone: e.target.value }))} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB: ADJUST */}
+                        {activeTab === 'ADJUST' && editingOrder && (
+                            <div className="flex-col gap-20">
+                                <h3 className="text-accent" style={{ fontSize: '0.85rem' }}>💰 AJUSTE DE CUENTAS FINAL</h3>
+
+                                <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.3)', padding: '20px' }}>
+                                    <div className="flex justify-between items-center mb-10 pb-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <span className="text-secondary">Precio Base Pactado:</span>
+                                        <span style={{ fontWeight: 'bold' }}>${editingOrder.price.toLocaleString('es-AR')}</span>
+                                    </div>
+
+                                    <div className="flex justify-between items-center mb-20 pb-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <span className="text-secondary">Tiempo de Espera ({editForm.waitingMinutes} min):</span>
+                                        <span className="text-warning">
+                                            + ${Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0)).toLocaleString('es-AR')}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex-col gap-10">
+                                        <label className="glass-label">Horas de Espera / Demoas (minutos)</label>
+                                        <input
+                                            type="number"
+                                            className="glass-input"
+                                            value={editForm.waitingMinutes}
+                                            onChange={e => setEditForm(p => ({ ...p, waitingMinutes: parseInt(e.target.value) || 0 }))}
+                                        />
+                                    </div>
+
+                                    <div className="flex-col gap-10 mt-15">
+                                        <label className="glass-label">Observaciones de cobro / Extras</label>
+                                        <textarea
+                                            className="glass-input"
+                                            placeholder="Ej: Peajes, carga extra, etc."
+                                            value={editForm.observations}
+                                            onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))}
+                                            style={{ minHeight: '60px' }}
+                                        />
+                                    </div>
+
+                                    <div className="flex-col gap-10 mt-15">
+                                        <label className="glass-label">Precio Final a Cobrar ($)</label>
+                                        <input
+                                            type="number"
+                                            className="glass-input"
+                                            value={editForm.price}
+                                            onChange={e => setEditForm(p => ({ ...p, price: parseInt(e.target.value) || 0 }))}
+                                            style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--success-color)', border: '1px solid var(--success-color)' }}
+                                        />
+                                    </div>
+
+                                    <div className="mt-20 p-15 rounded-12" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                                        <p style={{ fontSize: '0.8rem', textAlign: 'center', margin: 0 }}>
+                                            Este precio es el que figurará en el resumen del cliente.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

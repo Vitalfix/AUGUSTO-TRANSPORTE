@@ -88,13 +88,24 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Get the last order to generate the next sequential ID
-    const { data: lastOrders } = await supabase
+    // We check BOTH 'orders' and 'recycle_bin' to ensure IDs are NEVER reused
+    const { data: lastOrder } = await supabase
         .from('orders')
         .select('id')
-        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
         .limit(1);
 
-    const lastId = lastOrders && lastOrders.length > 0 ? lastOrders[0].id : '';
+    const { data: lastRecycled } = await supabase
+        .from('recycle_bin')
+        .select('original_id')
+        .order('original_id', { ascending: false })
+        .limit(1);
+
+    const oId = lastOrder?.[0]?.id || '';
+    const rId = lastRecycled?.[0]?.original_id || '';
+
+    // Choose the lexicographically largest ID between active and deleted records
+    const lastId = oId > rId ? oId : rId;
 
     // Default starting ID
     let id = 'A0001';
@@ -238,10 +249,18 @@ export async function POST(request: Request) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
     try {
+        const { data: dbSetting } = await supabase
+            .from('site_settings')
+            .select('value')
+            .eq('id', 'notification_emails')
+            .maybeSingle();
+        const bccEmails = dbSetting?.value ? dbSetting.value.split(',').map((e: string) => e.trim()).filter(Boolean) : [];
+
         // Admin Notification
         await resend.emails.send({
             from: 'EL CASAL <onboarding@resend.dev>',
             to: 'vitalfix@gmail.com',
+            bcc: bccEmails.length > 0 ? bccEmails : undefined,
             subject: `Nueva Solicitud: ${id}`,
             html: `
         <h2 style="color: #3b82f6;">Nueva solicitud de presupuesto (A Confirmar)</h2>
@@ -265,6 +284,7 @@ export async function POST(request: Request) {
             await resend.emails.send({
                 from: 'EL CASAL <onboarding@resend.dev>',
                 to: body.customerEmail,
+                bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `Recibimos tu solicitud de presupuesto - ID ${id}`,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -314,15 +334,14 @@ export async function PATCH(request: Request) {
     const body = await request.json();
 
     if (!isAdmin) {
-        // Allow driver updates for specific fields ONLY (GPS, Status, Wait Time)
-        const isTryingToChangeAdminFields =
-            body.price !== undefined ||
-            body.customerName !== undefined ||
-            body.vehicle !== undefined ||
-            body.driverName !== undefined; // drivers shouldn't reassign themselves here
+        // Allow driver updates for specific fields ONLY (GPS, Status, Wait Time, etc.)
+        const allowedDriverFields = ['id', 'status', 'lat', 'lng', 'waitingMinutes', 'activityLog'];
+        const bodyKeys = Object.keys(body);
 
-        if (isTryingToChangeAdminFields) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const hasUnauthorizedFields = bodyKeys.some(key => !allowedDriverFields.includes(key));
+
+        if (hasUnauthorizedFields) {
+            return NextResponse.json({ error: 'Campos no permitidos para el chofer' }, { status: 401 });
         }
     }
     const {
@@ -398,12 +417,21 @@ export async function PATCH(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+    // Fetch bcc emails
+    const { data: dbSetting } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('id', 'notification_emails')
+        .maybeSingle();
+    const bccEmails = dbSetting?.value ? dbSetting.value.split(',').map((e: string) => e.trim()).filter(Boolean) : [];
+
     // Notificaciones
     if (status === 'CONFIRMED' && data.customer_email) {
         try {
             await resend.emails.send({
                 from: 'EL CASAL <onboarding@resend.dev>',
                 to: data.customer_email,
+                bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `¡Pedido Confirmado! - ID ${id}`,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -437,79 +465,40 @@ export async function PATCH(request: Request) {
         } catch (e) { console.error("Error email confirmado", e); }
     }
 
-    // Notificaciones de llegada
+    // Notificaciones de llegada (DESACTIVADAS PARA AHORRAR CUOTA DE EMAILS)
+    /* 
     if ((status === 'ARRIVED_ORIGIN' || status === 'ARRIVED_DESTINATION') && data.customer_email) {
-        const msg = status === 'ARRIVED_ORIGIN' ? 'el chofer ha llegado al origen' : 'el chofer ha llegado al destino';
-        try {
-            await resend.emails.send({
-                from: 'EL CASAL <onboarding@resend.dev>',
-                to: data.customer_email,
-                subject: `Actualización de tu pedido - ID ${id}`,
-                html: `
-                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                        <div style="background: #f8fafc; padding: 30px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                            <h1 style="margin: 0; font-size: 24px; color: #1e293b;">EL CASAL</h1>
-                        </div>
-                        <div style="padding: 30px; color: #1e293b; line-height: 1.6; text-align: center;">
-                            <div style="font-size: 40px; margin-bottom: 10px;">📍</div>
-                            <h2 style="margin-top: 0;">Actualización importante</h2>
-                            <p>Te informamos que <strong>${msg}</strong>.</p>
-                            
-                            <div style="margin: 30px 0;">
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #1e293b; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Ver Mapa en Vivo</a>
-                            </div>
-                        </div>
-                    </div>
-                `
-            });
-        } catch (e) { console.error("Error email llegada", e); }
-    }
+       ...
+    } 
+    */
 
+    // Notificación de Inicio (DESACTIVADA PARA AHORRAR CUOTA DE EMAILS)
+    /*
     if (status === 'STARTED' && data.customer_email) {
-        try {
-            await resend.emails.send({
-                from: 'EL CASAL <onboarding@resend.dev>',
-                to: data.customer_email,
-                subject: `¡Tu viaje ha iniciado! - ID ${id}`,
-                html: `
-                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                        <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white;">
-                            <h1 style="margin: 0; font-size: 24px;">EL CASAL</h1>
-                            <p style="margin: 10px 0 0; opacity: 0.9;">Seguimiento en Tiempo Real</p>
-                        </div>
-                        <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
-                            <h2 style="color: #3b82f6; margin-top: 0;">Tu envío está en camino 🚚</h2>
-                            <p>Te informamos que el vehículo ya inició el recorrido hacia el destino.</p>
-                            <p><strong>Chofer:</strong> ${data.driver_name || 'Asignado'} (${data.license_plate || ''})</p>
-                            
-                            <div style="margin: 30px 0; text-align: center;">
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">SEGUIR EN EL MAPA</a>
-                            </div>
-
-                            <p style="font-size: 0.9em; color: #64748b;">Podrás ver la ubicación exacta del vehículo y el tiempo estimado de llegada.</p>
-                        </div>
-                    </div>
-                `
-            });
-        } catch (e) { console.error("Error email inicio", e); }
+       ...
     }
+    */
 
+    // Notificación de Fin de Viaje (DESACTIVADA PARA AHORRAR CUOTA DE EMAILS)
+    /*
     if (status === 'FINISHED' && data.customer_email) {
         try {
             const total = data.price;
             await resend.emails.send({
                 from: 'EL CASAL <onboarding@resend.dev>',
                 to: data.customer_email,
+                bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `Viaje Finalizado - Resumen ID ${id}`,
                 html: `
                     <h2>¡Entrega Realizada! ✅</h2>
                     <p>El pedido <strong>${id}</strong> ha sido entregado correctamente.</p>
-                    <p><strong>Total Final:</strong> $${total.toLocaleString('es-AR')}</p>
+                    <p><strong>Total Final Estimativo:</strong> $${total.toLocaleString('es-AR')}</p>
                     <p>Gracias por confiar en EL CASAL.</p>
                 `
             });
         } catch (e) { console.error("Error email fin", e); }
     }
+    */
 
     return NextResponse.json(data);
 }

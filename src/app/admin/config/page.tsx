@@ -25,6 +25,10 @@ export default function PricingConfigPage() {
     const [editValues, setEditValues] = useState<{ [key: string]: Partial<PricingConfig> }>({});
     const [expandedVehicles, setExpandedVehicles] = useState<string[]>([]);
 
+    // Notification Emails Settings
+    const [notificationEmails, setNotificationEmails] = useState('');
+    const [savingEmails, setSavingEmails] = useState(false);
+
     const toggleVehicle = (id: string) => {
         setExpandedVehicles(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
     };
@@ -43,7 +47,18 @@ export default function PricingConfigPage() {
             setIsAuthenticated(true);
         }
         fetchPrices();
+        fetchSettings();
     }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch('/api/settings');
+            const data = await res.json();
+            setNotificationEmails(data.emails || '');
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const fetchPrices = async () => {
         try {
@@ -116,6 +131,28 @@ export default function PricingConfigPage() {
             alert('Error al cambiar contraseña');
         } finally {
             setChangingPassword(false);
+        }
+    };
+
+    const handleSaveEmails = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingEmails(true);
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, emails: notificationEmails })
+            });
+            if (res.ok) {
+                alert('Emails de notificación actualizados correctamente');
+            } else {
+                alert('Error al guardar los emails');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Error de conexión');
+        } finally {
+            setSavingEmails(false);
         }
     };
 
@@ -354,6 +391,24 @@ export default function PricingConfigPage() {
                         </div>
                     );
                 })}
+            </div>
+
+            <div className="glass-panel" style={{ padding: '30px', marginTop: '40px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                <h2 style={{ fontSize: '1.5rem', marginBottom: '15px', color: 'var(--text-primary)' }}>Configuración de Alertas & Notificaciones</h2>
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>Especifíca a qué correos además del cliente le llegarán las alertas (Reservas, Inicio de viaje, Fin de viaje). Separa múltiples correos con una coma (,).</p>
+                <form onSubmit={handleSaveEmails} style={{ display: 'flex', gap: '15px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                        type="text"
+                        className="glass-input"
+                        placeholder="ejemplo@empresa.com, supervisor@elcasal.com"
+                        value={notificationEmails}
+                        onChange={(e) => setNotificationEmails(e.target.value)}
+                        style={{ maxWidth: '400px', flex: 1 }}
+                    />
+                    <button type="submit" className="glass-button" disabled={savingEmails} style={{ background: 'var(--accent-gradient)' }}>
+                        {savingEmails ? 'Guardando...' : 'Guardar Emails'}
+                    </button>
+                </form>
             </div>
 
             <div className="glass-panel" style={{ padding: '30px', marginTop: '40px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
