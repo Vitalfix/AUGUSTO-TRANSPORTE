@@ -562,6 +562,11 @@ export default function QuotePageV2() {
                             </div>
                         </div>
 
+                        {/* DIVISOR SUTIL */}
+                        <div style={{ padding: '10px 0' }}>
+                            <div style={{ height: '1px', background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)' }} />
+                        </div>
+
                         {/* DESTINOS */}
                         <div className="flex-col gap-10">
                             <label className="glass-label">Destino/s</label>
@@ -614,17 +619,21 @@ export default function QuotePageV2() {
                             </div>
                         </div>
 
-                        <div className="flex gap-20">
-                            <div style={{ flex: 1 }}>
+                        <div className="flex gap-20 items-start">
+                            <div style={{ flex: 1.2 }}>
                                 <label className="glass-label">Fecha de Carga</label>
                                 <input type="date" className="glass-input" value={travelDate} onChange={e => setTravelDate(e.target.value)} min={minDateString} style={{ colorScheme: 'dark' }} />
-                                <div style={{ fontSize: '0.7rem', marginTop: '5px', opacity: 0.7 }}>48hs min. | <a href="https://wa.me/5491150443328" style={{ color: 'var(--success-color)' }}>Urgente? WA ↗</a></div>
+                                <div style={{ fontSize: '0.65rem', marginTop: '6px', opacity: 0.8, lineHeight: '1.2' }}>
+                                    48hs min. anticipación. <br />
+                                    Para hoy/mañana: <a href="https://wa.me/5491150443328" style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Contacto urgente ↗</a>
+                                </div>
                             </div>
                             <div style={{ flex: 1 }}>
                                 <label className="glass-label">Turno</label>
-                                <div className="toggle-group">
-                                    <button type="button" className={`toggle-btn ${travelTime === 'manana' ? 'active' : ''}`} onClick={() => setTravelTime('manana')} style={{ flex: 1 }}>☀️ Mañana</button>
-                                    <button type="button" className={`toggle-btn ${travelTime === 'tarde' ? 'active' : ''}`} onClick={() => setTravelTime('tarde')} style={{ flex: 1 }}>🌙 Tarde</button>
+                                <div className="toggle-group" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '5px' }}>
+                                    <button type="button" className={`toggle-btn ${travelTime === 'manana' ? 'active' : ''}`} onClick={() => setTravelTime('manana')} style={{ padding: '8px' }}>☀️ Mañana</button>
+                                    <button type="button" className={`toggle-btn ${travelTime === 'mediodia' ? 'active' : ''}`} onClick={() => setTravelTime('mediodia')} style={{ padding: '8px' }}>🕛 Medio día</button>
+                                    <button type="button" className={`toggle-btn ${travelTime === 'tarde' ? 'active' : ''}`} onClick={() => setTravelTime('tarde')} style={{ padding: '8px' }}>🌙 Tarde</button>
                                 </div>
                             </div>
                         </div>
@@ -687,7 +696,7 @@ export default function QuotePageV2() {
                                         <strong>Destinos:</strong> {customDestinations.filter(d => d.trim()).join(', ')}
                                     </div>
                                     <div style={{ fontSize: '0.85rem', marginTop: '5px' }}>
-                                        <strong>Fecha:</strong> {travelDate.split('-').reverse().join('/')} ({travelTime === 'manana' ? 'Mañana' : 'Tarde'})
+                                        <strong>Fecha:</strong> {travelDate.split('-').reverse().join('/')} ({travelTime === 'manana' ? 'Mañana' : travelTime === 'mediodia' ? 'Medio día' : 'Tarde'})
                                     </div>
                                 </div>
 
