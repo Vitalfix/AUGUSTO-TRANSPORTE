@@ -18,6 +18,7 @@ Esta skill define los estándares técnicos y visuales para el proyecto Augusto 
 - **Cero Estilos Inline**: Todos los estilos deben residir en `globals.css` o módulos CSS.
 - **Tipado Estricto**: Evitar el uso de `any` en las interfaces de TypeScript, especialmente en modelos de Pedidos y Ubicaciones.
 - **Seguridad**: Implementación de Row Level Security (RLS) en cada nueva tabla de Supabase.
+- **Simplicidad y Eficiencia**: Valorar siempre la solución más simple y directa que resuelva el problema de forma eficiente (mínimo código, máximo impacto).
 
 ## Lógica Logística
 
@@ -30,4 +31,5 @@ Esta skill define los estándares técnicos y visuales para el proyecto Augusto 
 1. Antes de crear cualquier UI, verificar el cumplimiento de las variables CSS globales.
 2. Al modificar APIs, asegurar la validación de la sesión de administrador mediante encabezados seguros.
 3. **Verificación de Base de Datos**: Antes de subir cambios que involucren nuevas columnas o tablas (como `customer_id` en `orders`), verificar siempre que el esquema de la base de datos en Supabase esté sincronizado con el código propuesto para evitar errores de ejecución en producción.
-4. Mantener siempre actualizado el `plan_maestro_augusto.md`.
+4. **Auto-Auditoría**: Antes de finalizar cualquier tarea o entregar un cambio, realizar un chequeo general del flujo afectado para asegurar que nada se haya roto y prever posibles errores o fallas.
+5. Mantener siempre actualizado el `plan_maestro_augusto.md`.
