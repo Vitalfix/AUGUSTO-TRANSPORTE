@@ -307,7 +307,7 @@ export default function QuotePageV2() {
                 let pKm = vData.priceKm;
                 let pHour = vData.priceHour;
 
-                if (hasSpecial && selectedCustomer.special_prices[sv.id]) {
+                if (hasSpecial && selectedCustomer.special_prices && selectedCustomer.special_prices[sv.id]) {
                     const sp = selectedCustomer.special_prices[sv.id];
                     if (sp.priceKm > 0) pKm = sp.priceKm;
                     if (sp.priceHour > 0) pHour = sp.priceHour;
