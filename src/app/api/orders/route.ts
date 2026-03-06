@@ -86,7 +86,36 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
     const body = await request.json();
-    const id = Math.random().toString(36).substring(2, 9).toUpperCase();
+
+    // Get the last order to generate the next sequential ID
+    const { data: lastOrders } = await supabase
+        .from('orders')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    const lastId = lastOrders && lastOrders.length > 0 ? lastOrders[0].id : '';
+
+    // Default starting ID
+    let id = 'A0001';
+
+    // If the last ID follows the pattern [Letter][4 Numbers], calculate the next one
+    const idPattern = /^[A-Z](\d{4})$/;
+    const match = lastId.match(idPattern);
+
+    if (match) {
+        const letter = lastId.charAt(0);
+        const number = parseInt(match[1], 10);
+
+        if (number < 9999) {
+            // Increment number: A0001 -> A0002
+            id = letter + (number + 1).toString().padStart(4, '0');
+        } else {
+            // Increment letter and reset number: A9999 -> B0000
+            const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
+            id = nextLetter + '0000';
+        }
+    }
 
     // Insert the order
     let { data, error } = await supabase

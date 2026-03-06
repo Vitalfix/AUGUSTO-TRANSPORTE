@@ -77,7 +77,7 @@ export default function Home() {
               name="trackingId"
               type="text"
               className="glass-input"
-              placeholder="CÓDIGO (EJ: A1B2C3)"
+              placeholder="CÓDIGO (EJ: A0000)"
               style={{ textAlign: 'center', textTransform: 'uppercase', padding: '10px' }}
               required
             />

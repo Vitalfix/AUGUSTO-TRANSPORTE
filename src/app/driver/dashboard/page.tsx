@@ -76,6 +76,8 @@ export default function DriverDashboardPage() {
         return () => clearInterval(interval);
     }, [router]);
 
+    const [menuOpen, setMenuOpen] = useState(false);
+
     const logout = () => {
         localStorage.removeItem('driver_session');
         router.push('/');
@@ -85,14 +87,62 @@ export default function DriverDashboardPage() {
 
     return (
         <div className="page-container" style={{ padding: '20px' }}>
-            <header className="flex justify-between items-center mb-30" style={{ flexWrap: 'wrap', gap: '15px' }}>
+            <header className="flex justify-between items-center mb-30" style={{ gap: '15px' }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: '1.8rem' }}>Hola, {driver.name} 👋</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Panel de Chofer - EL CASAL</p>
+                    <h1 className="text-gradient" style={{ fontSize: '1.5rem', margin: 0 }}>Hola, {driver.name} 👋</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Panel de Chofer - EL CASAL</p>
                 </div>
-                <button className="glass-button" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }} onClick={logout}>
-                    Cerrar Sesión
-                </button>
+
+                <div style={{ position: 'relative' }}>
+                    <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="glass-button"
+                        style={{
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3px',
+                            background: menuOpen ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.05)',
+                            border: '1px solid var(--glass-border)',
+                            boxShadow: 'none',
+                            minWidth: 'auto'
+                        }}
+                    >
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                    </button>
+
+                    {menuOpen && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 10px)',
+                            right: '0',
+                            background: '#0a0a14',
+                            backdropFilter: 'blur(25px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            padding: '10px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            zIndex: 1000,
+                            width: '200px',
+                            maxWidth: '85vw',
+                            boxShadow: '0 20px 50px rgba(0,0,0,0.9)',
+                            animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                            <button onClick={logout} style={{
+                                padding: '12px 15px', fontSize: '0.9rem', width: '100%', textAlign: 'left',
+                                background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                border: 'none',
+                                borderRadius: '10px', cursor: 'pointer'
+                            }}>
+                                🚪 Cerrar Sesión
+                            </button>
+                        </div>
+                    )}
+                </div>
             </header>
 
             {gpsError && (

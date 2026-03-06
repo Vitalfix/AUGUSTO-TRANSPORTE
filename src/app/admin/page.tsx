@@ -89,6 +89,7 @@ export default function AdminPage() {
     const [saving, setSaving] = useState(false);
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
+    const [menuOpen, setMenuOpen] = useState(false);
 
     const toggleExpand = (id: string) => {
         setExpandedOrders(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -447,88 +448,120 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="page-container" style={{ padding: '15px' }}>
-            <div className="flex justify-between items-center mb-20" style={{ flexWrap: 'wrap', gap: '15px' }}>
-                <div style={{ minWidth: '200px' }}>
-                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Panel de Despachos</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>V-TIMELINE • EL CASAL</p>
-                </div>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                    gap: '10px',
-                    width: '100%',
-                    background: 'rgba(255,255,255,0.02)',
-                    padding: '15px',
-                    borderRadius: '15px',
-                    border: '1px solid var(--glass-border)'
-                }}>
-                    <button onClick={() => window.location.reload()} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
-                        🔄 Actualizar
-                    </button>
-                    <Link href="/admin/customers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%' }}>
-                            👥 Clientes
-                        </button>
-                    </Link>
-                    <Link href="/admin/drivers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
-                            👷 Choferes
-                        </button>
-                    </Link>
-                    <Link href="/admin/vehicles" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
-                            🚘 Vehículos
-                        </button>
-                    </Link>
-                    <Link href="/admin/config" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
-                            ⚙️ Tarifas
-                        </button>
-                    </Link>
-                    <button onClick={handleBackup} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid #3b82f6', color: '#3b82f6' }}>
-                        📥 Backup
-                    </button>
-                    <label style={{ cursor: 'pointer', display: 'flex' }}>
-                        <div className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid #ef4444', color: '#ef4444', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            📤 Restaurar
-                        </div>
-                        <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestore} />
-                    </label>
-                    <Link href="/admin/recycle-bin" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid #ef4444', color: '#ef4444', width: '100%' }}>
-                            🗑️ Papelera
-                        </button>
-                    </Link>
-                    <button onClick={handleLogout} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
-                        🚪 Salir
-                    </button>
-                </div>
-            </div>
+        <div className="page-container" style={{ padding: '10px' }}>
+            <div className="flex justify-between items-center mb-20">
+                <h1 className="text-gradient" style={{ fontSize: '1.4rem', margin: 0 }}>Control de Viajes</h1>
 
-            {/* Stats Bar */}
-            <div className="flex gap-20 mb-20" style={{ flexWrap: 'wrap' }}>
-                <div className="glass-panel stat-card">
-                    <div className="glass-label">Facturación (Terminados)</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--success-color)' }}>${stats.totalRevenue.toLocaleString('es-AR')}</div>
-                </div>
-                <div className="glass-panel stat-card">
-                    <div className="glass-label">Viajes en Curso</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--accent-color)' }}>{stats.activeTrips}</div>
-                </div>
-                <div className="glass-panel stat-card">
-                    <div className="glass-label">Pendientes</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold', color: '#fcd34d' }}>{stats.pendingTrips}</div>
-                </div>
-                <div className="glass-panel stat-card">
-                    <div className="glass-label">Completados</div>
-                    <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{stats.completedTrips}</div>
+                <div style={{ position: 'relative' }}>
+                    <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="glass-button"
+                        style={{
+                            padding: '10px 12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '3px',
+                            background: menuOpen ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)',
+                            border: '1px solid var(--glass-border)',
+                            boxShadow: 'none',
+                            minWidth: 'auto'
+                        }}
+                    >
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                        <div style={{ width: '18px', height: '2px', background: 'white' }}></div>
+                    </button>
+
+                    {menuOpen && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 10px)',
+                            right: '0',
+                            background: '#0a0a14',
+                            backdropFilter: 'blur(25px)',
+                            borderRadius: '16px',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            padding: '10px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '6px',
+                            zIndex: 1000,
+                            width: '240px',
+                            maxWidth: '85vw',
+                            boxShadow: '0 20px 50px rgba(0,0,0,0.9)',
+                            animation: 'fadeIn 0.2s ease-out'
+                        }}>
+                            {[
+                                { label: '👥 Clientes', href: '/admin/customers' },
+                                { label: '👷 Choferes', href: '/admin/drivers' },
+                                { label: '🚘 Vehículos', href: '/admin/vehicles' },
+                                { label: '📍 Direcciones', href: '/admin/locations' },
+                                { label: '⚙️ Tarifas', href: '/admin/config' },
+                                { label: '📥 Backup', action: handleBackup },
+                                { label: '🗑️ Papelera', href: '/admin/recycle-bin' }
+                            ].map((item, idx) => (
+                                item.href ? (
+                                    <Link key={idx} href={item.href}>
+                                        <button style={{
+                                            padding: '12px 15px',
+                                            fontSize: '0.9rem',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            background: 'rgba(255,255,255,0.05)',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '10px',
+                                            cursor: 'pointer'
+                                        }}>
+                                            {item.label}
+                                        </button>
+                                    </Link>
+                                ) : (
+                                    <button key={idx} onClick={item.action} style={{
+                                        padding: '12px 15px',
+                                        fontSize: '0.9rem',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        background: 'rgba(255,255,255,0.05)',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '10px',
+                                        cursor: 'pointer'
+                                    }}>
+                                        {item.label}
+                                    </button>
+                                )
+                            ))}
+
+                            <label style={{ cursor: 'pointer', display: 'block' }}>
+                                <div style={{
+                                    padding: '12px 15px', fontSize: '0.9rem', width: '100%', textAlign: 'left',
+                                    background: 'rgba(255,255,255,0.05)', color: 'white',
+                                    borderRadius: '10px'
+                                }}>
+                                    📤 Restaurar
+                                </div>
+                                <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestore} />
+                            </label>
+
+                            <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '5px 0' }}></div>
+
+                            <button onClick={handleLogout} style={{
+                                padding: '12px 15px', fontSize: '0.9rem', width: '100%', textAlign: 'left',
+                                background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+                                border: 'none',
+                                borderRadius: '10px', cursor: 'pointer'
+                            }}>
+                                🚪 Salir
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="glass-panel mb-20" style={{ padding: '20px' }}>
-                <div className="search-bar">
+            <div className="glass-panel mb-20" style={{ padding: '15px' }}>
+                <div className="search-bar" style={{ marginBottom: '15px' }}>
                     <input
                         type="text"
                         placeholder="Buscar por ID o Cliente..."
@@ -538,26 +571,45 @@ export default function AdminPage() {
                         style={{ flex: 1 }}
                     />
                 </div>
-                <div className="filter-group">
+                <div className="filter-group" style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    width: '100%',
+                    marginTop: '10px'
+                }}>
                     {[
-                        { id: 'ALL', label: 'Todos' },
-                        { id: 'PENDING', label: 'NUEVO' },
-                        { id: 'APPROVED', label: 'APROBADO' },
-                        { id: 'CONFIRMED', label: 'PENDIENTE' },
-                        { id: 'STARTED', label: 'EN CURSO' },
-                        { id: 'FINISHED', label: 'FINALIZADO' },
-                        { id: 'INVOICED', label: 'FACTURADO' },
-                        { id: 'PAID', label: 'COBRADO' }
-                    ].map(s => (
-                        <button
-                            key={s.id}
-                            className={`filter-btn ${filterStatus === s.id ? 'active' : ''}`}
-                            onClick={() => setFilterStatus(s.id as any)}
-                            style={{ fontSize: '0.75rem', padding: '8px 15px' }}
-                        >
-                            {s.label}
-                        </button>
-                    ))}
+                        { id: 'ALL', label: 'Todos', color: 'var(--text-secondary)' },
+                        { id: 'PENDING', label: 'NUEVO', color: '#f59e0b' },
+                        { id: 'APPROVED', label: 'APROBADO', color: '#3b82f6' },
+                        { id: 'CONFIRMED', label: 'PENDIENTE', color: '#10b981' },
+                        { id: 'STARTED', label: 'EN CURSO', color: 'var(--accent-color)' },
+                        { id: 'FINISHED', label: 'FINALIZADO', color: '#8b5cf6' },
+                        { id: 'INVOICED', label: 'FACTURADO', color: '#ec4899' },
+                        { id: 'PAID', label: 'COBRADO', color: '#059669' }
+                    ].map(s => {
+                        const count = s.id === 'ALL' ? orders.length : orders.filter(o => o.status === s.id).length;
+                        return (
+                            <button
+                                key={s.id}
+                                className={`filter-btn ${filterStatus === s.id ? 'active' : ''}`}
+                                onClick={() => setFilterStatus(s.id as any)}
+                                style={{
+                                    fontSize: '0.75rem',
+                                    padding: '8px 14px',
+                                    border: `1px solid ${filterStatus === s.id ? s.color : 'rgba(255,255,255,0.05)'}`,
+                                    background: filterStatus === s.id ? `${s.color}15` : 'rgba(255,255,255,0.02)',
+                                    color: filterStatus === s.id ? s.color : 'var(--text-secondary)',
+                                    whiteSpace: 'nowrap',
+                                    borderRadius: '20px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                {s.label} <span style={{ opacity: 0.6, marginLeft: '5px' }}>{count}</span>
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 

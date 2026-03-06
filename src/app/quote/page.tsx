@@ -14,9 +14,7 @@ interface Vehicle {
     priceStay: number;
 }
 
-const PRESET_LOCATIONS = [
-    { id: 'ezeiza', name: 'Ezeiza (Base)', icon: '🛫' },
-    { id: 'ruta8', name: 'Ruta 8 (Base)', icon: '🛣️' },
+const UTILITY_LOCATIONS = [
     { id: 'custom', name: 'Dirección Exacta', icon: '📍' },
     { id: 'multi', name: 'Múltiples Puntos', icon: '📎' }
 ];
@@ -137,6 +135,7 @@ export default function QuotePageV2() {
     const [cargoKilos, setCargoKilos] = useState('');
     const [cargoVolume, setCargoVolume] = useState('');
     const [selectedVehicles, setSelectedVehicles] = useState<SelectedVehicle[]>([]);
+    const [dbLocations, setDbLocations] = useState<any[]>([]);
 
     // Customers Data
     const [customers, setCustomers] = useState<any[]>([]);
@@ -176,24 +175,43 @@ export default function QuotePageV2() {
                 console.error("Error fetching initial data", e);
             }
         };
+
+        const fetchLocations = async () => {
+            try {
+                const res = await fetch('/api/locations');
+                if (res.ok) {
+                    const data = await res.json();
+                    setDbLocations(data);
+                    if (data.length > 0) setOriginType(`db_${data[0].id}`);
+                }
+            } catch (e) {
+                console.error("Error fetching locations", e);
+            }
+        };
+
         fetchData();
+        fetchLocations();
     }, []);
 
-    const PRESET_COORDS: Record<string, { lat: number; lng: number }> = {
-        ezeiza: { lat: -34.815, lng: -58.535 },
-        ruta8: { lat: -34.460, lng: -58.745 }
+    const allLocations = [
+        ...dbLocations.map(l => ({ id: `db_${l.id}`, name: l.name, icon: l.icon, lat: l.lat, lng: l.lng })),
+        ...UTILITY_LOCATIONS
+    ];
+
+    const getCoords = (type: string, coords: { lat: number, lng: number } | null) => {
+        if (type.startsWith('db_')) {
+            const loc = dbLocations.find(l => `db_${l.id}` === type);
+            return loc ? { lat: loc.lat, lng: loc.lng } : { lat: -34.815, lng: -58.535 };
+        }
+        if ((type === 'custom' || type === 'multi') && coords) return coords;
+        return { lat: -34.815, lng: -58.535 };
     };
 
     const calculateRealDistance = async () => {
         setCalculatingRoute(true);
         try {
-            const startNode = (originType === 'custom' || originType === 'multi') && originCoords
-                ? originCoords
-                : PRESET_COORDS[originType] || { lat: -34.815, lng: -58.535 };
-
-            const endNode = (destType === 'custom' || destType === 'multi') && destCoords
-                ? destCoords
-                : PRESET_COORDS[destType] || { lat: -34.6037, lng: -58.3816 };
+            const startNode = getCoords(originType, originCoords);
+            const endNode = getCoords(destType, destCoords);
 
             const points = [startNode];
             if (originType === 'multi' && origin2Coords) points.push(origin2Coords);
@@ -261,14 +279,14 @@ export default function QuotePageV2() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     vehicle: selectedVehicles.map(v => `${v.qty}x ${vehiclesData.find(x => x.id === v.id)?.name}`).join(', '),
-                    destination: destType === 'ezeiza' || destType === 'ruta8'
-                        ? PRESET_LOCATIONS.find(l => l.id === destType)?.name
+                    destination: destType.startsWith('db_')
+                        ? dbLocations.find(l => `db_${l.id}` === destType)?.name
                         : customDestinations.filter(d => d.trim()).join(' | '),
                     price,
                     customerName,
                     customerId: selectedCustomerId !== 'new' ? selectedCustomerId : undefined,
-                    origin: originType === 'ezeiza' || originType === 'ruta8'
-                        ? PRESET_LOCATIONS.find(l => l.id === originType)?.name
+                    origin: originType.startsWith('db_')
+                        ? dbLocations.find(l => `db_${l.id}` === originType)?.name
                         : customOrigins.filter(o => o.trim()).join(' | '),
                     travelDate,
                     travelTime,
@@ -276,12 +294,12 @@ export default function QuotePageV2() {
                     customerEmail,
                     customerPhone: `${customerPhone}${customerPhone2 ? ' / ' + customerPhone2 : ''}`,
                     taxStatus,
-                    originLat: (originType === 'custom' || originType === 'multi') ? originCoords?.lat : PRESET_COORDS[originType]?.lat,
-                    originLng: (originType === 'custom' || originType === 'multi') ? originCoords?.lng : PRESET_COORDS[originType]?.lng,
+                    originLat: getCoords(originType, originCoords).lat,
+                    originLng: getCoords(originType, originCoords).lng,
                     origin2Lat: originType === 'multi' ? origin2Coords?.lat : undefined,
                     origin2Lng: originType === 'multi' ? origin2Coords?.lng : undefined,
-                    destLat: (destType === 'custom' || destType === 'multi') ? destCoords?.lat : PRESET_COORDS[destType]?.lat,
-                    destLng: (destType === 'custom' || destType === 'multi') ? destCoords?.lng : PRESET_COORDS[destType]?.lng,
+                    destLat: getCoords(destType, destCoords).lat,
+                    destLng: getCoords(destType, destCoords).lng,
                     observations,
                     distanceKm,
                     travelHours
@@ -350,8 +368,8 @@ export default function QuotePageV2() {
             <div className="flex justify-between items-start mb-20">
                 <div>
                     <Link href="/" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>← Cancelar</Link>
-                    <h1 className="text-gradient">Presupuesto Estimativo</h1>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.7, color: 'var(--text-secondary)' }}>Evaluación manual definitiva por personal de EL CASAL</p>
+                    <h1 className="text-gradient">Presupuesto Estimativo y Reserva</h1>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.7, color: 'var(--text-secondary)' }}>El presupuesto será revisado, adaptado e informado por personal de EL CASAL.</p>
                 </div>
             </div>
 
@@ -369,9 +387,9 @@ export default function QuotePageV2() {
                     <div className="flex-col gap-20">
                         <h2 className="mb-10">1. Ruta y Fechas</h2>
                         <div className="flex-col gap-10">
-                            <label className="glass-label">Origen</label>
+                            <label className="glass-label">Origen/es</label>
                             <div className="toggle-group">
-                                {PRESET_LOCATIONS.map(l => (
+                                {allLocations.map(l => (
                                     <button
                                         key={l.id}
                                         type="button"
@@ -383,7 +401,7 @@ export default function QuotePageV2() {
                                         style={{ flex: '1 1 45%' }}
                                     >
                                         <span>{l.icon}</span>
-                                        {l.name}
+                                        {l.id === 'multi' ? 'Múltiples Orígenes' : l.name}
                                     </button>
                                 ))}
                             </div>
@@ -434,9 +452,9 @@ export default function QuotePageV2() {
                         </div>
 
                         <div className="flex-col gap-10">
-                            <label className="glass-label">Destino</label>
+                            <label className="glass-label">Destino/s</label>
                             <div className="toggle-group">
-                                {PRESET_LOCATIONS.map(l => (
+                                {allLocations.map(l => (
                                     <button
                                         key={l.id}
                                         type="button"
@@ -445,7 +463,7 @@ export default function QuotePageV2() {
                                         style={{ flex: '1 1 45%' }}
                                     >
                                         <span>{l.icon}</span>
-                                        {l.name}
+                                        {l.id === 'multi' ? 'Múltiples Destinos' : l.name}
                                     </button>
                                 ))}
                             </div>
@@ -547,7 +565,7 @@ export default function QuotePageV2() {
                                 <>
                                     <label className="glass-label">Identificación del Cliente</label>
                                     <select
-                                        className="glass-input"
+                                        className="glass-select"
                                         value={selectedCustomerId}
                                         onChange={(e) => handleCustomerChange(e.target.value)}
                                         style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
@@ -627,13 +645,13 @@ export default function QuotePageV2() {
                                 <div>
                                     <div className="glass-label" style={{ fontSize: '0.7rem' }}>RUTA Y CRONOLOGÍA</div>
                                     <div style={{ fontSize: '0.85rem' }}>
-                                        <strong>Origen:</strong> {originType === 'ezeiza' || originType === 'ruta8'
-                                            ? PRESET_LOCATIONS.find(l => l.id === originType)?.name
+                                        <strong>Origen:</strong> {originType.startsWith('db_')
+                                            ? dbLocations.find(l => `db_${l.id}` === originType)?.name
                                             : customOrigins.filter(o => o.trim()).join(' | ')}
                                     </div>
                                     <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>
-                                        <strong>Destino:</strong> {destType === 'ezeiza' || destType === 'ruta8'
-                                            ? PRESET_LOCATIONS.find(l => l.id === destType)?.name
+                                        <strong>Destino:</strong> {destType.startsWith('db_')
+                                            ? dbLocations.find(l => `db_${l.id}` === destType)?.name
                                             : customDestinations.filter(d => d.trim()).join(' | ')}
                                     </div>
                                 </div>

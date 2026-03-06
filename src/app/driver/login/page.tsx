@@ -83,7 +83,7 @@ export default function DriverLoginPage() {
                                     maxLength={4}
                                     value={pin}
                                     onChange={e => setPin(e.target.value)}
-                                    style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '10px' }}
+                                    style={{ textAlign: 'center', fontSize: '1.2rem' }}
                                     required
                                 />
                             </div>
