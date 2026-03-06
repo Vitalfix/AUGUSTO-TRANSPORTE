@@ -710,11 +710,11 @@ export default function QuotePageV2() {
                                     </button>
                                     <button
                                         type="button"
-                                        className={`toggle-btn ${taxStatus === 'monotributista' ? 'active' : ''}`}
-                                        onClick={() => setTaxStatus('monotributista')}
+                                        className={`toggle-btn ${taxStatus === 'monotributo' ? 'active' : ''}`}
+                                        onClick={() => setTaxStatus('monotributo')}
                                         style={{ padding: '10px' }}
                                     >
-                                        Monotributista
+                                        Monotributo
                                     </button>
                                     <button
                                         type="button"
@@ -726,11 +726,11 @@ export default function QuotePageV2() {
                                     </button>
                                     <button
                                         type="button"
-                                        className={`toggle-btn ${taxStatus === 'otro' ? 'active' : ''}`}
-                                        onClick={() => setTaxStatus('otro')}
+                                        className={`toggle-btn ${taxStatus === 'exento' ? 'active' : ''}`}
+                                        onClick={() => setTaxStatus('exento')}
                                         style={{ padding: '10px' }}
                                     >
-                                        Otro
+                                        Exento
                                     </button>
                                 </div>
                             </div>

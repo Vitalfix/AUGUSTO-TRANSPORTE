@@ -58,6 +58,7 @@ export async function GET(request: Request) {
         travelDate: o.travel_date,
         travelTime: o.travel_time,
         cuit: o.cuit,
+        taxStatus: o.tax_status,
         lat: o.lat,
         lng: o.lng,
         driverName: o.driver_name,
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
                 travel_date: body.travelDate,
                 travel_time: body.travelTime,
                 cuit: body.cuit,
+                tax_status: body.taxStatus,
                 customer_email: body.customerEmail,
                 customer_phone: body.customerPhone,
                 status: 'PENDING',
@@ -298,7 +300,7 @@ export async function PATCH(request: Request) {
         id, status, lat, lng, price, driverName, driverPhone, licensePlate,
         waitingMinutes, driverId, origin, destination, vehicle, travelDate,
         travelTime, customerName, customerEmail, customerPhone, observations,
-        distanceKm, travelHours
+        distanceKm, travelHours, cuit, taxStatus
     } = body;
 
     const updateData: Record<string, any> = {};
@@ -322,6 +324,8 @@ export async function PATCH(request: Request) {
     if (observations !== undefined) updateData.observations = observations;
     if (distanceKm !== undefined) updateData.distance_km = distanceKm;
     if (travelHours !== undefined) updateData.travel_hours = travelHours;
+    if (cuit !== undefined) updateData.cuit = cuit;
+    if (taxStatus !== undefined) updateData.tax_status = taxStatus;
 
     // Fetch current log to append
     const { data: currentOrder } = await supabase.from('orders').select('activity_log').eq('id', id).single();

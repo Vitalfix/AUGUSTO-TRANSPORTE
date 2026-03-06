@@ -208,21 +208,46 @@ export default function PricingConfigPage() {
 
     return (
         <div className="page-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '15px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Panel de Tarifas</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Ajuste de valores para cálculo automático</p>
                 </div>
-                <div className="flex gap-10" style={{ flexWrap: 'wrap' }}>
-                    <Link href="/admin">
-                        <button className="glass-button" style={{ padding: '10px 20px', fontSize: '0.9rem' }}>← Volver al Panel Admin</button>
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                    gap: '10px',
+                    background: 'rgba(255,255,255,0.02)',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--glass-border)',
+                    width: '100%',
+                    maxWidth: '800px'
+                }}>
+                    <button onClick={() => window.location.reload()} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
+                        🔄 Actualizar
+                    </button>
+                    <Link href="/admin" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
+                            📦 Pedidos
+                        </button>
                     </Link>
-                    <Link href="/admin/vehicles">
-                        <button className="glass-button" style={{ padding: '10px 20px', fontSize: '0.9rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
+                    <Link href="/admin/customers" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%' }}>
+                            👥 Clientes
+                        </button>
+                    </Link>
+                    <Link href="/admin/drivers" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
+                            👷 Choferes
+                        </button>
+                    </Link>
+                    <Link href="/admin/vehicles" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
                             🚘 Vehículos
                         </button>
                     </Link>
-                    <button onClick={handleLogout} className="glass-button" style={{ padding: '10px 20px', fontSize: '0.9rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
+                    <button onClick={handleLogout} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
                         🚪 Salir
                     </button>
                 </div>

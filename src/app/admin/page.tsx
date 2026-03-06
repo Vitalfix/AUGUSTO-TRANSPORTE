@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 export interface Order {
@@ -22,9 +22,24 @@ export interface Order {
     cuit?: string;
     travelDate?: string;
     travelTime?: string;
+    taxStatus?: string;
     distanceKm?: number;
     travelHours?: number;
-    activityLog?: any[];
+    activityLog?: { type: string; timestamp: string;[key: string]: any }[];
+}
+
+interface Driver {
+    id: string;
+    name: string;
+    phone: string;
+    license_plate: string;
+}
+
+interface VehiclePricing {
+    id: string;
+    name: string;
+    priceKm: number;
+    priceHour: number;
 }
 
 const formatVehicle = (v: string) => {
@@ -48,6 +63,7 @@ export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [copiedLink, setCopiedLink] = useState<string | null>(null);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+    const [activeTab, setActiveTab] = useState<'CLIENT' | 'ROUTE' | 'LOGISTICS'>('CLIENT');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<Order['status'] | 'ALL'>('ALL');
     const [editForm, setEditForm] = useState({
@@ -58,6 +74,8 @@ export default function AdminPage() {
         customerName: '',
         customerEmail: '',
         customerPhone: '',
+        cuit: '',
+        taxStatus: '',
         observations: '',
         origin: '',
         destination: '',
@@ -67,9 +85,9 @@ export default function AdminPage() {
         distanceKm: 0,
         travelHours: 0
     });
-    const [vehiclesData, setVehiclesData] = useState<any[]>([]);
+    const [vehiclesData, setVehiclesData] = useState<VehiclePricing[]>([]);
     const [saving, setSaving] = useState(false);
-    const [drivers, setDrivers] = useState<any[]>([]);
+    const [drivers, setDrivers] = useState<Driver[]>([]);
     const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
 
     const toggleExpand = (id: string) => {
@@ -120,7 +138,7 @@ export default function AdminPage() {
         return filteredOrders.filter(o => o.status === status);
     };
 
-    const fetchOrders = async () => {
+    const fetchOrders = useCallback(async () => {
         const currentPass = password || sessionStorage.getItem('admin_password');
         if (!isAuthenticated && !currentPass) {
             setLoading(false);
@@ -142,6 +160,63 @@ export default function AdminPage() {
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    }, [password, isAuthenticated]);
+
+    const handleUpdateCustomerProfile = async (orderId: string, newData: { id: string, phone: string, email: string, cuit: string, tax_status: string }) => {
+        if (!window.confirm("¿Seguro que quieres actualizar los datos permanentes de este cliente con esta nueva información?")) return;
+
+        try {
+            // 1. Update customer record
+            const resCust = await fetch('/api/customers', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-password': password
+                },
+                body: JSON.stringify({
+                    id: newData.id,
+                    phone: newData.phone,
+                    email: newData.email,
+                    cuit: newData.cuit,
+                    taxStatus: newData.tax_status
+                })
+            });
+
+            if (!resCust.ok) throw new Error("Error al actualizar cliente");
+
+            // 2. Clean up activity log (remove the pending entry)
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                const newLog = order.activityLog?.filter((l: any) => l.type !== 'CUSTOMER_UPDATE_PENDING');
+                await fetch(`/api/orders/${orderId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activity_log: newLog })
+                });
+                alert("✅ Cliente actualizado con éxito.");
+                fetchOrders();
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error al procesar la actualización del cliente");
+        }
+    };
+
+    const handleRejectCustomerUpdate = async (orderId: string) => {
+        try {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                const newLog = order.activityLog?.filter((l: any) => l.type !== 'CUSTOMER_UPDATE_PENDING');
+                await fetch(`/api/orders/${orderId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ activity_log: newLog })
+                });
+                fetchOrders();
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -172,7 +247,7 @@ export default function AdminPage() {
         fetchOrders();
         const interval = setInterval(fetchOrders, 3000); // Polling every 3s
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchOrders]);
 
     const updateStatus = async (id: string, newStatus: string) => {
         try {
@@ -190,45 +265,7 @@ export default function AdminPage() {
         }
     };
 
-    const handleUpdateCustomerProfile = async (orderId: string, newData: any) => {
-        try {
-            const res = await fetch('/api/customers', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-admin-password': password || sessionStorage.getItem('admin_password') || ''
-                },
-                body: JSON.stringify({
-                    id: newData.id,
-                    phone: newData.phone,
-                    email: newData.email,
-                    cuit: newData.cuit,
-                    taxStatus: newData.tax_status
-                }),
-            });
-            if (res.ok) {
-                await handleRejectCustomerUpdate(orderId);
-                alert("Perfil de cliente actualizado correctamente en la base de datos.");
-            } else {
-                alert("Error actualizando perfil del cliente.");
-            }
-        } catch (e) { console.error(e); }
-    };
 
-    const handleRejectCustomerUpdate = async (orderId: string) => {
-        try {
-            const order = orders.find(o => o.id === orderId);
-            if (order) {
-                const newLog = (order.activityLog || []).filter((l: any) => l.type !== 'CUSTOMER_UPDATE_PENDING');
-                await fetch('/api/orders', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'x-admin-password': password || sessionStorage.getItem('admin_password') || '' },
-                    body: JSON.stringify({ id: orderId, activityLog: newLog }),
-                });
-                fetchOrders();
-            }
-        } catch (e) { console.error(e); }
-    };
 
     const handleBackup = async () => {
         try {
@@ -293,41 +330,6 @@ export default function AdminPage() {
         if (win) win.focus();
     };
 
-    const submitEditOrder = async (e?: React.FormEvent) => {
-        e?.preventDefault(); // Prevent default if event is provided
-        if (!editingOrder) return;
-        setSaving(true);
-        try {
-            const currentPass = password || sessionStorage.getItem('admin_password');
-            // Find selected driver info if any (case insensitive)
-            const selectedD = drivers.find(d => d.name.toLowerCase() === editForm.driverName.toLowerCase());
-
-            const res = await fetch('/api/orders', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-admin-password': currentPass || ''
-                },
-                body: JSON.stringify({
-                    id: editingOrder.id,
-                    ...editForm,
-                    driverId: selectedD ? selectedD.id : null
-                })
-            });
-            if (res.ok) {
-                fetchOrders();
-                setEditingOrder(null);
-            } else {
-                const err = await res.json();
-                alert('Error: ' + err.error);
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Error al guardar cambios');
-        } finally {
-            setSaving(false);
-        }
-    };
 
     if (!isAuthenticated) {
         return (
@@ -365,6 +367,8 @@ export default function AdminPage() {
             customerName: order.customerName || '',
             customerEmail: order.customerEmail || '',
             customerPhone: order.customerPhone || '',
+            cuit: order.cuit || '',
+            taxStatus: order.taxStatus || '',
             observations: order.observations || '',
             origin: order.origin || '',
             destination: order.destination || '',
@@ -421,47 +425,54 @@ export default function AdminPage() {
         <div className="page-container" style={{ padding: '15px' }}>
             <div className="flex justify-between items-center mb-20" style={{ flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ minWidth: '200px' }}>
-                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Panel de Despachos V-TIMELINE</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>EL CASAL</p>
+                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Panel de Despachos</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>V-TIMELINE • EL CASAL</p>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', width: '100%' }}>
-                    <button onClick={handleBackup} className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%', height: '100%' }}>
-                        📥 Backup
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
+                    gap: '10px',
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.02)',
+                    padding: '15px',
+                    borderRadius: '15px',
+                    border: '1px solid var(--glass-border)'
+                }}>
+                    <button onClick={() => window.location.reload()} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
+                        🔄 Actualizar
                     </button>
-                    <label style={{ cursor: 'pointer', display: 'flex' }}>
-                        <div className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            📤 Restaurar
-                        </div>
-                        <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestore} />
-                    </label>
                     <Link href="/admin/customers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%' }}>
+                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%' }}>
                             👥 Clientes
                         </button>
                     </Link>
                     <Link href="/admin/drivers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
+                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
                             👷 Choferes
                         </button>
                     </Link>
-                    <Link href="/admin/config" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
-                            ⚙️ Tarifas
-                        </button>
-                    </Link>
                     <Link href="/admin/vehicles" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
+                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
                             🚘 Vehículos
                         </button>
                     </Link>
-                    <button onClick={handleLogout} className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', width: '100%', height: '100%' }}>
-                        🚪 Salir
-                    </button>
-                    <Link href="/" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.85rem', width: '100%' }}>
-                            ← Inicio
+                    <Link href="/admin/config" style={{ display: 'flex' }}>
+                        <button className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
+                            ⚙️ Tarifas
                         </button>
                     </Link>
+                    <button onClick={handleBackup} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid #3b82f6', color: '#3b82f6' }}>
+                        📥 Backup
+                    </button>
+                    <label style={{ cursor: 'pointer', display: 'flex' }}>
+                        <div className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', border: '1px solid #ef4444', color: '#ef4444', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            📤 Restaurar
+                        </div>
+                        <input type="file" accept=".json" style={{ display: 'none' }} onChange={handleRestore} />
+                    </label>
+                    <button onClick={handleLogout} className="glass-button" style={{ padding: '10px', fontSize: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
+                        🚪 Salir
+                    </button>
                 </div>
             </div>
 
@@ -556,118 +567,136 @@ export default function AdminPage() {
 
                                         return (
                                             <div key={order.id} className="glass-panel" style={{ padding: '0', overflow: 'hidden', border: '1px solid var(--glass-border)', transition: 'all 0.3s ease' }}>
-                                                {/* Status Timeline - Focused View */}
-                                                <div style={{
-                                                    padding: '18px 20px',
-                                                    background: 'rgba(0,0,0,0.25)',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    gap: '10px',
-                                                    borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                                }}>
-                                                    {(() => {
-                                                        const allS = ['PENDING', 'APPROVED', 'CONFIRMED', 'STARTED', 'FINISHED', 'INVOICED', 'PAID'];
-                                                        const labels: Record<string, string> = { 'PENDING': 'NUEVO', 'APPROVED': 'APROBADO', 'CONFIRMED': 'PENDIENTE', 'STARTED': 'EN CURSO', 'FINISHED': 'FINALIZADO', 'INVOICED': 'FACTURADO', 'PAID': 'COBRADO' };
-                                                        const currIdx = allS.indexOf(order.status);
-
-                                                        // Get window of 3 statuses
-                                                        const start = Math.max(0, currIdx - 1);
-                                                        const end = Math.min(allS.length - 1, currIdx + 1);
-                                                        const displayIdxs = [];
-                                                        if (start > 0 && currIdx === allS.length - 1) displayIdxs.push(currIdx - 2); // Show 3 even at the end
-                                                        if (currIdx === 0 && allS.length > 2) displayIdxs.push(0, 1, 2);
-                                                        else {
-                                                            for (let i = start; i <= end; i++) displayIdxs.push(i);
-                                                        }
-                                                        // Filter and deduplicate
-                                                        const finalIdxs = Array.from(new Set(displayIdxs)).filter(i => i >= 0 && i < allS.length).sort((a, b) => a - b);
-
-                                                        return finalIdxs.map((idx, i) => {
-                                                            const s = allS[idx];
-                                                            const isCurrent = idx === currIdx;
-                                                            const isCompleted = idx <= currIdx;
-                                                            const isFirstInWindow = i === 0;
-                                                            const isLastInWindow = i === finalIdxs.length - 1;
-
-                                                            return (
-                                                                <div key={s} style={{
-                                                                    display: 'flex',
-                                                                    flexDirection: 'column',
-                                                                    alignItems: 'center',
-                                                                    flex: 1,
-                                                                    position: 'relative',
-                                                                    transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
-                                                                    transition: 'transform 0.3s ease'
-                                                                }}>
-                                                                    <div style={{
-                                                                        width: isCurrent ? '16px' : '10px',
-                                                                        height: isCurrent ? '16px' : '10px',
-                                                                        borderRadius: '50%',
-                                                                        background: isCurrent ? group.color : (isCompleted ? group.color : 'rgba(255,255,255,0.2)'),
-                                                                        boxShadow: isCurrent ? `0 0 15px ${group.color}` : 'none',
-                                                                        zIndex: 2,
-                                                                        border: isCurrent ? '2px solid white' : 'none',
-                                                                        transition: 'all 0.3s ease'
-                                                                    }} />
-                                                                    <div style={{
-                                                                        fontSize: isCurrent ? '0.75rem' : '0.65rem',
-                                                                        marginTop: '8px',
-                                                                        color: isCompleted ? 'white' : 'var(--text-secondary)',
-                                                                        fontWeight: isCurrent ? 'bold' : 'normal',
-                                                                        textAlign: 'center',
-                                                                        opacity: isCurrent ? 1 : 0.6,
-                                                                        transition: 'all 0.3s ease'
-                                                                    }}>
-                                                                        {labels[s as keyof typeof labels]}
-                                                                    </div>
-
-                                                                    {!isLastInWindow && (
-                                                                        <div style={{
-                                                                            position: 'absolute',
-                                                                            top: isCurrent ? '8px' : '5px',
-                                                                            left: '50%',
-                                                                            width: '100%',
-                                                                            height: '2px',
-                                                                            background: idx < currIdx ? group.color : 'rgba(255,255,255,0.1)',
-                                                                            zIndex: 1
-                                                                        }} />
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        });
-                                                    })()}
-                                                </div>
-
-                                                {/* Header */}
+                                                {/* Header - Simple View */}
                                                 <div
                                                     onClick={() => toggleExpand(order.id)}
                                                     style={{
-                                                        padding: '12px 20px',
+                                                        padding: '16px 20px',
                                                         background: isExpanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
                                                         borderBottom: isExpanded ? '1px solid var(--glass-border)' : '1px solid transparent',
                                                         display: 'flex',
                                                         justifyContent: 'space-between',
                                                         alignItems: 'center',
-                                                        cursor: 'pointer'
+                                                        cursor: 'pointer',
+                                                        transition: 'background 0.3s ease'
                                                     }}
                                                 >
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <span style={{ fontSize: '1rem', transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s ease' }}>⌄</span>
-                                                        <div>
-                                                            <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{order.customerName}</div>
-                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>ID: {order.id}</div>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+                                                        <div style={{
+                                                            minWidth: '100px',
+                                                            padding: '4px 10px',
+                                                            borderRadius: '20px',
+                                                            fontSize: '0.65rem',
+                                                            fontWeight: 'bold',
+                                                            background: `${group.color}22`,
+                                                            color: group.color,
+                                                            border: `1px solid ${group.color}44`,
+                                                            textAlign: 'center'
+                                                        }}>
+                                                            {group.label.split(' ')[1] || group.label}
+                                                        </div>
+                                                        <div style={{ overflow: 'hidden' }}>
+                                                            <div style={{ fontWeight: 'bold', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{order.customerName}</div>
+                                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'flex', gap: '10px' }}>
+                                                                <span>ID: {order.id.substring(0, 8)}...</span>
+                                                                <span style={{ color: 'var(--accent-color)' }}>{order.travelDate || 'A coordinar'}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <div style={{ color: group.color, fontWeight: 'bold' }}>${order.price.toLocaleString('es-AR')}</div>
-                                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{order.travelDate || 'A coordinar'}</div>
+
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                        <div style={{ textAlign: 'right' }}>
+                                                            <div style={{ color: group.color, fontWeight: '800', fontSize: '1rem' }}>${order.price.toLocaleString('es-AR')}</div>
+                                                            <div style={{ fontSize: '0.65rem', color: 'var(--success-color)', opacity: 0.8 }}>{order.driverName ? `🚚 ${order.driverName.split(' ')[0]}` : '⏳ Sin chofer'}</div>
+                                                        </div>
+                                                        <span style={{
+                                                            fontSize: '1.2rem',
+                                                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                            transition: 'transform 0.3s ease',
+                                                            opacity: 0.5
+                                                        }}>⌄</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Expanded Content */}
                                                 {isExpanded && (
-                                                    <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
+                                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        {/* Status Timeline - Moved here */}
+                                                        <div style={{
+                                                            padding: '18px 20px',
+                                                            background: 'rgba(0,0,0,0.15)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            gap: '10px',
+                                                            borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                                        }}>
+                                                            {(() => {
+                                                                const allS = ['PENDING', 'APPROVED', 'CONFIRMED', 'STARTED', 'FINISHED', 'INVOICED', 'PAID'];
+                                                                const labels: Record<string, string> = { 'PENDING': 'NUEVO', 'APPROVED': 'APROBADO', 'CONFIRMED': 'PENDIENTE', 'STARTED': 'EN CURSO', 'FINISHED': 'FINALIZADO', 'INVOICED': 'FACTURADO', 'PAID': 'COBRADO' };
+                                                                const currIdx = allS.indexOf(order.status);
+                                                                const start = Math.max(0, currIdx - 1);
+                                                                const end = Math.min(allS.length - 1, currIdx + 1);
+                                                                const displayIdxs = [];
+                                                                if (start > 0 && currIdx === allS.length - 1) displayIdxs.push(currIdx - 2);
+                                                                if (currIdx === 0 && allS.length > 2) displayIdxs.push(0, 1, 2);
+                                                                else {
+                                                                    for (let i = start; i <= end; i++) displayIdxs.push(i);
+                                                                }
+                                                                const finalIdxs = Array.from(new Set(displayIdxs)).filter(i => i >= 0 && i < allS.length).sort((a, b) => a - b);
+
+                                                                return finalIdxs.map((idx, i) => {
+                                                                    const s = allS[idx];
+                                                                    const isCurrent = idx === currIdx;
+                                                                    const isCompleted = idx <= currIdx;
+                                                                    const isLastInWindow = i === finalIdxs.length - 1;
+
+                                                                    return (
+                                                                        <div key={s} style={{
+                                                                            display: 'flex',
+                                                                            flexDirection: 'column',
+                                                                            alignItems: 'center',
+                                                                            flex: 1,
+                                                                            position: 'relative',
+                                                                            transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
+                                                                            transition: 'transform 0.3s ease'
+                                                                        }}>
+                                                                            <div style={{
+                                                                                width: isCurrent ? '16px' : '10px',
+                                                                                height: isCurrent ? '16px' : '10px',
+                                                                                borderRadius: '50%',
+                                                                                background: isCurrent ? group.color : (isCompleted ? group.color : 'rgba(255,255,255,0.2)'),
+                                                                                boxShadow: isCurrent ? `0 0 15px ${group.color}` : 'none',
+                                                                                zIndex: 2,
+                                                                                border: isCurrent ? '2px solid white' : 'none',
+                                                                                transition: 'all 0.3s ease'
+                                                                            }} />
+                                                                            <div style={{
+                                                                                fontSize: isCurrent ? '0.7rem' : '0.6rem',
+                                                                                marginTop: '6px',
+                                                                                color: isCompleted ? 'white' : 'var(--text-secondary)',
+                                                                                fontWeight: isCurrent ? 'bold' : 'normal',
+                                                                                textAlign: 'center',
+                                                                                opacity: isCurrent ? 1 : 0.6
+                                                                            }}>
+                                                                                {labels[s as keyof typeof labels]}
+                                                                            </div>
+                                                                            {!isLastInWindow && (
+                                                                                <div style={{
+                                                                                    position: 'absolute',
+                                                                                    top: isCurrent ? '8px' : '5px',
+                                                                                    left: '50%',
+                                                                                    width: '100%',
+                                                                                    height: '2px',
+                                                                                    background: idx < currIdx ? group.color : 'rgba(255,255,255,0.1)',
+                                                                                    zIndex: 1
+                                                                                }} />
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                });
+                                                            })()}
+                                                        </div>
                                                         {(() => {
                                                             const pendingUpdate = order.activityLog?.find((l: any) => l.type === 'CUSTOMER_UPDATE_PENDING');
                                                             if (pendingUpdate) {
@@ -706,53 +735,68 @@ export default function AdminPage() {
                                                             }
                                                             return null;
                                                         })()}
-                                                        <div className="flex-col gap-15">
-                                                            <div>
-                                                                <div className="glass-label" style={{ fontSize: '0.65rem' }}>DETALLE DE CARGA</div>
-                                                                <div style={{ fontSize: '0.85rem' }}><strong>Vehículo:</strong> {formatVehicle(order.vehicle)}</div>
-                                                                <div style={{ fontSize: '0.85rem' }}><strong>Fecha:</strong> {order.travelDate} ({order.travelTime})</div>
-                                                                {order.observations && <div style={{ fontSize: '0.75rem', marginTop: '5px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderLeft: `2px solid ${group.color}` }}>{order.observations}</div>}
-                                                            </div>
-                                                            <div>
-                                                                <div className="glass-label" style={{ fontSize: '0.65rem' }}>ORIGEN</div>
-                                                                <div style={{ fontSize: '0.8rem' }}>{order.origin}</div>
-                                                                <div className="glass-label" style={{ fontSize: '0.65rem', marginTop: '10px' }}>DESTINO</div>
-                                                                <div style={{ fontSize: '0.8rem' }}>{order.destination}</div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex-col gap-15">
-                                                            <div>
-                                                                <div className="glass-label" style={{ fontSize: '0.65rem' }}>CONTACTO</div>
-                                                                <div style={{ fontSize: '0.85rem' }}>📞 {order.customerPhone}</div>
-                                                                <div style={{ fontSize: '0.85rem' }}>✉️ {order.customerEmail}</div>
-                                                                {order.cuit && <div style={{ fontSize: '0.85rem' }}>📄 CUIT: {order.cuit}</div>}
-                                                            </div>
-                                                            {order.driverName && (
-                                                                <div style={{ padding: '10px', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
-                                                                    <div className="glass-label" style={{ fontSize: '0.65rem' }}>CHOFER</div>
-                                                                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{order.driverName}</div>
-                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{order.licensePlate} | {order.driverPhone}</div>
+                                                        <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
+                                                            <div className="flex-col gap-15">
+                                                                <div>
+                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>📟 INFORMACIÓN DE CARGA</div>
+                                                                    <div style={{ fontSize: '0.85rem', marginTop: '10px' }}><strong>Vehículo:</strong> {formatVehicle(order.vehicle)}</div>
+                                                                    <div style={{ fontSize: '0.85rem' }}><strong>Fecha y Hora:</strong> {order.travelDate} ({order.travelTime})</div>
+                                                                    {order.observations && (
+                                                                        <div style={{
+                                                                            fontSize: '0.75rem',
+                                                                            marginTop: '10px',
+                                                                            padding: '10px',
+                                                                            background: 'rgba(0,0,0,0.2)',
+                                                                            borderRadius: '8px',
+                                                                            borderLeft: `3px solid ${group.color}`
+                                                                        }}>
+                                                                            <strong>Obs:</strong> {order.observations}
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                            )}
-                                                        </div>
 
-                                                        <div className="flex-col gap-10">
-                                                            <div className="glass-label" style={{ fontSize: '0.65rem' }}>ACCIONES DE ESTADO</div>
-                                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                                                                {order.status === 'PENDING' && <button className="glass-button" onClick={() => updateStatus(order.id, 'APPROVED')} style={{ background: '#3b82f6', fontWeight: 'bold' }}>✅ APROBAR PRESUPUESTO</button>}
-                                                                {order.status === 'APPROVED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'CONFIRMED')} style={{ background: '#10b981', fontWeight: 'bold' }}>📅 PROGRAMAR (PENDIENTE)</button>}
-                                                                {order.status === 'CONFIRMED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'STARTED')} style={{ background: 'var(--accent-gradient)', fontWeight: 'bold' }}>🚀 INICIAR VIAJE</button>}
-                                                                {order.status === 'STARTED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'FINISHED')} style={{ background: '#8b5cf6', fontWeight: 'bold' }}>🏁 FINALIZAR VIAJE</button>}
-                                                                {order.status === 'FINISHED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'INVOICED')} style={{ background: '#ec4899', fontWeight: 'bold' }}>📄 MARCAR FACTURADO</button>}
-                                                                {order.status === 'INVOICED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'PAID')} style={{ background: '#059669', fontWeight: 'bold' }}>💰 MARCAR COBRADO</button>}
+                                                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>👤 CONTACTO</div>
+                                                                    <div style={{ fontSize: '0.8rem' }}>{order.customerEmail}</div>
+                                                                    <div style={{ fontSize: '0.8rem' }}>{order.customerPhone}</div>
+                                                                </div>
                                                             </div>
 
-                                                            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '10px', marginTop: '5px' }}>
-                                                                <button className="glass-button" onClick={() => handleEditClick(order)} style={{ width: '100%', fontSize: '0.8rem', padding: '10px', marginBottom: '8px' }}>✏️ Editar Datos</button>
-                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                                                    <button className="glass-button" onClick={() => copyToClipboard(order.id)} style={{ fontSize: '0.7rem' }}>{copiedLink === order.id ? '✅ Link' : '🔗 Link'}</button>
-                                                                    <button className="glass-button" onClick={() => sendWhatsApp(order)} style={{ fontSize: '0.7rem', background: '#25d366', border: 'none' }}>🟢 WhatsApp</button>
+                                                            <div className="flex-col gap-15">
+                                                                <div>
+                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>📍 RUTA</div>
+                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Origen:</strong> {order.origin}</div>
+                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Destino:</strong> {order.destination}</div>
+                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'var(--text-secondary)' }}>
+                                                                        {order.distanceKm} Km | {order.travelHours} hs est.
+                                                                    </div>
+                                                                </div>
+
+                                                                {order.driverName && (
+                                                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
+                                                                        <div className="glass-label" style={{ fontSize: '0.6rem' }}>🚚 CHOFER ASIGNADO</div>
+                                                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{order.driverName}</div>
+                                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{order.licensePlate} | {order.driverPhone}</div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex-col gap-10">
+                                                                <div className="glass-label" style={{ fontSize: '0.6rem' }}>⚙️ OPERACIONES</div>
+                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
+                                                                    {order.status === 'PENDING' && <button className="glass-button" onClick={() => updateStatus(order.id, 'APPROVED')} style={{ background: '#3b82f6', fontWeight: '800', fontSize: '0.75rem' }}>✅ APROBAR PRESUPUESTO</button>}
+                                                                    {order.status === 'APPROVED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'CONFIRMED')} style={{ background: '#10b981', fontWeight: '800', fontSize: '0.75rem' }}>📅 PROGRAMAR (PENDIENTE)</button>}
+                                                                    {order.status === 'CONFIRMED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'STARTED')} style={{ background: 'var(--accent-gradient)', fontWeight: '800', fontSize: '0.75rem' }}>🚀 INICIAR VIAJE</button>}
+                                                                    {order.status === 'STARTED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'FINISHED')} style={{ background: '#8b5cf6', fontWeight: '800', fontSize: '0.75rem' }}>🏁 FINALIZAR VIAJE</button>}
+                                                                    {order.status === 'FINISHED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'INVOICED')} style={{ background: '#ec4899', fontWeight: '800', fontSize: '0.75rem' }}>📄 MARCAR FACTURADO</button>}
+                                                                    {order.status === 'INVOICED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'PAID')} style={{ background: '#059669', fontWeight: '800', fontSize: '0.75rem' }}>💰 MARCAR COBRADO</button>}
+                                                                </div>
+
+                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '5px' }}>
+                                                                    <button className="glass-button" onClick={() => handleEditClick(order)} style={{ fontSize: '0.75rem', padding: '10px' }}>✏️ Editar</button>
+                                                                    <button className="glass-button" onClick={() => sendWhatsApp(order)} style={{ fontSize: '0.75rem', padding: '10px', background: '#25d366', border: 'none' }}>🟢 WA</button>
+                                                                    <button className="glass-button" onClick={() => copyToClipboard(order.id)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(255,255,255,0.1)' }}>{copiedLink === order.id ? '✅ Link' : '🔗 Link'}</button>
+                                                                    <button className="glass-button" onClick={() => updateStatus(order.id, 'PENDING')} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>🗑️ Reset</button>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -769,43 +813,116 @@ export default function AdminPage() {
             )}
 
             {/* Modal de Edición */}
-            {editingOrder && (
+            {editingOrder ? (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(15px)' }}>
-                    <div className="glass-panel" style={{ width: '95%', maxWidth: '800px', padding: '25px', maxHeight: '90vh', overflowY: 'auto' }}>
+                    <div className="glass-panel" style={{ width: '95%', maxWidth: '800px', padding: '25px', maxHeight: '95vh', overflowY: 'auto' }}>
                         <div className="flex justify-between items-center mb-20">
-                            <h2 style={{ fontSize: '1.5rem' }}>Editar Pedido <span style={{ fontFamily: 'monospace', opacity: 0.6 }}>{editingOrder.id}</span></h2>
+                            <h2 style={{ fontSize: '1.2rem' }}>Editar Pedido <span style={{ fontFamily: 'monospace', opacity: 0.5 }}>{editingOrder.id.substring(0, 8)}</span></h2>
                             <button className="filter-btn" onClick={() => setEditingOrder(null)}>✕</button>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px' }}>
-                            {/* Columna 1: Cliente y Viaje */}
-                            <div className="flex-col gap-15">
-                                <h3 style={{ fontSize: '0.9rem', color: 'var(--accent-color)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px' }}>DATOS DEL CLIENTE</h3>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        {/* Tab Navigation */}
+                        <div className="filter-group" style={{ marginBottom: '25px', display: 'flex', overflowX: 'auto', gap: '5px', paddingBottom: '10px' }}>
+                            <button className={`filter-btn ${activeTab === 'CLIENT' ? 'active' : ''}`} onClick={() => setActiveTab('CLIENT')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>👤 Cliente e IVA</button>
+                            <button className={`filter-btn ${activeTab === 'ROUTE' ? 'active' : ''}`} onClick={() => setActiveTab('ROUTE')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>📍 Ruta y Precio</button>
+                            <button className={`filter-btn ${activeTab === 'LOGISTICS' ? 'active' : ''}`} onClick={() => setActiveTab('LOGISTICS')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>🚚 Chofer y Logística</button>
+                        </div>
+
+                        {/* TAB: CLIENT */}
+                        {activeTab === 'CLIENT' && (
+                            <div className="flex-col gap-20">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                                     <div>
                                         <label className="glass-label">Nombre Cliente</label>
                                         <input type="text" className="glass-input" value={editForm.customerName} onChange={e => setEditForm(p => ({ ...p, customerName: e.target.value }))} />
                                     </div>
                                     <div>
-                                        <label className="glass-label">Precio Final ($)</label>
-                                        <input type="number" className="glass-input" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} />
+                                        <label className="glass-label">Email</label>
+                                        <input type="email" className="glass-input" value={editForm.customerEmail} onChange={e => setEditForm(p => ({ ...p, customerEmail: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">Teléfono</label>
+                                        <input type="tel" className="glass-input" value={editForm.customerPhone} onChange={e => setEditForm(p => ({ ...p, customerPhone: e.target.value }))} />
                                     </div>
                                 </div>
 
-                                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '10px', marginTop: '10px' }}>
-                                    <h3 style={{ fontSize: '0.8rem', color: 'var(--accent-color)', marginBottom: '10px' }}>📟 CALCULADORA DE PRECIO</h3>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                                    <div>
+                                        <label className="glass-label">CUIT</label>
+                                        <input type="text" className="glass-input" value={editForm.cuit} onChange={e => setEditForm(p => ({ ...p, cuit: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">Condición IVA</label>
+                                        <select
+                                            className="glass-input"
+                                            value={editForm.taxStatus}
+                                            onChange={e => setEditForm(p => ({ ...p, taxStatus: e.target.value }))}
+                                            style={{ color: 'white' }}
+                                        >
+                                            <option value="">Seleccionar...</option>
+                                            <option value="responsable_inscripto">Responsable Inscripto</option>
+                                            <option value="monotributo">Monotributo</option>
+                                            <option value="exento">Exento</option>
+                                            <option value="consumidor_final">Consumidor Final</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="glass-label">Observaciones Internas</label>
+                                    <textarea className="glass-input" style={{ minHeight: '80px', paddingTop: '10px' }} value={editForm.observations} onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))} />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* TAB: ROUTE */}
+                        {activeTab === 'ROUTE' && (
+                            <div className="flex-col gap-20">
+                                <div style={{ display: 'grid', gap: '15px' }}>
+                                    <div>
+                                        <label className="glass-label">Origen (direcciones separadas por | )</label>
+                                        <input type="text" className="glass-input" value={editForm.origin} onChange={e => setEditForm(p => ({ ...p, origin: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">Destino Final</label>
+                                        <input type="text" className="glass-input" value={editForm.destination} onChange={e => setEditForm(p => ({ ...p, destination: e.target.value }))} />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
+                                    <div>
+                                        <label className="glass-label">Fecha</label>
+                                        <input type="date" className="glass-input" value={editForm.travelDate} onChange={e => setEditForm(p => ({ ...p, travelDate: e.target.value }))} />
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">Franja Horaria</label>
+                                        <select className="glass-input" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))} style={{ background: 'var(--body-bg)', color: 'white' }}>
+                                            <option value="manana">Mañana</option>
+                                            <option value="mediodia">Medio día</option>
+                                            <option value="tarde">Tarde</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">Vehículo(s)</label>
+                                        <input type="text" className="glass-input" value={editForm.vehicle} onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))} />
+                                    </div>
+                                </div>
+
+                                <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.2)', padding: '20px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                                        <h3 style={{ fontSize: '0.8rem', color: 'var(--accent-color)' }}>💰 AJUSTE DE PRECIO</h3>
+                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>${editForm.price.toLocaleString('es-AR')}</div>
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                         <div>
                                             <label className="glass-label">Distancia (Km)</label>
                                             <input type="number" className="glass-input" value={editForm.distanceKm} onChange={e => {
                                                 const km = Number(e.target.value);
                                                 setEditForm(p => {
                                                     const newState = { ...p, distanceKm: km };
-                                                    // Recalculate if we have vehicle data
-                                                    // In quote page it uses 100km threshold
-                                                    // We need to parse vehicle since it's "1x Utilitario..."
                                                     const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                    const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
+                                                    const vData = (vehiclesData as any[]).find(v => v.name === mainVehicle || v.id === p.vehicle);
                                                     if (vData) {
                                                         const qty = parseInt(p.vehicle.split('x')[0]) || 1;
                                                         if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
@@ -816,7 +933,7 @@ export default function AdminPage() {
                                             }} />
                                         </div>
                                         <div>
-                                            <label className="glass-label">Horas Est. (Si Km &lt; 100)</label>
+                                            <label className="glass-label">Horas Estimadas</label>
                                             <input type="number" className="glass-input" value={editForm.travelHours} onChange={e => {
                                                 const h = Number(e.target.value);
                                                 setEditForm(p => {
@@ -832,63 +949,25 @@ export default function AdminPage() {
                                             }} />
                                         </div>
                                     </div>
-                                    <p style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                                        * Al modificar estos valores, el Precio Final se recalcula según las tarifas configuradas.
-                                    </p>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                    <div>
-                                        <label className="glass-label">Email</label>
-                                        <input type="email" className="glass-input" value={editForm.customerEmail} onChange={e => setEditForm(p => ({ ...p, customerEmail: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Teléfono</label>
-                                        <input type="tel" className="glass-input" value={editForm.customerPhone} onChange={e => setEditForm(p => ({ ...p, customerPhone: e.target.value }))} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="glass-label">Observaciones</label>
-                                    <textarea className="glass-input" style={{ minHeight: '60px', paddingTop: '10px' }} value={editForm.observations} onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))} />
-                                </div>
 
-                                <h3 style={{ fontSize: '0.9rem', color: 'var(--accent-color)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px', marginTop: '10px' }}>RUTA Y FECHA</h3>
-                                <div>
-                                    <label className="glass-label">Origen (direcciones separadas por | )</label>
-                                    <input type="text" className="glass-input" value={editForm.origin} onChange={e => setEditForm(p => ({ ...p, origin: e.target.value }))} />
-                                </div>
-                                <div>
-                                    <label className="glass-label">Destino Final</label>
-                                    <input type="text" className="glass-input" value={editForm.destination} onChange={e => setEditForm(p => ({ ...p, destination: e.target.value }))} />
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                                    <div>
-                                        <label className="glass-label">Fecha</label>
-                                        <input type="date" className="glass-input" value={editForm.travelDate} onChange={e => setEditForm(p => ({ ...p, travelDate: e.target.value }))} />
+                                    <div style={{ marginTop: '15px' }}>
+                                        <label className="glass-label">Precio Final Forzado ($)</label>
+                                        <input type="number" className="glass-input" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} />
                                     </div>
-                                    <div>
-                                        <label className="glass-label">Turno (manana/mediodia/tarde)</label>
-                                        <select className="glass-input" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))} style={{ background: 'var(--body-bg)' }}>
-                                            <option value="manana">Mañana</option>
-                                            <option value="mediodia">Medio día</option>
-                                            <option value="tarde">Tarde</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label className="glass-label">Vehículo(s)</label>
-                                    <input type="text" className="glass-input" value={editForm.vehicle} onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))} placeholder="Ej: 1x Camioneta Mediana" />
                                 </div>
                             </div>
+                        )}
 
-                            {/* Columna 2: Chofer */}
-                            <div className="flex-col gap-15">
-                                <h3 style={{ fontSize: '0.9rem', color: 'var(--success-color)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '5px' }}>ASIGNACIÓN DE CHOFER</h3>
-                                <div className="toggle-group" style={{ maxHeight: '200px', overflowY: 'auto', padding: '5px' }}>
+                        {/* TAB: LOGISTICS */}
+                        {activeTab === 'LOGISTICS' && (
+                            <div className="flex-col gap-20">
+                                <h3 style={{ fontSize: '0.85rem', color: 'var(--success-color)' }}>🚚 ASIGNACIÓN DE CHOFER</h3>
+                                <div className="toggle-group" style={{ maxHeight: '180px', overflowY: 'auto', padding: '5px' }}>
                                     <button
                                         type="button"
                                         className={`toggle-btn ${!editForm.driverName ? 'active' : ''}`}
-                                        onClick={() => setEditForm({ ...editForm, driverName: '', driverPhone: '', licensePlate: '' })}
-                                        style={{ minWidth: '80px', padding: '10px', fontSize: '0.8rem' }}
+                                        onClick={() => setEditForm(p => ({ ...p, driverName: '', driverPhone: '', licensePlate: '' }))}
+                                        style={{ minWidth: '80px', padding: '10px', fontSize: '0.75rem' }}
                                     >
                                         ❌ Sin Chofer
                                     </button>
@@ -897,45 +976,42 @@ export default function AdminPage() {
                                             key={d.id}
                                             type="button"
                                             className={`toggle-btn ${editForm.driverName === d.name ? 'active' : ''}`}
-                                            onClick={() => setEditForm({ ...editForm, driverName: d.name, driverPhone: d.phone, licensePlate: d.license_plate })}
-                                            style={{ minWidth: '80px', padding: '10px', fontSize: '0.8rem' }}
+                                            onClick={() => setEditForm(p => ({ ...p, driverName: d.name, driverPhone: d.phone, licensePlate: d.license_plate }))}
+                                            style={{ minWidth: '80px', padding: '10px', fontSize: '0.75rem' }}
                                         >
                                             {d.name}
                                         </button>
                                     ))}
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
                                     <div>
-                                        <label className="glass-label">Nombre Chofer</label>
+                                        <label className="glass-label">Chofer</label>
                                         <input type="text" className="glass-input" value={editForm.driverName} onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))} />
                                     </div>
                                     <div>
                                         <label className="glass-label">Patente</label>
                                         <input type="text" className="glass-input" value={editForm.licensePlate} onChange={e => setEditForm(p => ({ ...p, licensePlate: e.target.value }))} />
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="glass-label">Teléfono Chofer</label>
-                                    <input type="tel" className="glass-input" value={editForm.driverPhone} onChange={e => setEditForm(p => ({ ...p, driverPhone: e.target.value }))} />
-                                </div>
-
-                                <div className="glass-panel" style={{ marginTop: '20px', padding: '15px', background: 'rgba(255,255,255,0.02)' }}>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
-                                        Al guardar, los cambios se reflejarán inmediatamente en la base de datos y en el seguimiento del cliente.
-                                    </p>
-                                    <div className="flex gap-10">
-                                        <button className="glass-button" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
-                                        <button className="glass-button" style={{ flex: 2, background: 'var(--accent-gradient)' }} onClick={handleSaveEdit} disabled={saving}>
-                                            {saving ? 'Guardando...' : '💾 GUARDAR TODOS LOS CAMBIOS'}
-                                        </button>
+                                    <div>
+                                        <label className="glass-label">Teléfono Chofer</label>
+                                        <input type="tel" className="glass-input" value={editForm.driverPhone} onChange={e => setEditForm(p => ({ ...p, driverPhone: e.target.value }))} />
                                     </div>
                                 </div>
+                            </div>
+                        )}
+
+                        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div className="flex gap-10">
+                                <button className="glass-button" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
+                                <button className="glass-button" style={{ flex: 2, background: 'var(--accent-gradient)', fontWeight: 'bold' }} onClick={handleSaveEdit} disabled={saving}>
+                                    {saving ? 'Guardando...' : '💾 GUARDAR CAMBIOS'}
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
+            ) : null}
         </div>
     );
 }
