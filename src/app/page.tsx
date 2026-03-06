@@ -6,10 +6,15 @@ import { useState, useEffect } from 'react';
 export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+
+    // Detectar si es móvil
+    const mobileCheck = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
+    setIsMobile(mobileCheck);
 
     // Detectar si YA está abierta como App (para ocultar el botón)
     const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
@@ -47,26 +52,41 @@ export default function Home() {
   if (!mounted) return null;
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '90vh' }}>
-      <header style={{ marginBottom: '15px' }}>
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '90vh', padding: '10px 15px' }}>
+      <header style={{ marginBottom: '10px' }}>
         <img
           src="/logo.jpg"
           alt="EL CASAL"
           className="main-logo"
+          style={{ maxWidth: '300px' }}
         />
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px', flexGrow: 1 }}>
+      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px', flexGrow: 1 }}>
 
-        {/* 1. Seguir Viaje */}
-        <div className="glass-panel" style={{ padding: '20px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📍</div>
-          <h2 style={{ marginBottom: '5px', fontSize: '1.3rem' }}>Seguir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '15px', fontSize: '0.85rem', flexGrow: 1 }}>
+        {/* 1. Pedir Viaje (AHORA PRIMERO) */}
+        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>🚚</div>
+          <h2 style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Pedir Viaje</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '10px', fontSize: '0.75rem' }}>
+            Cotizá y reservá desde tu celular.
+          </p>
+          <Link href="/quote" style={{ width: '100%' }}>
+            <button className="glass-button" style={{ width: '100%', padding: '10px' }}>
+              Nueva Solicitud
+            </button>
+          </Link>
+        </div>
+
+        {/* 2. Seguir Viaje (AHORA SEGUNDO) */}
+        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>📍</div>
+          <h2 style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Seguir Viaje</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '10px', fontSize: '0.75rem' }}>
             Ingresá tu código de seguimiento.
           </p>
           <form
-            className="flex-col gap-10"
+            className="flex-col gap-8"
             onSubmit={(e) => {
               e.preventDefault();
               const id = (e.currentTarget.elements.namedItem('trackingId') as HTMLInputElement).value;
@@ -77,58 +97,27 @@ export default function Home() {
               name="trackingId"
               type="text"
               className="glass-input"
-              placeholder="CÓDIGO (EJ: A0000)"
-              style={{ textAlign: 'center', textTransform: 'uppercase', padding: '10px' }}
+              placeholder="EJ: A0000"
+              style={{ textAlign: 'center', textTransform: 'uppercase', padding: '8px', fontSize: '0.8rem' }}
               required
             />
-            <button type="submit" className="glass-button" style={{ width: '100%', padding: '12px' }}>
+            <button type="submit" className="glass-button" style={{ width: '100%', padding: '10px' }}>
               Ver Mapa
             </button>
           </form>
         </div>
 
-        {/* 2. Pedir Viaje */}
-        <div className="glass-panel" style={{ padding: '20px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>🚚</div>
-          <h2 style={{ marginBottom: '5px', fontSize: '1.3rem' }}>Pedir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '15px', fontSize: '0.85rem', flexGrow: 1 }}>
-            Cotizá y reservá desde tu celular.
-          </p>
-          <Link href="/quote" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', padding: '12px' }}>
-              Nueva Solicitud
-            </button>
-          </Link>
-        </div>
-
         {/* Soy Chofer */}
-        <div className="glass-panel" style={{ padding: '20px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>👷</div>
-          <h2 className="text-gradient-green" style={{ marginBottom: '5px', fontSize: '1.3rem' }}>Soy Chofer</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '10px', fontSize: '0.85rem', flexGrow: 1 }}>
+        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>👷</div>
+          <h2 className="text-gradient-green" style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Soy Chofer</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.75rem' }}>
             Accedé a tus viajes asignados.
           </p>
 
-          <button
-            className="glass-button"
-            style={{ width: '100%', marginBottom: '8px', background: 'rgba(59,130,246,0.1)', borderColor: '#3b82f6', fontSize: '0.75rem', padding: '10px' }}
-            onClick={() => {
-              if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                  () => alert("✅ ¡GPS Funcionando correctamente!"),
-                  (err) => alert(`❌ Error de GPS: ${err.message}.`)
-                );
-              } else {
-                alert("❌ Este dispositivo no soporta GPS.");
-              }
-            }}
-          >
-            📡 PROBAR GPS
-          </button>
-
-          <Link href="/driver/login" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', borderColor: 'var(--success-color)', color: 'var(--success-color)', padding: '12px' }}>
-              Ingresar con PIN
+          <Link href="/chofer" style={{ width: '100%' }}>
+            <button className="glass-button" style={{ width: '100%', borderColor: 'var(--success-color)', color: 'var(--success-color)', padding: '10px' }}>
+              Ingresar
             </button>
           </Link>
         </div>
@@ -136,9 +125,9 @@ export default function Home() {
       </div>
 
       {/* Social / Admin Row */}
-      <footer style={{ marginTop: '20px', paddingBottom: '10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+      <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 
-        {!isStandalone && (
+        {isMobile && !isStandalone && (
           <button
             id="install-button-manual"
             className="install-btn-pulse"
@@ -173,18 +162,40 @@ export default function Home() {
         >
           🛡️
         </button>
-        <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', opacity: 0.3, marginTop: '5px' }}>
-          v1.2 Premium Logistics System
+        <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', opacity: 0.2, marginTop: '2px' }}>
+          v1.3 Premium Logistics
         </div>
       </footer>
 
       <style jsx>{`
+        .home-grid {
+          max-height: calc(100vh - 200px);
+        }
+        @media (max-width: 600px) {
+           .home-grid {
+             grid-template-columns: 1fr !important;
+             gap: 8px !important;
+           }
+           .main-logo {
+             max-width: 220px !important;
+           }
+           .glass-panel {
+             padding: 10px 15px !important;
+           }
+           h2 {
+             font-size: 1.1rem !important;
+             margin-bottom: 2px !important;
+           }
+           p {
+             margin-bottom: 5px !important;
+           }
+        }
         .install-btn-pulse {
           animation: pulse 2s infinite;
         }
         @keyframes pulse {
           0% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
-          50% { transform: scale(1.08); box-shadow: 0 4px 25px rgba(59,130,246,0.8); }
+          50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(59,130,246,0.7); }
           100% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
         }
       `}</style>

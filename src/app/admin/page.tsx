@@ -61,6 +61,7 @@ const formatVehicle = (v: string) => {
 export default function AdminPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loginLoading, setLoginLoading] = useState(false);
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [copiedLink, setCopiedLink] = useState<string | null>(null);
@@ -226,7 +227,8 @@ export default function AdminPage() {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        setLoginLoading(true);
+        console.log("Iniciando validación de admin...");
         try {
             const res = await fetch('/api/orders', {
                 headers: { 'x-admin-password': password }
@@ -236,14 +238,17 @@ export default function AdminPage() {
                 setOrders(data);
                 setIsAuthenticated(true);
                 sessionStorage.setItem('admin_password', password);
+                console.log("Login exitoso");
             } else {
+                const errorData = await res.json().catch(() => ({}));
+                console.error("Error de login:", res.status, errorData);
                 alert('Contraseña Incorrecta');
             }
         } catch (e) {
-            console.error(e);
-            alert('Error al validar');
+            console.error("Error en validación:", e);
+            alert('Error al validar conexión');
         } finally {
-            setLoading(false);
+            setLoginLoading(false);
         }
     };
 
@@ -361,8 +366,8 @@ export default function AdminPage() {
                             style={{ marginBottom: '20px', textAlign: 'center' }}
                             required
                         />
-                        <button type="submit" className="glass-button" style={{ width: '100%', padding: '15px' }} disabled={loading}>
-                            {loading ? 'Validando...' : 'Ingresar'}
+                        <button type="submit" className="glass-button" style={{ width: '100%', padding: '15px' }} disabled={loginLoading}>
+                            {loginLoading ? 'Validando...' : 'Ingresar'}
                         </button>
                     </form>
                 </div>

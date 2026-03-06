@@ -34,7 +34,7 @@ export default function DriverLoginPage() {
             if (res.ok) {
                 const driver = await res.json();
                 localStorage.setItem('driver_session', JSON.stringify(driver));
-                router.push('/driver/dashboard');
+                router.push('/chofer/dashboard');
             } else {
                 setError('PIN incorrecto o chofer no encontrado');
             }

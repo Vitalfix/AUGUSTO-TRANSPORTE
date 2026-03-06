@@ -44,7 +44,7 @@ export default function DriverDashboardPage() {
     useEffect(() => {
         const session = localStorage.getItem('driver_session');
         if (!session) {
-            router.push('/driver/login');
+            router.push('/chofer/login');
             return;
         }
         const driverData = JSON.parse(session);
@@ -191,7 +191,7 @@ export default function DriverDashboardPage() {
                             </div>
 
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <Link href={`/driver/${order.id}`} style={{ flex: 2 }}>
+                                <Link href={`/chofer/${order.id}`} style={{ flex: 2 }}>
                                     <button
                                         className="glass-button"
                                         style={{
