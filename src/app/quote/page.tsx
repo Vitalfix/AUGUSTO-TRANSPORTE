@@ -183,7 +183,10 @@ export default function QuotePageV2() {
                         if (!aSiemens && bSiemens) return 1;
                         return nameA.localeCompare(nameB);
                     });
+                    console.log("Clientes cargados y ordenados:", sorted.length);
                     setCustomers(sorted);
+                } else {
+                    console.error("Error al obtener clientes públicos:", custRes.status);
                 }
             } catch (e) {
                 console.error("Error fetching initial data", e);
@@ -771,13 +774,20 @@ export default function QuotePageV2() {
                             <select
                                 className="glass-select"
                                 value={selectedCustomerId}
-                                onChange={(e) => handleCustomerChange(e.target.value)}
+                                onChange={(e) => {
+                                    console.log("Seleccionando cliente ID:", e.target.value);
+                                    handleCustomerChange(e.target.value);
+                                }}
                                 style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
                             >
                                 <option value="new">🆕 Nuevo Cliente / Otro</option>
-                                {Array.isArray(customers) && customers.map(c => (
-                                    <option key={c.id} value={c.id}>{c.name}</option>
-                                ))}
+                                {Array.isArray(customers) && customers.length > 0 ? (
+                                    customers.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))
+                                ) : (
+                                    <option disabled>Cargando clientes...</option>
+                                )}
                             </select>
 
                             <label htmlFor="name" className="glass-label">{selectedCustomerId === 'new' ? 'Nombre / Empresa' : 'Cliente Seleccionado'}</label>
