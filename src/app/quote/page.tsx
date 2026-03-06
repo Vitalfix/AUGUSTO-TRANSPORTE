@@ -691,11 +691,21 @@ export default function QuotePageV2() {
                             <div className="flex-col gap-15">
                                 <div>
                                     <div className="glass-label" style={{ fontSize: '0.7rem' }}>RUTA Y FECHAS</div>
-                                    <div style={{ fontSize: '0.85rem' }}>
-                                        <strong>Orígenes:</strong> {customOrigins.filter(o => o.trim()).join(', ')}<br />
-                                        <strong>Destinos:</strong> {customDestinations.filter(d => d.trim()).join(', ')}
+                                    <div style={{ fontSize: '0.85rem' }} className="flex-col gap-5">
+                                        <div>
+                                            <strong>Orígenes:</strong>
+                                            {customOrigins.filter(o => o.trim()).map((o, i) => (
+                                                <div key={i} style={{ marginLeft: '10px', marginTop: '2px', opacity: 0.9 }}>• {o}</div>
+                                            ))}
+                                        </div>
+                                        <div style={{ marginTop: '5px' }}>
+                                            <strong>Destinos:</strong>
+                                            {customDestinations.filter(d => d.trim()).map((d, i) => (
+                                                <div key={i} style={{ marginLeft: '10px', marginTop: '2px', opacity: 0.9 }}>• {d}</div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: '0.85rem', marginTop: '5px' }}>
+                                    <div style={{ fontSize: '0.85rem', marginTop: '10px' }}>
                                         <strong>Fecha:</strong> {travelDate.split('-').reverse().join('/')} ({travelTime === 'manana' ? 'Mañana' : travelTime === 'mediodia' ? 'Medio día' : 'Tarde'})
                                     </div>
                                 </div>
@@ -717,8 +727,8 @@ export default function QuotePageV2() {
                             <div className="status-indicator badge-active" style={{ width: '100%', height: '1px', margin: '20px 0', opacity: 0.2 }} />
 
                             <div style={{ fontSize: '2.2rem', textAlign: 'center' }} className="text-gradient">Total: <strong>${price.toLocaleString('es-AR')}</strong></div>
-                            <p style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '10px', color: 'var(--text-secondary)' }}>
-                                * Valor estimativo sujeto a confirmación manual de disponibilidad y fletes de retorno.
+                            <p style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '10px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                                * Este es un <strong>precio de referencia aproximado</strong>. El valor final se enviará a la brevedad tras la confirmación manual de disponibilidad y fletes de retorno.
                             </p>
                         </div>
 
