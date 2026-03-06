@@ -141,6 +141,7 @@ export default function QuotePageV2() {
 
     // Customers Data
     const [customers, setCustomers] = useState<any[]>([]);
+    const [customerError, setCustomerError] = useState(false);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('new');
     const [cuit, setCuit] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');
@@ -187,9 +188,11 @@ export default function QuotePageV2() {
                     setCustomers(sorted);
                 } else {
                     console.error("Error al obtener clientes públicos:", custRes.status);
+                    setCustomerError(true);
                 }
             } catch (e) {
                 console.error("Error fetching initial data", e);
+                setCustomerError(true);
             }
         };
 
@@ -781,7 +784,9 @@ export default function QuotePageV2() {
                                 style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
                             >
                                 <option value="new">🆕 Nuevo Cliente / Otro</option>
-                                {Array.isArray(customers) && customers.length > 0 ? (
+                                {customerError ? (
+                                    <option disabled>⚠️ Error al cargar clientes</option>
+                                ) : Array.isArray(customers) && customers.length > 0 ? (
                                     customers.map(c => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
                                     ))
