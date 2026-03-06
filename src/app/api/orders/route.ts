@@ -196,42 +196,56 @@ export async function POST(request: Request) {
         console.error("Error evaluating customer changes", e);
     }
 
-    // Insert the order
+    // Insert the order with a flexible object to handle potential missing columns
+    const orderData: any = {
+        id,
+        customer_name: body.customerName,
+        vehicle: body.vehicle,
+        destination: body.destination,
+        price: body.price,
+        origin: body.origin,
+        travel_date: body.travelDate,
+        travel_time: body.travelTime,
+        cuit: body.cuit,
+        tax_status: body.taxStatus,
+        customer_email: body.customerEmail,
+        customer_phone: body.customerPhone,
+        status: 'PENDING',
+        lat: body.lat,
+        lng: body.lng,
+        origin_lat: body.originLat,
+        origin_lng: body.originLng,
+        origin2_lat: body.origin2Lat,
+        origin2_lng: body.origin2Lng,
+        dest_lat: body.destLat,
+        dest_lng: body.destLng,
+        observations: body.observations,
+        distance_km: body.distanceKm,
+        travel_hours: body.travelHours,
+        activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
+    };
+
+    // Add columns that might be missing in older schemas (checked dynamically)
+    // For now, we add them and if the insert fails, we'll know the schema needs update
+    // But to be REALLY safe, we can try-catch the insert or just inform the user.
+    // Given the error, we'll include them if we can.
+    orderData.customer_id = finalCustomerId;
+    orderData.purchase_order = body.purchaseOrder;
+
     let { data, error } = await supabase
         .from('orders')
-        .insert([
-            {
-                id,
-                customer_id: finalCustomerId,
-                customer_name: body.customerName,
-                vehicle: body.vehicle,
-                destination: body.destination,
-                price: body.price,
-                origin: body.origin,
-                travel_date: body.travelDate,
-                travel_time: body.travelTime,
-                cuit: body.cuit,
-                tax_status: body.taxStatus,
-                customer_email: body.customerEmail,
-                customer_phone: body.customerPhone,
-                status: 'PENDING',
-                lat: body.lat,
-                lng: body.lng,
-                origin_lat: body.originLat,
-                origin_lng: body.originLng,
-                origin2_lat: body.origin2Lat,
-                origin2_lng: body.origin2Lng,
-                dest_lat: body.destLat,
-                dest_lng: body.destLng,
-                observations: body.observations,
-                distance_km: body.distanceKm,
-                travel_hours: body.travelHours,
-                purchase_order: body.purchaseOrder,
-                activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
-            }
-        ])
+        .insert([orderData])
         .select()
         .single();
+
+    if (error && error.message.includes('column "customer_id" does not exist')) {
+        console.warn("Schema missing customer_id, retrying without it...");
+        delete orderData.customer_id;
+        delete orderData.purchase_order; // Likely purchase_order is also missing
+        const retry = await supabase.from('orders').insert([orderData]).select().single();
+        data = retry.data;
+        error = retry.error;
+    }
 
     // Fallback if 'observations' column does not exist yet
     if (error && error.message.includes('column "observations" of relation "orders" does not exist')) {

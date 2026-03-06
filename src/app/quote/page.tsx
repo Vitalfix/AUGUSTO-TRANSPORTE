@@ -922,7 +922,7 @@ export default function QuotePageV2() {
                         <div className="flex-col gap-20">
                             <div style={{ flex: 1 }}>
                                 <label htmlFor="po" className="glass-label">Nº Orden de Compra</label>
-                                <input id="po" type="text" className="glass-input" value={purchaseOrder} onChange={e => setPurchaseOrder(e.target.value)} placeholder="Opcional" />
+                                <input id="po" type="text" className="glass-input" value={purchaseOrder} onChange={e => setPurchaseOrder(e.target.value)} />
                             </div>
                             <div className="flex gap-20">
                                 <div style={{ flex: 1 }}>
