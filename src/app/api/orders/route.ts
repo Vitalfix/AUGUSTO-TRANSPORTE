@@ -317,8 +317,12 @@ export async function POST(request: Request) {
                 <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #065f46;">Total Estimado: $${body.price.toLocaleString('es-AR')}</p>
             </div>
 
-            <div style="margin-top: 30px;">
-                <a href="https://transport-app-lilac-beta.vercel.app/admin" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">Abrir Panel de Administración</a>
+            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <p style="font-size: 0.9rem; color: #64748b;"><strong>Acción necesaria:</strong> El presupuesto será evaluado manualmente. Revisar detalles de la carga, ajustar el precio si es necesario y contactar al cliente para confirmar el servicio.</p>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">SEGUIMIENTO</a>
             </div>
         </div>
       `
@@ -351,11 +355,11 @@ export async function POST(request: Request) {
                                 </p>
                             </div>
 
-                            <p><strong>Aviso importante:</strong> El presupuesto de <strong style="color: #10b981;">$${body.price.toLocaleString('es-AR')}</strong> es <strong>estimativo</strong>. Nuestro equipo evaluará los detalles y te contactará para confirmar el valor definitivo.</p>
+                            <p><strong>Aviso importante:</strong> El presupuesto de <strong style="color: #10b981;">$${body.price.toLocaleString('es-AR')}</strong> es <strong>estimativo</strong>. Nuestro equipo evaluará los detalles manualmente y te contactará para confirmar el valor definitivo.</p>
                             
                             <div style="margin: 30px 0; text-align: center;">
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés seguir el estado de tu pedido aquí:</p>
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">Seguir mi Pedido</a>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés seguir el estado de tu pedido en tiempo real aquí:</p>
+                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">SEGUIMIENTO</a>
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
