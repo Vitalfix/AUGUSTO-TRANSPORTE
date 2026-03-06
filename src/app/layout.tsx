@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import RefreshButton from "@/components/RefreshButton";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata: Metadata = {
   title: "EL CASAL - Logística y Fletes",
@@ -34,6 +35,7 @@ export default function RootLayout({
         }} />
       </head>
       <body>
+        <ScrollToTop />
         <ThemeSwitcher />
         <RefreshButton />
         <div style={{
