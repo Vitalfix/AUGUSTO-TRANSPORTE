@@ -2,53 +2,15 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import InstallPrompt from '@/components/InstallPrompt';
 
 export default function Home() {
-  const [installPrompt, setInstallPrompt] = useState<any>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-
-    // Detectar si es móvil
-    const mobileCheck = /android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
-    setIsMobile(mobileCheck);
-
-    // Detectar si YA está abierta como App (para ocultar el botón)
-    const isStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
-      || (window.navigator as any).standalone
-      || document.referrer.includes('android-app://');
-    setIsStandalone(isStandaloneMode);
-
-    // Capturar el evento de instalación automática (Android/Chrome)
-    const handler = (e: any) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  const handleInstallClick = () => {
-    if (installPrompt) {
-      installPrompt.prompt();
-      installPrompt.userChoice.then((choice: any) => {
-        if (choice.outcome === 'accepted') setInstallPrompt(null);
-      });
-    } else {
-      // Instrucciones manuales si no hay prompt automático
-      const isIOS = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
-      if (isIOS) {
-        alert("INSTALACIÓN EN IPHONE:\n1. Toca 'Compartir' (cuadrado con flecha arriba).\n2. Selecciona 'Añadir a la pantalla de inicio'.");
-      } else {
-        alert("INSTALACIÓN MANUAL:\n1. Toca los 3 puntos del navegador (arriba a la derecha).\n2. Selecciona 'Instalar aplicación' o 'Agregar a pantalla de inicio'.");
-      }
-    }
-  };
-
-  // Si no está montado, no renderizamos para evitar errores de hidratación
   if (!mounted) return null;
 
   return (
@@ -62,31 +24,31 @@ export default function Home() {
         />
       </header>
 
-      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px', flexGrow: 1 }}>
+      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'center', maxWidth: '800px', margin: '0 auto' }}>
 
-        {/* 1. Pedir Viaje (AHORA PRIMERO) */}
-        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>🚚</div>
-          <h2 style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Pedir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '10px', fontSize: '0.75rem' }}>
-            Cotizá y reservá desde tu celular.
+        {/* 1. Pedir Viaje */}
+        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
+          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Pedir Viaje</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+            Cotizá y reservá tu transporte de carga de forma inmediata y profesional.
           </p>
           <Link href="/quote" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', padding: '10px' }}>
+            <button className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
               Nueva Solicitud
             </button>
           </Link>
         </div>
 
-        {/* 2. Seguir Viaje (AHORA SEGUNDO) */}
-        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>📍</div>
-          <h2 style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Seguir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '10px', fontSize: '0.75rem' }}>
-            Ingresá tu código de seguimiento.
+        {/* 2. Seguir Viaje */}
+        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📍</div>
+          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Seguir Viaje</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+            Consultá el estado y ubicación satelital de tu pedido en tiempo real.
           </p>
           <form
-            className="flex-col gap-8"
+            className="flex-col gap-10"
             onSubmit={(e) => {
               e.preventDefault();
               const id = (e.currentTarget.elements.namedItem('trackingId') as HTMLInputElement).value;
@@ -97,29 +59,14 @@ export default function Home() {
               name="trackingId"
               type="text"
               className="glass-input"
-              placeholder="EJ: A0000"
-              style={{ textAlign: 'center', textTransform: 'uppercase', padding: '8px', fontSize: '0.8rem' }}
+              placeholder="CÓDIGO (EJ: A0001)"
+              style={{ textAlign: 'center', textTransform: 'uppercase', padding: '12px', fontSize: '1rem' }}
               required
             />
-            <button type="submit" className="glass-button" style={{ width: '100%', padding: '10px' }}>
+            <button type="submit" className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
               Ver Mapa
             </button>
           </form>
-        </div>
-
-        {/* Soy Chofer */}
-        <div className="glass-panel" style={{ padding: '12px 15px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '1.5rem', marginBottom: '5px' }}>👷</div>
-          <h2 className="text-gradient-green" style={{ marginBottom: '5px', fontSize: '1.2rem' }}>Soy Chofer</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '8px', fontSize: '0.75rem' }}>
-            Accedé a tus viajes asignados.
-          </p>
-
-          <Link href="/chofer" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', borderColor: 'var(--success-color)', color: 'var(--success-color)', padding: '10px' }}>
-              Ingresar
-            </button>
-          </Link>
         </div>
 
       </div>
@@ -127,45 +74,25 @@ export default function Home() {
       {/* Social / Admin Row */}
       <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 
-        {isMobile && !isStandalone && (
-          <button
-            id="install-button-manual"
-            className="install-btn-pulse"
-            onClick={handleInstallClick}
-            style={{
-              background: '#3b82f6',
-              border: 'none',
-              color: 'white',
-              padding: '12px 24px',
-              borderRadius: '30px',
-              fontSize: '1rem',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(59,130,246,0.5)',
-              zIndex: 9999
-            }}
-          >
-            📲 INSTALAR APP OFICIAL
-          </button>
-        )}
+        <div style={{
+          fontSize: '0.65rem',
+          color: 'var(--text-secondary)',
+          textAlign: 'center',
+          maxWidth: '600px',
+          opacity: 0.6,
+          lineHeight: '1.4',
+          marginTop: '20px',
+          padding: '0 10px'
+        }}>
+          <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+        </div>
 
-        <button
-          onClick={() => {
-            const pin = window.prompt("Ingrese PIN de Administrador:");
-            if (pin) {
-              sessionStorage.setItem('admin_password', pin);
-              window.location.href = '/admin';
-            }
-          }}
-          style={{ background: 'none', border: 'none', fontSize: '1.2rem', opacity: 0.3, cursor: 'pointer', marginTop: '10px' }}
-          title="Administración"
-        >
-          🛡️
-        </button>
         <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', opacity: 0.2, marginTop: '2px' }}>
           v1.3 Premium Logistics
         </div>
       </footer>
+
+      <InstallPrompt />
 
       <style jsx>{`
         .home-grid {

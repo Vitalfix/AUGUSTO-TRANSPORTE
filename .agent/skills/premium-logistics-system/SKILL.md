@@ -3,9 +3,9 @@ name: Premium Logistics System
 description: Especialización en desarrollo de sistemas de transporte de alta gama, enfocada en UX Premium (Glassmorphism), optimización de rutas y código escalable.
 ---
 
-# Skill: Premium Logistics System (AUGUSTO-TRANSPORTE)
+# Skill: Premium Logistics System (El Casal-TRANSPORTE)
 
-Esta skill define los estándares técnicos y visuales para el proyecto Augusto Transporte.
+Esta skill define los estándares técnicos y visuales para el proyecto El Casal.
 
 ## Estándares de Diseño (Premium Aesthetics)
 
@@ -32,4 +32,4 @@ Esta skill define los estándares técnicos y visuales para el proyecto Augusto 
 2. Al modificar APIs, asegurar la validación de la sesión de administrador mediante encabezados seguros.
 3. **Verificación de Base de Datos**: Antes de subir cambios que involucren nuevas columnas o tablas (como `customer_id` en `orders`), verificar siempre que el esquema de la base de datos en Supabase esté sincronizado con el código propuesto para evitar errores de ejecución en producción.
 4. **Auto-Auditoría**: Antes de finalizar cualquier tarea o entregar un cambio, realizar un chequeo general del flujo afectado para asegurar que nada se haya roto y prever posibles errores o fallas.
-5. Mantener siempre actualizado el `plan_maestro_augusto.md`.
+5. Mantener siempre actualizado el `plan_maestro_El Casal.md`.

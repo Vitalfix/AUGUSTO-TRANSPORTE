@@ -42,12 +42,20 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, email, phone, cuit, taxStatus } = body;
+        const { name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices } = body;
 
         // Try to find if customer exists or insert new
         const { data, error } = await supabase
             .from('customers')
-            .upsert({ name, email, phone, cuit, tax_status: taxStatus }, { onConflict: 'name, phone' })
+            .upsert({
+                name,
+                email,
+                phone,
+                cuit,
+                tax_status: taxStatus,
+                has_special_pricing: hasSpecialPricing,
+                special_prices: specialPrices
+            }, { onConflict: 'name, phone' })
             .select()
             .maybeSingle();
 
@@ -66,11 +74,19 @@ export async function PATCH(request: Request) {
         }
 
         const body = await request.json();
-        const { id, name, email, phone, cuit, taxStatus } = body;
+        const { id, name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices } = body;
 
         const { data, error } = await supabase
             .from('customers')
-            .update({ name, email, phone, cuit, tax_status: taxStatus })
+            .update({
+                name,
+                email,
+                phone,
+                cuit,
+                tax_status: taxStatus,
+                has_special_pricing: hasSpecialPricing,
+                special_prices: specialPrices
+            })
             .eq('id', id)
             .select()
             .maybeSingle();

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import InstallPrompt from '@/components/InstallPrompt';
 
 export interface Order {
     id: string;
@@ -1200,6 +1201,7 @@ export default function AdminPage() {
                     </div>
                 </div>
             ) : null}
+            <InstallPrompt />
         </div>
     );
 }

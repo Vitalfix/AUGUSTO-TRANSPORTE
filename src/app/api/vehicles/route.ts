@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description } = body;
+    const { name, description, price_km, price_hour, price_wait_hour } = body;
 
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
 
@@ -43,9 +43,9 @@ export async function POST(request: Request) {
                 id,
                 name,
                 description,
-                price_km: 0,
-                price_hour: 0,
-                price_wait_hour: 0,
+                price_km: price_km || 0,
+                price_hour: price_hour || 0,
+                price_wait_hour: price_wait_hour || 0,
                 price_stay: 0
             }
         ])
@@ -63,13 +63,16 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, description } = body;
+    const { id, name, description, price_km, price_hour, price_wait_hour } = body;
 
     const { data, error } = await supabase
         .from('pricing_config')
         .update({
             name,
             description,
+            price_km,
+            price_hour,
+            price_wait_hour,
             updated_at: new Date().toISOString()
         })
         .eq('id', id)

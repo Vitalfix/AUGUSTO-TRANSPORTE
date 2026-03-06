@@ -76,9 +76,9 @@ export async function GET(request: Request) {
         startedAt: o.started_at,
         finishedAt: o.finished_at,
         activityLog: o.activity_log || [],
-        observations: o.observations,
         distanceKm: o.distance_km,
-        travelHours: o.travel_hours
+        travelHours: o.travel_hours,
+        purchaseOrder: o.purchase_order
     }));
 
     return NextResponse.json(orders);
@@ -89,34 +89,22 @@ export async function POST(request: Request) {
 
     // Get the last order to generate the next sequential ID
     // We check BOTH 'orders' and 'recycle_bin' to ensure IDs are NEVER reused
-    const { data: lastOrders } = await supabase
-        .from('orders')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(20);
-
-    const { data: lastRecycled } = await supabase
-        .from('recycle_bin')
-        .select('original_id')
-        .order('original_id', { ascending: false })
-        .limit(20);
+    const { data: ordersData } = await supabase.from('orders').select('id');
+    const { data: recycledData } = await supabase.from('recycle_bin').select('original_id');
 
     const allIds = [
-        ...(lastOrders?.map(o => o.id) || []),
-        ...(lastRecycled?.map(r => r.original_id) || [])
+        ...(ordersData?.map(o => o.id) || []),
+        ...(recycledData?.map(r => r.original_id) || [])
     ].filter(Boolean);
 
     let id = 'A0001';
     if (allIds.length > 0) {
-        // Encontrar el valor numérico más alto considerando CUALQUIER letra inicial
         let maxLetter = 'A';
         let maxNum = 0;
-        let foundAny = false;
 
         for (const currentKey of allIds) {
             const m = currentKey.match(/^([A-Z])(\d+)/);
             if (m) {
-                foundAny = true;
                 const l = m[1];
                 const n = parseInt(m[2], 10);
                 if (l > maxLetter || (l === maxLetter && n > maxNum)) {
@@ -126,14 +114,29 @@ export async function POST(request: Request) {
             }
         }
 
-        if (foundAny) {
-            if (maxNum < 9999) {
-                // Incrementar número manteniendo el padding estándar de 4
-                id = maxLetter + (maxNum + 1).toString().padStart(4, '0');
-            } else {
-                // Siguiente letra: A9999 -> B0001
-                const nextLetter = String.fromCharCode(maxLetter.charCodeAt(0) + 1);
-                id = nextLetter + '0001';
+        if (maxNum < 9999) {
+            id = maxLetter + (maxNum + 1).toString().padStart(4, '0');
+        } else {
+            const nextLetter = String.fromCharCode(maxLetter.charCodeAt(0) + 1);
+            id = nextLetter + '0001';
+        }
+    }
+
+    // Brute force safety check
+    let isDuplicate = true;
+    while (isDuplicate) {
+        if (!allIds.includes(id)) {
+            isDuplicate = false;
+        } else {
+            const m = id.match(/^([A-Z])(\d+)/);
+            if (m) {
+                const l = m[1];
+                const n = parseInt(m[2], 10);
+                if (n < 9999) {
+                    id = l + (n + 1).toString().padStart(4, '0');
+                } else {
+                    id = String.fromCharCode(l.charCodeAt(0) + 1) + '0001';
+                }
             }
         }
     }
@@ -142,52 +145,53 @@ export async function POST(request: Request) {
     let finalCustomerId = body.customerId;
 
     try {
-        if (body.customerId) {
-            const { data: existingCustomer } = await supabase
+        if (body.customerName) {
+            // Buscamos si ya existe un cliente con este nombre y teléfono exactos
+            // No bloqueamos por email o cuit único
+            const { data: existing } = await supabase
                 .from('customers')
-                .select('*')
-                .eq('id', body.customerId)
-                .single();
+                .select('id')
+                .eq('name', body.customerName)
+                .eq('phone', body.customerPhone)
+                .maybeSingle();
 
-            if (existingCustomer) {
-                const phoneHasChanged = body.customerPhone !== existingCustomer.phone;
-                const emailHasChanged = body.customerEmail !== (existingCustomer.email || '');
-                const cuitHasChanged = body.cuit !== (existingCustomer.cuit || '');
-                const taxStatusHasChanged = body.taxStatus !== (existingCustomer.tax_status || 'responsable_inscripto');
-
-                if (phoneHasChanged || emailHasChanged || cuitHasChanged || taxStatusHasChanged) {
-                    const log: any[] = [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }];
-                    log.push({
-                        type: 'CUSTOMER_UPDATE_PENDING',
-                        label: 'El cliente ha modificado sus datos. ¿Actualizar perfil?',
-                        time: new Date().toISOString(),
-                        newData: { phone: body.customerPhone, email: body.customerEmail, cuit: body.cuit, tax_status: body.taxStatus, id: body.customerId }
-                    });
-                    // Will update order log below after inserting it
-                    body.pendingCustomerUpdateLog = log;
-                }
-            }
-        } else if (body.customerName) {
-            // Usar upsert para que permita "repetir campos" como CUIT o Email
-            const { data: customerData } = await supabase
-                .from('customers')
-                .upsert({
-                    name: body.customerName,
+            if (existing) {
+                finalCustomerId = existing.id;
+                // Actualizamos datos si cambiaron (email, cuit, etc)
+                await supabase.from('customers').update({
                     email: body.customerEmail,
-                    phone: body.customerPhone,
                     cuit: body.cuit,
                     tax_status: body.taxStatus
-                }, { onConflict: 'name, phone' })
-                .select()
-                .single();
+                }).eq('id', finalCustomerId);
+            } else {
+                // Creamos nuevo
+                const { data: newCust, error: insErr } = await supabase
+                    .from('customers')
+                    .insert({
+                        name: body.customerName,
+                        email: body.customerEmail,
+                        phone: body.customerPhone,
+                        cuit: body.cuit,
+                        tax_status: body.taxStatus
+                    })
+                    .select()
+                    .single();
 
-            if (customerData) {
-                finalCustomerId = (customerData as any).id;
+                if (newCust) {
+                    finalCustomerId = (newCust as any).id;
+                } else if (insErr) {
+                    console.error("Customer creation failed, trying fallback search", insErr.message);
+                    // Si falló por alguna restricción de email/cuit repetido, buscamos CUALQUIER cliente con ese nombre
+                    const { data: fallback } = await supabase
+                        .from('customers')
+                        .select('id')
+                        .eq('name', body.customerName)
+                        .limit(1)
+                        .maybeSingle();
+                    if (fallback) finalCustomerId = fallback.id;
+                }
             }
         }
-        // Evitaremos que finalCustomerId no sea usado (para el lint), 
-        // aunque de momento no lo insertemos en orders si la columna no existe.
-        console.log("Customer handled:", finalCustomerId);
     } catch (e) {
         console.error("Error evaluating customer changes", e);
     }
@@ -198,6 +202,7 @@ export async function POST(request: Request) {
         .insert([
             {
                 id,
+                customer_id: finalCustomerId,
                 customer_name: body.customerName,
                 vehicle: body.vehicle,
                 destination: body.destination,
@@ -221,6 +226,7 @@ export async function POST(request: Request) {
                 observations: body.observations,
                 distance_km: body.distanceKm,
                 travel_hours: body.travelHours,
+                purchase_order: body.purchaseOrder,
                 activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
             }
         ])
@@ -253,6 +259,9 @@ export async function POST(request: Request) {
                     origin2_lng: body.origin2Lng,
                     dest_lat: body.destLat,
                     dest_lng: body.destLng,
+                    distance_km: body.distanceKm,
+                    travel_hours: body.travelHours,
+                    purchase_order: body.purchaseOrder,
                     // Store observations in activity_log as fallback
                     activity_log: [{
                         type: 'CREATED',
@@ -290,23 +299,25 @@ export async function POST(request: Request) {
             <p style="font-size: 1.1rem;"><strong>ID de Pedido:</strong> <span style="color: #2563eb;">${id}</span></p>
             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
             
-            <p><strong>Cliente:</strong> ${body.customerName} (CUIT: ${body.cuit || 'N/A'})</p>
-            <p><strong>Condición IVA:</strong> ${body.taxStatus || 'No especificado'}</p>
-            <p><strong>Contacto:</strong> ${body.customerPhone}</p>
-            <p><strong>Email:</strong> ${body.customerEmail || 'No provisto'}</p>
+            <p style="margin: 5px 0;"><strong>Cliente:</strong> ${body.customerName}</p>
+            <p style="margin: 5px 0;"><strong>CUIT:</strong> ${body.cuit || 'N/A'}</p>
+            <p style="margin: 5px 0;"><strong>Condición IVA:</strong> ${body.taxStatus || 'No especificado'}</p>
+            <p style="margin: 5px 0;"><strong>Contacto:</strong> ${body.customerPhone}</p>
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${body.customerEmail || 'No provisto'}</p>
+            ${body.purchaseOrder ? `<p style="margin: 5px 0;"><strong>Nº Orden de Compra:</strong> ${body.purchaseOrder}</p>` : ''}
             
             <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px;">
-                <p style="margin-top: 0;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
+                <p style="margin-top: 0; margin-bottom: 15px;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
                 
-                <p><strong>📍 Origen:</strong><br/>
-                    ${body.origin.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                <p style="margin-top: 0; margin-bottom: 15px;"><strong>📍 Origen:</strong><br/>
+                    ${body.origin.split(' | ').join('<br/>')}
                 </p>
                 
-                <p><strong>🏁 Destino:</strong><br/>
-                    ${body.destination.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                <p style="margin-top: 0; margin-bottom: 15px;"><strong>🏁 Destino:</strong><br/>
+                    ${body.destination.split(' | ').join('<br/>')}
                 </p>
 
-                <p><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
+                <p style="margin-bottom: 0;"><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
             </div>
 
             <p><strong>📝 Observaciones:</strong><br/>
@@ -318,11 +329,11 @@ export async function POST(request: Request) {
             </div>
 
             <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                <p style="font-size: 0.9rem; color: #64748b;"><strong>Acción necesaria:</strong> El presupuesto será evaluado manualmente. Revisar detalles de la carga, ajustar el precio si es necesario y contactar al cliente para confirmar el servicio.</p>
+                <p style="font-size: 0.9rem; color: #64748b;">Este pedido requiere revisión manual para confirmar el presupuesto final.</p>
             </div>
 
             <div style="margin-top: 20px;">
-                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">SEGUIMIENTO</a>
+                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">VER EN PANEL</a>
             </div>
         </div>
       `
@@ -338,33 +349,39 @@ export async function POST(request: Request) {
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                         <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 30px; text-align: center; color: white;">
+                             <img src="https://transport-app-lilac-beta.vercel.app/logo.jpg" alt="EL CASAL" style="max-width: 150px; border-radius: 8px; margin-bottom: 10px; background: white; padding: 5px;">
                             <h1 style="margin: 0; font-size: 24px;">EL CASAL</h1>
                             <p style="margin: 10px 0 0; opacity: 0.9;">Tu solicitud ha sido recibida</p>
                         </div>
                         <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
-                            <h2 style="color: #3b82f6; margin-top: 0;">¡Gracias por tu solicitud!</h2>
+                            <h2 style="color: #3b82f6; margin-top: 0;">¡Gracias por contactarnos!</h2>
                             <p>Hola <strong>${body.customerName}</strong>,</p>
-                            <p>Hemos recibido tu pedido de presupuesto estimativo con el ID: <strong><span style="color: #2563eb;">${id}</span></strong>.</p>
+                            <p>Hemos recibido correctamente tu pedido de presupuesto con el ID: <strong><span style="color: #2563eb;">${id}</span></strong>.</p>
+                            ${body.purchaseOrder ? `<p><strong>Nº Orden de Compra:</strong> ${body.purchaseOrder}</p>` : ''}
                             
-                            <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px; font-size: 14px;">
-                                <p style="margin-top: 0;"><strong>📍 Origen:</strong><br/>
-                                    ${body.origin.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                            <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                                <p style="margin-top: 0; margin-bottom: 10px;"><strong>📍 Origen:</strong><br/>
+                                    ${body.origin.split(' | ').join('<br/>')}
                                 </p>
                                 <p style="margin-bottom: 0;"><strong>🏁 Destino:</strong><br/>
-                                    ${body.destination.split(' | ').map((dir: string) => `• ${dir}`).join('<br/>')}
+                                    ${body.destination.split(' | ').join('<br/>')}
                                 </p>
                             </div>
 
-                            <p><strong>Aviso importante:</strong> El presupuesto de <strong style="color: #10b981;">$${body.price.toLocaleString('es-AR')}</strong> es <strong>estimativo</strong>. Nuestro equipo evaluará los detalles manualmente y te contactará para confirmar el valor definitivo.</p>
+                            <p style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; color: #92400e;">
+                                <strong>Nota Importante:</strong> El presupuesto de <strong style="color: #059669;">$${body.price.toLocaleString('es-AR')}</strong> es de carácter <strong>estimativo</strong>. Nuestro equipo evaluará los detalles manualmente y te contactará a la brevedad para confirmar el valor definitivo y la disponibilidad.
+                            </p>
                             
                             <div style="margin: 30px 0; text-align: center;">
-                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés seguir el estado de tu pedido en tiempo real aquí:</p>
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés consultar el estado de tu pedido en cualquier momento:</p>
                                 <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">SEGUIMIENTO</a>
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
-                            <p>Ante cualquier duda, estamos a tu disposición por WhatsApp.</p>
-                            <p>Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
+                            <p style="font-size: 0.85rem; color: #94a3b8; text-align: center;">
+                                Ni el prestador ni los desarrolladores de la plataforma se responsabilizan por errores tipográficos o fallos técnicos temporales. El presupuesto final será el acordado manualmente con la empresa.
+                            </p>
+                            <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
                     </div>
                 `
@@ -407,7 +424,7 @@ export async function PATCH(request: Request) {
         id, status, lat, lng, price, driverName, driverPhone, licensePlate,
         waitingMinutes, driverId, origin, destination, vehicle, travelDate,
         travelTime, customerName, customerEmail, customerPhone, observations,
-        distanceKm, travelHours, cuit, taxStatus
+        distanceKm, travelHours, cuit, taxStatus, purchaseOrder
     } = body;
 
     const updateData: Record<string, any> = {};
@@ -433,6 +450,7 @@ export async function PATCH(request: Request) {
     if (travelHours !== undefined) updateData.travel_hours = travelHours;
     if (cuit !== undefined) updateData.cuit = cuit;
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;
+    if (purchaseOrder !== undefined) updateData.purchase_order = purchaseOrder;
 
     // Fetch current log to append
     const { data: currentOrder } = await supabase.from('orders').select('activity_log').eq('id', id).single();

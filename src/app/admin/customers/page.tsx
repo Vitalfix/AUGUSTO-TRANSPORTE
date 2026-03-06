@@ -10,6 +10,16 @@ interface Customer {
     phone: string;
     cuit: string;
     tax_status: string;
+    has_special_pricing: boolean;
+    special_prices: any;
+}
+
+interface VehiclePricing {
+    id: string;
+    name: string;
+    priceKm: number;
+    priceHour: number;
+    priceWaitHour?: number;
 }
 
 export default function CustomerManagementPage() {
@@ -19,13 +29,17 @@ export default function CustomerManagementPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [saving, setSaving] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [vehicles, setVehicles] = useState<VehiclePricing[]>([]);
+    const [showSpecialPricesModal, setShowSpecialPricesModal] = useState(false);
 
     const [form, setForm] = useState({
         name: '',
         email: '',
         phone: '',
         cuit: '',
-        taxStatus: 'responsable_inscripto'
+        taxStatus: 'responsable_inscripto',
+        hasSpecialPricing: false,
+        specialPrices: {} as any
     });
 
     useEffect(() => {
@@ -44,7 +58,18 @@ export default function CustomerManagementPage() {
         } else {
             setLoading(false);
         }
+        fetchVehicles();
     }, []);
+
+    const fetchVehicles = async () => {
+        try {
+            const res = await fetch('/api/pricing');
+            const data = await res.json();
+            if (res.ok) setVehicles(data);
+        } catch (e) {
+            console.error("Error fetching vehicles:", e);
+        }
+    };
 
     useEffect(() => {
         if (isAuthenticated) fetchCustomers();
@@ -86,7 +111,7 @@ export default function CustomerManagementPage() {
     };
 
     const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setSaving(true);
         try {
             const method = editingCustomer ? 'PATCH' : 'POST';
@@ -102,7 +127,15 @@ export default function CustomerManagementPage() {
                 })
             });
             if (res.ok) {
-                setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto' });
+                setForm({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    cuit: '',
+                    taxStatus: 'responsable_inscripto',
+                    hasSpecialPricing: false,
+                    specialPrices: {}
+                });
                 setEditingCustomer(null);
                 fetchCustomers();
             } else {
@@ -132,7 +165,7 @@ export default function CustomerManagementPage() {
                 // Limpiar estado de edición si el borrado era el que se estaba editando
                 if (editingCustomer?.id === id) {
                     setEditingCustomer(null);
-                    setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto' });
+                    setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto', hasSpecialPricing: false, specialPrices: {} });
                 }
                 fetchCustomers();
             }
@@ -149,7 +182,9 @@ export default function CustomerManagementPage() {
             email: c.email || '',
             phone: c.phone || '',
             cuit: c.cuit || '',
-            taxStatus: c.tax_status || 'responsable_inscripto'
+            taxStatus: c.tax_status || 'responsable_inscripto',
+            hasSpecialPricing: c.has_special_pricing || false,
+            specialPrices: c.special_prices || {}
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -158,6 +193,20 @@ export default function CustomerManagementPage() {
         sessionStorage.removeItem('admin_password');
         setIsAuthenticated(false);
         setPassword('');
+    };
+
+    const updateSpecialPrice = (vehicleId: string, field: string, value: string) => {
+        const numVal = parseFloat(value) || 0;
+        setForm(prev => ({
+            ...prev,
+            specialPrices: {
+                ...prev.specialPrices,
+                [vehicleId]: {
+                    ...(prev.specialPrices[vehicleId] || {}),
+                    [field]: numVal
+                }
+            }
+        }));
     };
 
     if (!isAuthenticated) {
@@ -195,6 +244,70 @@ export default function CustomerManagementPage() {
 
     return (
         <div className="page-container">
+            {showSpecialPricesModal && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.8)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px'
+                }}>
+                    <div className="glass-panel" style={{ width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', padding: '30px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+                            <h2 className="text-gradient">Precios Especiales: {form.name || 'Cliente'}</h2>
+                            <button onClick={() => setShowSpecialPricesModal(false)} className="glass-button" style={{ padding: '5px 15px', background: 'rgba(255,255,255,0.05)', border: 'none' }}>✕</button>
+                        </div>
+
+                        <div style={{ display: 'grid', gap: '15px' }}>
+                            {vehicles.map(v => (
+                                <div key={v.id} className="glass-panel" style={{ padding: '15px', background: 'rgba(255,255,255,0.02)' }}>
+                                    <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid var(--glass-border)', paddingBottom: '5px' }}>{v.name}</h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '15px' }}>
+                                        <div>
+                                            <label className="glass-label" style={{ fontSize: '0.75rem' }}>Precio KM</label>
+                                            <input
+                                                type="number"
+                                                className="glass-input"
+                                                value={form.specialPrices[v.id]?.priceKm ?? v.priceKm}
+                                                onChange={e => updateSpecialPrice(v.id, 'priceKm', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="glass-label" style={{ fontSize: '0.75rem' }}>Precio Hora</label>
+                                            <input
+                                                type="number"
+                                                className="glass-input"
+                                                value={form.specialPrices[v.id]?.priceHour ?? v.priceHour}
+                                                onChange={e => updateSpecialPrice(v.id, 'priceHour', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="glass-label" style={{ fontSize: '0.75rem' }}>Precio Espera</label>
+                                            <input
+                                                type="number"
+                                                className="glass-input"
+                                                value={form.specialPrices[v.id]?.priceWaitHour ?? (v.priceWaitHour || 0)}
+                                                onChange={e => updateSpecialPrice(v.id, 'priceWaitHour', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ marginTop: '30px', display: 'flex', gap: '15px' }}>
+                            <button onClick={() => setShowSpecialPricesModal(false)} className="glass-button" style={{ flex: 1, padding: '15px' }}>Listo</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-40 flex-wrap gap-20">
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Base de Clientes</h1>
@@ -288,13 +401,50 @@ export default function CustomerManagementPage() {
                                 <option value="exento">Exento</option>
                             </select>
                         </div>
+                        <div className="flex items-center gap-10 mt-10">
+                            <label className="glass-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={form.hasSpecialPricing}
+                                    onChange={(e) => setForm({ ...form, hasSpecialPricing: e.target.checked })}
+                                    style={{ width: '18px', height: '18px' }}
+                                />
+                                Tiene Precio Especial
+                            </label>
+                            {form.hasSpecialPricing && (
+                                <button
+                                    type="button"
+                                    className="glass-button"
+                                    style={{ padding: '5px 15px', background: 'var(--accent-gradient)', fontSize: '0.8rem' }}
+                                    onClick={() => setShowSpecialPricesModal(true)}
+                                >
+                                    ⚙️ Configurar Precios
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="flex gap-10">
                         <button type="submit" className="glass-button" style={{ flex: 1, padding: '15px' }} disabled={saving}>
                             {saving ? 'Guardando...' : editingCustomer ? 'Actualizar Cliente' : 'Crear Cliente'}
                         </button>
                         {editingCustomer && (
-                            <button type="button" className="glass-button" style={{ background: 'rgba(255,255,255,0.05)', border: 'none' }} onClick={() => { setEditingCustomer(null); setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto' }); }}>
+                            <button
+                                type="button"
+                                className="glass-button"
+                                style={{ background: 'rgba(255,255,255,0.05)', border: 'none' }}
+                                onClick={() => {
+                                    setEditingCustomer(null);
+                                    setForm({
+                                        name: '',
+                                        email: '',
+                                        phone: '',
+                                        cuit: '',
+                                        taxStatus: 'responsable_inscripto',
+                                        hasSpecialPricing: false,
+                                        specialPrices: {}
+                                    });
+                                }}
+                            >
                                 Cancelar
                             </button>
                         )}
@@ -317,8 +467,11 @@ export default function CustomerManagementPage() {
                             {customers.map(c => (
                                 <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                     <td style={{ padding: '15px' }}>
-                                        <div style={{ fontWeight: 'bold' }}>{c.name}</div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{c.tax_status.replace('_', ' ')}</div>
+                                        <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            {c.name}
+                                            {c.has_special_pricing && <span title="Precio Especial" style={{ fontSize: '0.9rem' }}>⭐</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{c.tax_status?.replace('_', ' ') || 'Sin clasificar'}</div>
                                     </td>
                                     <td style={{ padding: '15px' }}>
                                         <div style={{ fontSize: '0.9rem' }}>{c.phone}</div>
@@ -342,6 +495,6 @@ export default function CustomerManagementPage() {
                     </table>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

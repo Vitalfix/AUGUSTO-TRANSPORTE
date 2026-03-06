@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import AdminMenu from '@/components/AdminMenu';
 
 export interface Vehicle {
     id: string;
     name: string;
     description: string;
+    price_km: number;
+    price_hour: number;
+    price_wait_hour: number;
 }
 
 export default function VehiclesPage() {
@@ -15,7 +18,13 @@ export default function VehiclesPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    const [form, setForm] = useState({ name: '', description: '' });
+    const [form, setForm] = useState({
+        name: '',
+        description: '',
+        price_km: 0,
+        price_hour: 0,
+        price_wait_hour: 0
+    });
     const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -97,7 +106,7 @@ export default function VehiclesPage() {
             if (res.ok) {
                 fetchVehicles();
                 setEditingVehicle(null);
-                setForm({ name: '', description: '' });
+                setForm({ name: '', description: '', price_km: 0, price_hour: 0, price_wait_hour: 0 });
             } else {
                 const data = await res.json();
                 alert(`Error al guardar: ${data.error}`);
@@ -133,7 +142,13 @@ export default function VehiclesPage() {
 
     const handleEditClick = (v: Vehicle) => {
         setEditingVehicle(v);
-        setForm({ name: v.name, description: v.description });
+        setForm({
+            name: v.name,
+            description: v.description,
+            price_km: v.price_km || 0,
+            price_hour: v.price_hour || 0,
+            price_wait_hour: v.price_wait_hour || 0
+        });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -170,52 +185,15 @@ export default function VehiclesPage() {
 
     return (
         <div className="page-container" style={{ padding: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'nowrap', gap: '20px' }}>
                 <div>
-                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Gestión de Vehículos</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Modificá los nombres y la capacidad de tu flota</p>
+                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Gestión de Flota</h1>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Configurá vehículos y sus tarifas base</p>
                 </div>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                    gap: '10px',
-                    background: 'rgba(255,255,255,0.02)',
-                    padding: '10px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--glass-border)',
-                    width: '100%',
-                    maxWidth: '800px'
-                }}>
-                    <button onClick={() => window.location.reload()} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
-                        🔄 Actualizar
-                    </button>
-                    <Link href="/admin" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            📦 Pedidos
-                        </button>
-                    </Link>
-                    <Link href="/admin/customers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', color: '#3b82f6', width: '100%' }}>
-                            👥 Clientes
-                        </button>
-                    </Link>
-                    <Link href="/admin/drivers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
-                            👷 Choferes
-                        </button>
-                    </Link>
-                    <Link href="/admin/config" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
-                            ⚙️ Tarifas
-                        </button>
-                    </Link>
-                    <button onClick={handleLogout} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
-                        🚪 Salir
-                    </button>
-                </div>
+                <AdminMenu password={password} onLogout={handleLogout} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 
                 {/* Formulario */}
                 <div className="glass-panel" style={{ padding: '20px' }}>
@@ -247,9 +225,43 @@ export default function VehiclesPage() {
                             />
                         </div>
 
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div>
+                                <label className="glass-label">Precio x KM ($)</label>
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    value={form.price_km}
+                                    onChange={e => setForm({ ...form, price_km: parseFloat(e.target.value) || 0 })}
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="glass-label">Precio x Hora ($)</label>
+                                <input
+                                    type="number"
+                                    className="glass-input"
+                                    value={form.price_hour}
+                                    onChange={e => setForm({ ...form, price_hour: parseFloat(e.target.value) || 0 })}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="glass-label">Precio Hora de Espera ($)</label>
+                            <input
+                                type="number"
+                                className="glass-input"
+                                value={form.price_wait_hour}
+                                onChange={e => setForm({ ...form, price_wait_hour: parseFloat(e.target.value) || 0 })}
+                                required
+                            />
+                        </div>
+
                         <div className="flex gap-10 mt-10">
                             {editingVehicle && (
-                                <button type="button" className="glass-button" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => { setEditingVehicle(null); setForm({ name: '', description: '' }); }}>
+                                <button type="button" className="glass-button" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => { setEditingVehicle(null); setForm({ name: '', description: '', price_km: 0, price_hour: 0, price_wait_hour: 0 }); }}>
                                     Cancelar
                                 </button>
                             )}
@@ -258,12 +270,6 @@ export default function VehiclesPage() {
                             </button>
                         </div>
                     </form>
-
-                    <div style={{ background: 'rgba(255,255,255,0.02)', padding: '15px', borderRadius: '10px', marginTop: '20px' }}>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            ℹ️ Nota: Para que el nuevo vehículo aparezca en la cotización, asegurate de configurarle su precio por kilómetro y hora en la sección de <strong><Link href="/admin/config" style={{ color: 'var(--accent-color)', textDecoration: 'underline' }}>Tarifas</Link></strong> una vez agregado.
-                        </p>
-                    </div>
                 </div>
 
                 {/* Lista */}
@@ -276,6 +282,17 @@ export default function VehiclesPage() {
                                 <div>
                                     <h3 style={{ fontSize: '1.1rem', margin: 0, color: 'white' }}>{v.name}</h3>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '5px' }}>{v.description}</div>
+                                    <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-light)' }}>
+                                            KM: <strong>${v.price_km}</strong>
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-light)' }}>
+                                            Hora: <strong>${v.price_hour}</strong>
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-light)' }}>
+                                            Espera: <strong>${v.price_wait_hour}</strong>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex gap-5">
                                     <button

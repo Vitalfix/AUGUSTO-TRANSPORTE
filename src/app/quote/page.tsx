@@ -148,6 +148,7 @@ export default function QuotePageV2() {
     const [customerPhone2, setCustomerPhone2] = useState('');
     const [taxStatus, setTaxStatus] = useState('responsable_inscripto');
     const [observations, setObservations] = useState('');
+    const [purchaseOrder, setPurchaseOrder] = useState('');
 
     // Real distance and route logic
     const [distanceKm, setDistanceKm] = useState(0);
@@ -168,11 +169,18 @@ export default function QuotePageV2() {
                     setVehiclesData(pricesData);
                 }
 
-                // Fetch customers ONLY to show names (public IDs, no sensitive data leakage here)
                 const custRes = await fetch('/api/customers/public');
                 if (custRes.ok) {
                     const custData = await custRes.json();
-                    setCustomers(custData);
+                    // Ordenar: EL CASAL primero, luego el resto
+                    const sorted = [...custData].sort((a, b) => {
+                        const aCasal = a.name.toUpperCase().includes('EL CASAL');
+                        const bCasal = b.name.toUpperCase().includes('EL CASAL');
+                        if (aCasal && !bCasal) return -1;
+                        if (!aCasal && bCasal) return 1;
+                        return a.name.localeCompare(b.name);
+                    });
+                    setCustomers(sorted);
                 }
             } catch (e) {
                 console.error("Error fetching initial data", e);
@@ -281,11 +289,23 @@ export default function QuotePageV2() {
 
     const calculateTotal = () => {
         let total = 0;
+        const selectedCustomer = customers.find(c => c.id === selectedCustomerId);
+        const hasSpecial = selectedCustomer?.has_special_pricing && selectedCustomer?.special_prices;
+
         selectedVehicles.forEach(sv => {
             const vData = vehiclesData.find(v => v.id === sv.id);
             if (vData) {
-                if (distanceKm <= 100) total += vData.priceHour * travelHours * sv.qty;
-                else total += vData.priceKm * distanceKm * sv.qty;
+                let pKm = vData.priceKm;
+                let pHour = vData.priceHour;
+
+                if (hasSpecial && selectedCustomer.special_prices[sv.id]) {
+                    const sp = selectedCustomer.special_prices[sv.id];
+                    if (sp.priceKm > 0) pKm = sp.priceKm;
+                    if (sp.priceHour > 0) pHour = sp.priceHour;
+                }
+
+                if (distanceKm <= 100) total += pHour * travelHours * sv.qty;
+                else total += pKm * distanceKm * sv.qty;
             }
         });
         return total;
@@ -325,7 +345,8 @@ export default function QuotePageV2() {
                     destLng: getCoords(destType, destCoords).lng,
                     observations,
                     distanceKm,
-                    travelHours
+                    travelHours,
+                    purchaseOrder
                 }),
             });
 
@@ -476,6 +497,34 @@ export default function QuotePageV2() {
                             )}
                             {originType === 'multi' && (
                                 <div className="flex-col gap-10 mt-10">
+                                    {/* Acceso rápido a guardados */}
+                                    <div className="flex gap-10 overflow-x-auto pb-5 no-scrollbar" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
+                                        {dbLocations.map(loc => (
+                                            <button
+                                                key={loc.id}
+                                                type="button"
+                                                className="filter-btn"
+                                                style={{ whiteSpace: 'nowrap', fontSize: '0.7rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                                onClick={() => {
+                                                    // Buscar un slot vacío o el último
+                                                    const emptyIdx = customOrigins.findIndex(o => !o || o.trim() === '');
+                                                    const targetIdx = emptyIdx !== -1 ? emptyIdx : customOrigins.length;
+
+                                                    const newO = [...customOrigins];
+                                                    const newC = [...originCoordsList];
+
+                                                    newO[targetIdx] = loc.name;
+                                                    newC[targetIdx] = { lat: loc.lat, lng: loc.lng };
+
+                                                    setCustomOrigins(newO);
+                                                    setOriginCoordsList(newC);
+                                                }}
+                                            >
+                                                <span>{loc.icon || '📍'}</span> {loc.name}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     {customOrigins.map((addr, idx) => (
                                         <div key={idx} className="flex gap-10 items-center">
                                             <div className="flex-col justify-center gap-5" style={{ minWidth: '35px', opacity: 0.7 }}>
@@ -591,6 +640,33 @@ export default function QuotePageV2() {
                             )}
                             {destType === 'multi' && (
                                 <div className="flex-col gap-10 mt-10">
+                                    {/* Acceso rápido a guardados */}
+                                    <div className="flex gap-10 overflow-x-auto pb-5 no-scrollbar" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: '10px' }}>
+                                        {dbLocations.map(loc => (
+                                            <button
+                                                key={loc.id}
+                                                type="button"
+                                                className="filter-btn"
+                                                style={{ whiteSpace: 'nowrap', fontSize: '0.7rem', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                                onClick={() => {
+                                                    const emptyIdx = customDestinations.findIndex(o => !o || o.trim() === '');
+                                                    const targetIdx = emptyIdx !== -1 ? emptyIdx : customDestinations.length;
+
+                                                    const newD = [...customDestinations];
+                                                    const newC = [...destCoordsList];
+
+                                                    newD[targetIdx] = loc.name;
+                                                    newC[targetIdx] = { lat: loc.lat, lng: loc.lng };
+
+                                                    setCustomDestinations(newD);
+                                                    setDestCoordsList(newC);
+                                                }}
+                                            >
+                                                <span>{loc.icon || '📍'}</span> {loc.name}
+                                            </button>
+                                        ))}
+                                    </div>
+
                                     {customDestinations.map((addr, idx) => (
                                         <div key={idx} className="flex gap-10 items-center">
                                             <div className="flex-col justify-center gap-5" style={{ minWidth: '35px', opacity: 0.7 }}>
@@ -831,12 +907,18 @@ export default function QuotePageV2() {
 
                         <div className="flex-col gap-20">
                             <div style={{ flex: 1 }}>
-                                <label htmlFor="cuit" className="glass-label">CUIT / CUIL</label>
-                                <input id="cuit" type="text" className="glass-input" value={cuit} onChange={e => setCuit(e.target.value)} required />
+                                <label htmlFor="po" className="glass-label">Nº Orden de Compra</label>
+                                <input id="po" type="text" className="glass-input" value={purchaseOrder} onChange={e => setPurchaseOrder(e.target.value)} placeholder="Opcional" />
                             </div>
-                            <div style={{ flex: 1 }}>
-                                <label htmlFor="email" className="glass-label">Email</label>
-                                <input id="email" type="email" className="glass-input" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required />
+                            <div className="flex gap-20">
+                                <div style={{ flex: 1 }}>
+                                    <label htmlFor="cuit" className="glass-label">CUIT / CUIL</label>
+                                    <input id="cuit" type="text" className="glass-input" value={cuit} onChange={e => setCuit(e.target.value)} required />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label htmlFor="email" className="glass-label">Email</label>
+                                    <input id="email" type="email" className="glass-input" value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} required />
+                                </div>
                             </div>
                         </div>
 
@@ -904,8 +986,13 @@ export default function QuotePageV2() {
 
                         <div className="flex gap-20 mt-10">
                             <button type="button" className="filter-btn" style={{ flex: 1 }} onClick={handlePrev}>← Volver</button>
-                            <button type="submit" className="glass-button" style={{ flex: 2 }} disabled={loading}>{loading ? 'Enviando...' : 'Generar Pedido'}</button>
+                            <button type="submit" className="glass-button" style={{ flex: 2, background: 'var(--accent-gradient)', padding: '15px', fontSize: '1.2rem' }} disabled={loading}>
+                                {loading ? 'Procesando...' : '📝 GENERAR PEDIDO'}
+                            </button>
                         </div>
+                        <p style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '10px', opacity: 0.7, lineHeight: '1.4' }}>
+                            <strong>Nota:</strong> Este presupuesto es estimativo y está sujeto a confirmación manual de disponibilidad y tarifas finales. No constituye un compromiso contractual.
+                        </p>
                     </form>
                 )}
             </div>

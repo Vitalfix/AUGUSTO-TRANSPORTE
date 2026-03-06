@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import InstallPrompt from '@/components/InstallPrompt';
 
 export default function DriverLoginPage() {
     const [drivers, setDrivers] = useState<any[]>([]);
@@ -101,6 +102,7 @@ export default function DriverLoginPage() {
                     </Link>
                 </form>
             </div>
+            <InstallPrompt />
         </div>
     );
 }

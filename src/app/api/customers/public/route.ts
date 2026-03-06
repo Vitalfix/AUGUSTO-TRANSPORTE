@@ -6,7 +6,7 @@ export async function GET() {
         // Fetch only basic info for the public dropdown
         const { data, error } = await supabase
             .from('customers')
-            .select('id, name, email, phone, cuit, tax_status')
+            .select('id, name, email, phone, cuit, tax_status, has_special_pricing, special_prices')
             .order('name', { ascending: true });
 
         if (error) throw error;

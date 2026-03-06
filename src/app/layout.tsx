@@ -3,6 +3,7 @@ import "./globals.css";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import RefreshButton from "@/components/RefreshButton";
 import ScrollToTop from "@/components/ScrollToTop";
+import DynamicManifest from "@/components/DynamicManifest";
 
 export const metadata: Metadata = {
   title: "EL CASAL - Logística y Fletes",
@@ -11,12 +12,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: { // Changed from Readonly<{ ... }>
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="es">
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" /> {/* Added viewport meta tag */}
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossOrigin="" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#3b82f6" />
@@ -35,6 +37,7 @@ export default function RootLayout({
         }} />
       </head>
       <body>
+        <DynamicManifest />
         <ScrollToTop />
         <ThemeSwitcher />
         <RefreshButton />
