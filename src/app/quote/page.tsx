@@ -256,6 +256,16 @@ export default function QuotePageV2() {
         });
     };
 
+    const moveItem = (arr: any[], setArr: (a: any[]) => void, index: number, direction: 'up' | 'down') => {
+        const newArr = [...arr];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= newArr.length) return;
+        const temp = newArr[index];
+        newArr[index] = newArr[targetIndex];
+        newArr[targetIndex] = temp;
+        setArr(newArr);
+    };
+
     const calculateTotal = () => {
         let total = 0;
         selectedVehicles.forEach(sv => {
@@ -395,8 +405,22 @@ export default function QuotePageV2() {
                                         type="button"
                                         className={`toggle-btn ${originType === l.id ? 'active' : ''}`}
                                         onClick={() => {
+                                            const prevType = originType;
                                             setOriginType(l.id);
                                             if (l.id === 'custom' && customOrigins.length === 0) setCustomOrigins(['']);
+                                            if (l.id === 'multi') {
+                                                if (prevType.startsWith('db_')) {
+                                                    const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
+                                                    if (loc) {
+                                                        setCustomOrigins([loc.name, '']);
+                                                        setOriginCoords({ lat: loc.lat, lng: loc.lng });
+                                                    }
+                                                } else if (customOrigins.length === 0) {
+                                                    setCustomOrigins(['', '']);
+                                                } else if (customOrigins.length === 1) {
+                                                    setCustomOrigins([...customOrigins, '']);
+                                                }
+                                            }
                                         }}
                                         style={{ flex: '1 1 45%' }}
                                     >
@@ -421,6 +445,10 @@ export default function QuotePageV2() {
                                 <div className="flex-col gap-10 mt-10">
                                     {customOrigins.map((addr, idx) => (
                                         <div key={idx} className="flex gap-10">
+                                            <div className="flex-col gap-5 justify-center" style={{ minWidth: '30px' }}>
+                                                {idx > 0 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customOrigins, setCustomOrigins, idx, 'up')}>▲</button>}
+                                                {idx < customOrigins.length - 1 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customOrigins, setCustomOrigins, idx, 'down')}>▼</button>}
+                                            </div>
                                             <AddressAutocomplete
                                                 placeholder={`Dirección ${idx + 1}`}
                                                 value={addr}
@@ -459,7 +487,24 @@ export default function QuotePageV2() {
                                         key={l.id}
                                         type="button"
                                         className={`toggle-btn ${destType === l.id ? 'active' : ''}`}
-                                        onClick={() => setDestType(l.id)}
+                                        onClick={() => {
+                                            const prevType = destType;
+                                            setDestType(l.id);
+                                            if (l.id === 'custom' && customDestinations.length === 0) setCustomDestinations(['']);
+                                            if (l.id === 'multi') {
+                                                if (prevType.startsWith('db_')) {
+                                                    const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
+                                                    if (loc) {
+                                                        setCustomDestinations([loc.name, '']);
+                                                        setDestCoords({ lat: loc.lat, lng: loc.lng });
+                                                    }
+                                                } else if (customDestinations.length === 0) {
+                                                    setCustomDestinations(['', '']);
+                                                } else if (customDestinations.length === 1) {
+                                                    setCustomDestinations([...customDestinations, '']);
+                                                }
+                                            }
+                                        }}
                                         style={{ flex: '1 1 45%' }}
                                     >
                                         <span>{l.icon}</span>
@@ -483,6 +528,10 @@ export default function QuotePageV2() {
                                 <div className="flex-col gap-10 mt-10">
                                     {customDestinations.map((addr, idx) => (
                                         <div key={idx} className="flex gap-10">
+                                            <div className="flex-col gap-5 justify-center" style={{ minWidth: '30px' }}>
+                                                {idx > 0 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customDestinations, setCustomDestinations, idx, 'up')}>▲</button>}
+                                                {idx < customDestinations.length - 1 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customDestinations, setCustomDestinations, idx, 'down')}>▼</button>}
+                                            </div>
                                             <AddressAutocomplete
                                                 placeholder={`Dirección ${idx + 1}`}
                                                 value={addr}
