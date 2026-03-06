@@ -89,42 +89,56 @@ export async function POST(request: Request) {
 
     // Get the last order to generate the next sequential ID
     // We check BOTH 'orders' and 'recycle_bin' to ensure IDs are NEVER reused
-    const { data: lastOrder } = await supabase
+    const { data: lastOrders } = await supabase
         .from('orders')
         .select('id')
         .order('id', { ascending: false })
-        .limit(1);
+        .limit(20);
 
     const { data: lastRecycled } = await supabase
         .from('recycle_bin')
         .select('original_id')
         .order('original_id', { ascending: false })
-        .limit(1);
+        .limit(20);
 
-    const oId = lastOrder?.[0]?.id || '';
-    const rId = lastRecycled?.[0]?.original_id || '';
+    const allIds = [
+        ...(lastOrders?.map(o => o.id) || []),
+        ...(lastRecycled?.map(r => r.original_id) || [])
+    ].filter(Boolean);
 
-    // Choose the lexicographically largest ID between active and deleted records
-    const lastId = oId > rId ? oId : rId;
-
-    // Default starting ID
     let id = 'A0001';
+    if (allIds.length > 0) {
+        // Encontrar el valor numérico más alto por letra, ignorando padding o sufijos
+        let maxLetter = 'A';
+        let maxNum = 0;
+        let foundAny = false;
 
-    // If the last ID follows the pattern [Letter][4 Numbers], calculate the next one
-    const idPattern = /^[A-Z](\d{4})$/;
-    const match = lastId.match(idPattern);
+        for (const currentId of allIds) {
+            const m = currentId.match(/^([A-Z])(\d+)/);
+            if (m) {
+                foundAny = true;
+                const l = m[1];
+                const n = parseInt(m[2], 10);
+                if (l > maxLetter || (l === maxLetter && n > maxNum)) {
+                    maxLetter = l;
+                    maxNum = n;
+                }
+            }
+        }
 
-    if (match) {
-        const letter = lastId.charAt(0);
-        const number = parseInt(match[1], 10);
-
-        if (number < 9999) {
-            // Increment number: A0001 -> A0002
-            id = letter + (number + 1).toString().padStart(4, '0');
+        if (foundAny) {
+            if (maxNum < 9999) {
+                // Incrementar número manteniendo el padding estándar de 4
+                id = maxLetter + (maxNum + 1).toString().padStart(4, '0');
+            } else {
+                // Siguiente letra
+                const nextLetter = String.fromCharCode(maxLetter.charCodeAt(0) + 1);
+                id = nextLetter + '0001';
+            }
         } else {
-            // Increment letter and reset number: A9999 -> B0000
-            const nextLetter = String.fromCharCode(letter.charCodeAt(0) + 1);
-            id = nextLetter + '0000';
+            // Si nada tiene formato A123, usar el mayor lexicográfico + 1 asumiendo A0001
+            const last = allIds.sort().reverse()[0];
+            id = last.startsWith('Z') ? 'ZA0001' : 'A0001'; // Fallback extremo
         }
     }
 
