@@ -29,4 +29,5 @@ Esta skill define los estándares técnicos y visuales para el proyecto Augusto 
 
 1. Antes de crear cualquier UI, verificar el cumplimiento de las variables CSS globales.
 2. Al modificar APIs, asegurar la validación de la sesión de administrador mediante encabezados seguros.
-3. Mantener siempre actualizado el `plan_maestro_augusto.md`.
+3. **Verificación de Base de Datos**: Antes de subir cambios que involucren nuevas columnas o tablas (como `customer_id` en `orders`), verificar siempre que el esquema de la base de datos en Supabase esté sincronizado con el código propuesto para evitar errores de ejecución en producción.
+4. Mantener siempre actualizado el `plan_maestro_augusto.md`.
