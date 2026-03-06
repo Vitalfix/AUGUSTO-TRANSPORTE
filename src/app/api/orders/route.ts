@@ -198,7 +198,6 @@ export async function POST(request: Request) {
             {
                 id,
                 customer_name: body.customerName,
-                customer_id: finalCustomerId,
                 vehicle: body.vehicle,
                 destination: body.destination,
                 price: body.price,

@@ -772,14 +772,24 @@ export default function QuotePageV2() {
                                 <div>
                                     <div className="glass-label" style={{ fontSize: '0.7rem' }}>RUTA Y CRONOLOGÍA</div>
                                     <div style={{ fontSize: '0.85rem' }}>
-                                        <strong>Origen:</strong> {originType.startsWith('db_')
-                                            ? dbLocations.find(l => `db_${l.id}` === originType)?.name
-                                            : customOrigins.filter(o => o.trim()).join(' | ')}
+                                        <strong>Origen:</strong>
+                                        <div style={{ marginLeft: '10px' }}>
+                                            {(originType.startsWith('db_')
+                                                ? [dbLocations.find(l => `db_${l.id}` === originType)?.name]
+                                                : customOrigins.filter(o => o.trim())).map((o, idx) => (
+                                                    <div key={idx} style={{ marginTop: '2px' }}>• {o}</div>
+                                                ))}
+                                        </div>
                                     </div>
-                                    <div style={{ fontSize: '0.85rem', marginTop: '4px' }}>
-                                        <strong>Destino:</strong> {destType.startsWith('db_')
-                                            ? dbLocations.find(l => `db_${l.id}` === destType)?.name
-                                            : customDestinations.filter(d => d.trim()).join(' | ')}
+                                    <div style={{ fontSize: '0.85rem', marginTop: '10px' }}>
+                                        <strong>Destino:</strong>
+                                        <div style={{ marginLeft: '10px' }}>
+                                            {(destType.startsWith('db_')
+                                                ? [dbLocations.find(l => `db_${l.id}` === destType)?.name]
+                                                : customDestinations.filter(d => d.trim())).map((d, idx) => (
+                                                    <div key={idx} style={{ marginTop: '2px' }}>• {d}</div>
+                                                ))}
+                                        </div>
                                     </div>
                                 </div>
 
