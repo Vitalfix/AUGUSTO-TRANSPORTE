@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     if (action === 'empty_bin') {
-        const { error } = await supabase.from('recycle_bin').delete().neq('id', 0); // Delete all
+        const { error } = await supabase.from('recycle_bin').delete().neq('table_name', 'none'); // Delete all
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
         return NextResponse.json({ success: true });
     }
