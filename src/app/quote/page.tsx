@@ -125,8 +125,10 @@ export default function QuotePageV2() {
     // Step 1 Data
     const [originType, setOriginType] = useState('ezeiza');
     const [customOrigins, setCustomOrigins] = useState<string[]>(['']);
+    const [originCoordsList, setOriginCoordsList] = useState<({ lat: number, lng: number } | null)[]>([null]);
     const [destType, setDestType] = useState('custom');
     const [customDestinations, setCustomDestinations] = useState<string[]>(['']);
+    const [destCoordsList, setDestCoordsList] = useState<({ lat: number, lng: number } | null)[]>([null]);
     const [customerName, setCustomerName] = useState('');
     const [travelDate, setTravelDate] = useState('');
     const [travelTime, setTravelTime] = useState('manana');
@@ -151,9 +153,10 @@ export default function QuotePageV2() {
     const [distanceKm, setDistanceKm] = useState(0);
     const [travelHours, setTravelHours] = useState(0);
 
-    const [originCoords, setOriginCoords] = useState<{ lat: number, lng: number } | null>(null);
-    const [origin2Coords, setOrigin2Coords] = useState<{ lat: number, lng: number } | null>(null);
-    const [destCoords, setDestCoords] = useState<{ lat: number, lng: number } | null>(null);
+    // Standard coordinate accessors (backward compatibility for calculateRealDistance)
+    const originCoords = originCoordsList[0];
+    const origin2Coords = originCoordsList[1];
+    const destCoords = destCoordsList[0];
 
     // Fetch Prices and Customers from DB on load
     useEffect(() => {
@@ -256,14 +259,24 @@ export default function QuotePageV2() {
         });
     };
 
-    const moveItem = (arr: any[], setArr: (a: any[]) => void, index: number, direction: 'up' | 'down') => {
+    const moveItem = (arr: any[], setArr: (a: any[]) => void, coords: any[], setCoords: (c: any[]) => void, index: number, direction: 'up' | 'down') => {
         const newArr = [...arr];
+        const newCoords = [...coords];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
         if (targetIndex < 0 || targetIndex >= newArr.length) return;
+
+        // Swap values
         const temp = newArr[index];
         newArr[index] = newArr[targetIndex];
         newArr[targetIndex] = temp;
+
+        // Swap coordinates
+        const tempC = newCoords[index];
+        newCoords[index] = newCoords[targetIndex];
+        newCoords[targetIndex] = tempC;
+
         setArr(newArr);
+        setCoords(newCoords);
     };
 
     const calculateTotal = () => {
@@ -407,18 +420,30 @@ export default function QuotePageV2() {
                                         onClick={() => {
                                             const prevType = originType;
                                             setOriginType(l.id);
-                                            if (l.id === 'custom' && customOrigins.length === 0) setCustomOrigins(['']);
+
                                             if (l.id === 'multi') {
                                                 if (prevType.startsWith('db_')) {
                                                     const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
                                                     if (loc) {
                                                         setCustomOrigins([loc.name, '']);
-                                                        setOriginCoords({ lat: loc.lat, lng: loc.lng });
+                                                        setOriginCoordsList([{ lat: loc.lat, lng: loc.lng }, null]);
+                                                    }
+                                                } else if (prevType === 'custom') {
+                                                    if (customOrigins.length === 1) {
+                                                        setCustomOrigins([...customOrigins, '']);
+                                                        setOriginCoordsList([...originCoordsList, null]);
                                                     }
                                                 } else if (customOrigins.length === 0) {
                                                     setCustomOrigins(['', '']);
-                                                } else if (customOrigins.length === 1) {
-                                                    setCustomOrigins([...customOrigins, '']);
+                                                    setOriginCoordsList([null, null]);
+                                                }
+                                            } else if (l.id === 'custom') {
+                                                if (prevType.startsWith('db_')) {
+                                                    const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
+                                                    if (loc) {
+                                                        setCustomOrigins([loc.name]);
+                                                        setOriginCoordsList([{ lat: loc.lat, lng: loc.lng }]);
+                                                    }
                                                 }
                                             }
                                         }}
@@ -436,42 +461,62 @@ export default function QuotePageV2() {
                                     <AddressAutocomplete
                                         placeholder="Escribí la dirección exacta de origen..."
                                         value={customOrigins[0]}
-                                        onChange={val => setCustomOrigins([val])}
-                                        onSelect={(lat, lng) => setOriginCoords({ lat, lng })}
+                                        onChange={val => {
+                                            const newO = [...customOrigins];
+                                            newO[0] = val;
+                                            setCustomOrigins(newO);
+                                        }}
+                                        onSelect={(lat, lng) => {
+                                            const newC = [...originCoordsList];
+                                            newC[0] = { lat, lng };
+                                            setOriginCoordsList(newC);
+                                        }}
                                     />
                                 </div>
                             )}
                             {originType === 'multi' && (
                                 <div className="flex-col gap-10 mt-10">
                                     {customOrigins.map((addr, idx) => (
-                                        <div key={idx} className="flex gap-10">
-                                            <div className="flex-col gap-5 justify-center" style={{ minWidth: '30px' }}>
-                                                {idx > 0 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customOrigins, setCustomOrigins, idx, 'up')}>▲</button>}
-                                                {idx < customOrigins.length - 1 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customOrigins, setCustomOrigins, idx, 'down')}>▼</button>}
+                                        <div key={idx} className="flex gap-10 items-center">
+                                            <div className="flex-col justify-center gap-5" style={{ minWidth: '35px', opacity: 0.7 }}>
+                                                <div style={{ fontSize: '10px', fontWeight: 'bold', textAlign: 'center', marginBottom: '-2px' }}>{idx + 1}</div>
+                                                <div className="flex-col gap-2">
+                                                    <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem', width: '100%', borderRadius: '4px' }} onClick={() => moveItem(customOrigins, setCustomOrigins, originCoordsList, setOriginCoordsList, idx, 'up')} disabled={idx === 0}>▲</button>
+                                                    <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem', width: '100%', borderRadius: '4px' }} onClick={() => moveItem(customOrigins, setCustomOrigins, originCoordsList, setOriginCoordsList, idx, 'down')} disabled={idx === customOrigins.length - 1}>▼</button>
+                                                </div>
                                             </div>
-                                            <AddressAutocomplete
-                                                placeholder={`Dirección ${idx + 1}`}
-                                                value={addr}
-                                                onChange={val => {
-                                                    const newO = [...customOrigins];
-                                                    newO[idx] = val;
-                                                    setCustomOrigins(newO);
-                                                }}
-                                                onSelect={(lat, lng) => {
-                                                    if (idx === 0) setOriginCoords({ lat, lng });
-                                                    if (idx === 1) setOrigin2Coords({ lat, lng });
-                                                }}
-                                            />
+                                            <div style={{ flexGrow: 1 }}>
+                                                <AddressAutocomplete
+                                                    placeholder={`Dirección ${idx + 1}`}
+                                                    value={addr}
+                                                    onChange={val => {
+                                                        const newO = [...customOrigins];
+                                                        newO[idx] = val;
+                                                        setCustomOrigins(newO);
+                                                    }}
+                                                    onSelect={(lat, lng) => {
+                                                        const newC = [...originCoordsList];
+                                                        newC[idx] = { lat, lng };
+                                                        setOriginCoordsList(newC);
+                                                    }}
+                                                />
+                                            </div>
                                             {customOrigins.length > 1 && (
-                                                <button className="filter-btn" type="button" onClick={() => setCustomOrigins(customOrigins.filter((_, i) => i !== idx))}>✕</button>
+                                                <button className="filter-btn" type="button" onClick={() => {
+                                                    setCustomOrigins(customOrigins.filter((_, i) => i !== idx));
+                                                    setOriginCoordsList(originCoordsList.filter((_, i) => i !== idx));
+                                                }}>✕</button>
                                             )}
                                         </div>
                                     ))}
                                     <button
                                         type="button"
                                         className="filter-btn w-full"
-                                        style={{ background: 'var(--glass-bg-secondary)', border: '1px dashed var(--glass-border)' }}
-                                        onClick={() => setCustomOrigins([...customOrigins, ''])}
+                                        style={{ background: 'var(--glass-bg-secondary)', border: '1px dashed var(--glass-border)', padding: '12px' }}
+                                        onClick={() => {
+                                            setCustomOrigins([...customOrigins, '']);
+                                            setOriginCoordsList([...originCoordsList, null]);
+                                        }}
                                     >
                                         ➕ Sumar Dirección Origen
                                     </button>
@@ -490,18 +535,30 @@ export default function QuotePageV2() {
                                         onClick={() => {
                                             const prevType = destType;
                                             setDestType(l.id);
-                                            if (l.id === 'custom' && customDestinations.length === 0) setCustomDestinations(['']);
+
                                             if (l.id === 'multi') {
                                                 if (prevType.startsWith('db_')) {
                                                     const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
                                                     if (loc) {
                                                         setCustomDestinations([loc.name, '']);
-                                                        setDestCoords({ lat: loc.lat, lng: loc.lng });
+                                                        setDestCoordsList([{ lat: loc.lat, lng: loc.lng }, null]);
+                                                    }
+                                                } else if (prevType === 'custom') {
+                                                    if (customDestinations.length === 1) {
+                                                        setCustomDestinations([...customDestinations, '']);
+                                                        setDestCoordsList([...destCoordsList, null]);
                                                     }
                                                 } else if (customDestinations.length === 0) {
                                                     setCustomDestinations(['', '']);
-                                                } else if (customDestinations.length === 1) {
-                                                    setCustomDestinations([...customDestinations, '']);
+                                                    setDestCoordsList([null, null]);
+                                                }
+                                            } else if (l.id === 'custom') {
+                                                if (prevType.startsWith('db_')) {
+                                                    const loc = dbLocations.find(dl => `db_${dl.id}` === prevType);
+                                                    if (loc) {
+                                                        setCustomDestinations([loc.name]);
+                                                        setDestCoordsList([{ lat: loc.lat, lng: loc.lng }]);
+                                                    }
                                                 }
                                             }
                                         }}
@@ -519,41 +576,62 @@ export default function QuotePageV2() {
                                     <AddressAutocomplete
                                         placeholder="Escribí la dirección exacta de destino..."
                                         value={customDestinations[0]}
-                                        onChange={val => setCustomDestinations([val])}
-                                        onSelect={(lat, lng) => setDestCoords({ lat, lng })}
+                                        onChange={val => {
+                                            const newD = [...customDestinations];
+                                            newD[0] = val;
+                                            setCustomDestinations(newD);
+                                        }}
+                                        onSelect={(lat, lng) => {
+                                            const newC = [...destCoordsList];
+                                            newC[0] = { lat, lng };
+                                            setDestCoordsList(newC);
+                                        }}
                                     />
                                 </div>
                             )}
                             {destType === 'multi' && (
                                 <div className="flex-col gap-10 mt-10">
                                     {customDestinations.map((addr, idx) => (
-                                        <div key={idx} className="flex gap-10">
-                                            <div className="flex-col gap-5 justify-center" style={{ minWidth: '30px' }}>
-                                                {idx > 0 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customDestinations, setCustomDestinations, idx, 'up')}>▲</button>}
-                                                {idx < customDestinations.length - 1 && <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem' }} onClick={() => moveItem(customDestinations, setCustomDestinations, idx, 'down')}>▼</button>}
+                                        <div key={idx} className="flex gap-10 items-center">
+                                            <div className="flex-col justify-center gap-5" style={{ minWidth: '35px', opacity: 0.7 }}>
+                                                <div style={{ fontSize: '10px', fontWeight: 'bold', textAlign: 'center', marginBottom: '-2px' }}>{idx + 1}</div>
+                                                <div className="flex-col gap-2">
+                                                    <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem', width: '100%', borderRadius: '4px' }} onClick={() => moveItem(customDestinations, setCustomDestinations, destCoordsList, setDestCoordsList, idx, 'up')} disabled={idx === 0}>▲</button>
+                                                    <button type="button" className="filter-btn" style={{ padding: '2px', fontSize: '0.6rem', width: '100%', borderRadius: '4px' }} onClick={() => moveItem(customDestinations, setCustomDestinations, destCoordsList, setDestCoordsList, idx, 'down')} disabled={idx === customDestinations.length - 1}>▼</button>
+                                                </div>
                                             </div>
-                                            <AddressAutocomplete
-                                                placeholder={`Dirección ${idx + 1}`}
-                                                value={addr}
-                                                onChange={val => {
-                                                    const newD = [...customDestinations];
-                                                    newD[idx] = val;
-                                                    setCustomDestinations(newD);
-                                                }}
-                                                onSelect={(lat, lng) => {
-                                                    if (idx === 0) setDestCoords({ lat, lng });
-                                                }}
-                                            />
+                                            <div style={{ flexGrow: 1 }}>
+                                                <AddressAutocomplete
+                                                    placeholder={`Dirección ${idx + 1}`}
+                                                    value={addr}
+                                                    onChange={val => {
+                                                        const newD = [...customDestinations];
+                                                        newD[idx] = val;
+                                                        setCustomDestinations(newD);
+                                                    }}
+                                                    onSelect={(lat, lng) => {
+                                                        const newC = [...destCoordsList];
+                                                        newC[idx] = { lat, lng };
+                                                        setDestCoordsList(newC);
+                                                    }}
+                                                />
+                                            </div>
                                             {customDestinations.length > 1 && (
-                                                <button className="filter-btn" type="button" onClick={() => setCustomDestinations(customDestinations.filter((_, i) => i !== idx))}>✕</button>
+                                                <button className="filter-btn" type="button" onClick={() => {
+                                                    setCustomDestinations(customDestinations.filter((_, i) => i !== idx));
+                                                    setDestCoordsList(destCoordsList.filter((_, i) => i !== idx));
+                                                }}>✕</button>
                                             )}
                                         </div>
                                     ))}
                                     <button
                                         type="button"
                                         className="filter-btn w-full"
-                                        style={{ background: 'var(--glass-bg-secondary)', border: '1px dashed var(--glass-border)' }}
-                                        onClick={() => setCustomDestinations([...customDestinations, ''])}
+                                        style={{ background: 'var(--glass-bg-secondary)', border: '1px dashed var(--glass-border)', padding: '12px' }}
+                                        onClick={() => {
+                                            setCustomDestinations([...customDestinations, '']);
+                                            setDestCoordsList([...destCoordsList, null]);
+                                        }}
                                     >
                                         ➕ Sumar Dirección Destino
                                     </button>
