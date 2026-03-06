@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AdminHeader from '@/components/AdminHeader';
 
 interface Customer {
     id: string;
@@ -189,12 +190,6 @@ export default function CustomerManagementPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleLogout = () => {
-        sessionStorage.removeItem('admin_password');
-        setIsAuthenticated(false);
-        setPassword('');
-    };
-
     const updateSpecialPrice = (vehicleId: string, field: string, value: string) => {
         const numVal = parseFloat(value) || 0;
         setForm(prev => ({
@@ -308,44 +303,7 @@ export default function CustomerManagementPage() {
                 </div>
             )}
 
-            <div className="flex justify-between items-center mb-40 flex-wrap gap-20">
-                <div>
-                    <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Base de Clientes</h1>
-                    <p className="text-secondary">Gestiona tus clientes recurrentes</p>
-                </div>
-                <div className="grid-cols-mobile p-10 rounded-12 w-full" style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid var(--glass-border)',
-                    maxWidth: '800px'
-                }}>
-                    <button onClick={() => window.location.reload()} className="glass-button p-10 text-sm" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
-                        🔄 Actualizar
-                    </button>
-                    <Link href="/admin" className="flex">
-                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            📦 Pedidos
-                        </button>
-                    </Link>
-                    <Link href="/admin/drivers" className="flex">
-                        <button className="glass-button p-10 text-sm w-full text-success" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)' }}>
-                            👷 Choferes
-                        </button>
-                    </Link>
-                    <Link href="/admin/vehicles" className="flex">
-                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            🚘 Vehículos
-                        </button>
-                    </Link>
-                    <Link href="/admin/config" className="flex">
-                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            ⚙️ Tarifas
-                        </button>
-                    </Link>
-                    <button onClick={handleLogout} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444' }}>
-                        🚪 Salir
-                    </button>
-                </div>
-            </div>
+            <AdminHeader title="Base de Clientes" />
 
             <div className="glass-panel mb-20 p-20">
                 <h3 className="mb-20">{editingCustomer ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}</h3>
@@ -481,7 +439,7 @@ export default function CustomerManagementPage() {
                                     <td style={{ padding: '15px', textAlign: 'right' }}>
                                         <div className="flex gap-10" style={{ justifyContent: 'flex-end' }}>
                                             <button className="glass-button" style={{ padding: '5px 12px', fontSize: '0.8rem' }} onClick={() => handleEdit(c)}> Editar </button>
-                                            <button className="glass-button" style={{ padding: '5px 12px', fontSize: '0.8rem', color: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleDelete(c.id, c.name)}> Borrar </button>
+                                            <button className="glass-button" style={{ padding: '5px 12px', fontSize: '0.8rem', color: '#fff', background: 'rgba(239, 68, 68, 0.2)', borderColor: '#ef4444' }} onClick={() => handleDelete(c.id, c.name)}> Borrar </button>
                                         </div>
                                     </td>
                                 </tr>

@@ -32,6 +32,8 @@ export default function Home() {
     setAdminClicks(prev => {
       const newClicks = prev + 1;
       if (newClicks === 5) {
+        // Clear session to force password prompt every time
+        sessionStorage.removeItem('admin_password');
         router.push('/admin');
         return 0;
       }
@@ -55,7 +57,7 @@ export default function Home() {
         />
       </header>
 
-      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'center', maxWidth: '800px', margin: '0 auto' }}>
+      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'stretch', maxWidth: '800px', margin: '0 auto' }}>
 
         {/* 1. Pedir Viaje */}
         <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

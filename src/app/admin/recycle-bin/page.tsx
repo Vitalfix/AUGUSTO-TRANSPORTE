@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import AdminHeader from '@/components/AdminHeader';
 
 interface BinItem {
     id: string;
@@ -139,11 +139,7 @@ export default function RecycleBinPage() {
 
     return (
         <div className="page-container">
-            <div className="flex justify-between items-center mb-20">
-                <Link href="/admin" className="filter-btn">← Volver al Panel</Link>
-                <h1 className="text-gradient" style={{ fontSize: '1.8rem' }}>Papelera de Reciclaje</h1>
-                <div style={{ width: '100px' }}></div>
-            </div>
+            <AdminHeader title="Papelera de Reciclaje" />
 
             <div className="glass-panel" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                 <p style={{ fontSize: '0.85rem', color: '#ef4444', textAlign: 'center' }}>

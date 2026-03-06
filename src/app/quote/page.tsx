@@ -172,12 +172,12 @@ export default function QuotePageV2() {
                 const custRes = await fetch('/api/customers/public');
                 if (custRes.ok) {
                     const custData = await custRes.json();
-                    // Ordenar: EL CASAL primero, luego el resto
+                    // Ordenar: SIEMENS primero, luego el resto alfabético
                     const sorted = [...custData].sort((a, b) => {
-                        const aCasal = a.name.toUpperCase().includes('EL CASAL');
-                        const bCasal = b.name.toUpperCase().includes('EL CASAL');
-                        if (aCasal && !bCasal) return -1;
-                        if (!aCasal && bCasal) return 1;
+                        const aSiemens = a.name.toUpperCase().includes('SIEMENS');
+                        const bSiemens = b.name.toUpperCase().includes('SIEMENS');
+                        if (aSiemens && !bSiemens) return -1;
+                        if (!aSiemens && bSiemens) return 1;
                         return a.name.localeCompare(b.name);
                     });
                     setCustomers(sorted);
@@ -764,22 +764,18 @@ export default function QuotePageV2() {
                         </div>
 
                         <div className="flex-col gap-10">
-                            {customers.length > 0 && (
-                                <>
-                                    <label className="glass-label">Identificación del Cliente</label>
-                                    <select
-                                        className="glass-select"
-                                        value={selectedCustomerId}
-                                        onChange={(e) => handleCustomerChange(e.target.value)}
-                                        style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
-                                    >
-                                        <option value="new">🆕 Nuevo Cliente / Otro</option>
-                                        {Array.isArray(customers) && customers.map(c => (
-                                            <option key={c.id} value={c.id}>{c.name}</option>
-                                        ))}
-                                    </select>
-                                </>
-                            )}
+                            <label className="glass-label">Identificación del Cliente</label>
+                            <select
+                                className="glass-select"
+                                value={selectedCustomerId}
+                                onChange={(e) => handleCustomerChange(e.target.value)}
+                                style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
+                            >
+                                <option value="new">🆕 Nuevo Cliente / Otro</option>
+                                {Array.isArray(customers) && customers.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
 
                             <label htmlFor="name" className="glass-label">{selectedCustomerId === 'new' ? 'Nombre / Empresa' : 'Cliente Seleccionado'}</label>
                             <input

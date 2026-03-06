@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AdminHeader from '@/components/AdminHeader';
 
 interface Location {
     id: string;
@@ -239,13 +240,7 @@ export default function AdminLocationsPage() {
 
     return (
         <div className="page-container" style={{ maxWidth: '900px' }}>
-            <header className="flex justify-between items-center mb-30">
-                <div>
-                    <Link href="/admin" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>← Volver</Link>
-                    <h1 className="text-gradient">Gestionar Direcciones Fijas</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Bases y Puntos de Referencia para Presupuestos</p>
-                </div>
-            </header>
+            <AdminHeader title="Gestionar Direcciones Fijas" />
 
             <div className="glass-panel mb-30 animate-fade-in" style={{ padding: '30px' }}>
                 <h3 className="mb-25 flex items-center gap-10">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import AdminHeader from '@/components/AdminHeader';
 
 export default function DriverManagementPage() {
     const [drivers, setDrivers] = useState<any[]>([]);
@@ -42,12 +43,6 @@ export default function DriverManagementPage() {
     useEffect(() => {
         if (isAuthenticated) fetchDrivers();
     }, [isAuthenticated]);
-
-    const handleLogout = () => {
-        sessionStorage.removeItem('admin_password');
-        setIsAuthenticated(false);
-        setPassword('');
-    };
 
     const fetchDrivers = async () => {
         try {
@@ -212,44 +207,7 @@ export default function DriverManagementPage() {
 
     return (
         <div className="page-container">
-            <div className="flex justify-between items-center mb-40 flex-wrap gap-20">
-                <div>
-                    <h1 className="text-gradient mb-8" style={{ fontSize: '2.5rem' }}>Gestión de Choferes</h1>
-                    <p className="text-secondary">Administra los conductores y sus accesos</p>
-                </div>
-                <div className="grid-cols-mobile p-10 rounded-12 w-full" style={{
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid var(--glass-border)',
-                    maxWidth: '800px'
-                }}>
-                    <button onClick={() => window.location.reload()} className="glass-button p-10 text-sm" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
-                        🔄 Actualizar
-                    </button>
-                    <Link href="/admin" className="flex">
-                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            📦 Pedidos
-                        </button>
-                    </Link>
-                    <Link href="/admin" className="flex">
-                        <button className="glass-button p-10 text-sm w-full text-accent" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            📊 Dashboard
-                        </button>
-                    </Link>
-                    <Link href="/admin/customers" className="flex">
-                        <button className="glass-button p-10 text-sm w-full text-gold" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid var(--gold-color)' }}>
-                            👥 Clientes
-                        </button>
-                    </Link>
-                    <Link href="/admin/vehicles" className="flex">
-                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
-                            🚘 Vehículos
-                        </button>
-                    </Link>
-                    <button onClick={handleLogout} className="glass-button p-10 text-sm text-error" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444' }}>
-                        🚪 Salir
-                    </button>
-                </div>
-            </div>
+            <AdminHeader title="Gestión de Choferes" />
 
             <div className="flex-col gap-30" style={{ width: '100%' }}>
                 {/* Form to New Driver */}

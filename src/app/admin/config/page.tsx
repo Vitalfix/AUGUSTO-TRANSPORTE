@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import AdminMenu from '@/components/AdminMenu';
+import AdminHeader from '@/components/AdminHeader';
 
 export default function GeneralSettingsPage() {
     const [loading, setLoading] = useState(true);
@@ -118,15 +118,7 @@ export default function GeneralSettingsPage() {
         }
     };
 
-    const handleLogout = () => {
-        sessionStorage.removeItem('admin_password');
-        setIsAuthenticated(false);
-        setPassword('');
-    };
-
-    if (loading) {
-        return <div className="page-container" style={{ textAlign: 'center', padding: '50px', color: 'var(--text-secondary)' }}>Cargando Panel...</div>;
-    }
+    if (loading) return <div className="page-container" style={{ textAlign: 'center', padding: '50px' }}>Cargando Configuración...</div>;
 
     if (!isAuthenticated) {
         return (
@@ -153,13 +145,7 @@ export default function GeneralSettingsPage() {
 
     return (
         <div className="page-container" style={{ padding: '15px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'nowrap', gap: '20px' }}>
-                <div>
-                    <h1 className="text-gradient" style={{ fontSize: '1.8rem', marginBottom: '5px' }}>Configuración General</h1>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Ajusta las opciones del sistema</p>
-                </div>
-                <AdminMenu password={password} onLogout={handleLogout} />
-            </div>
+            <AdminHeader title="Configuración del Sistema" />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 

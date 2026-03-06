@@ -306,34 +306,29 @@ export async function POST(request: Request) {
             <p style="margin: 5px 0;"><strong>Email:</strong> ${body.customerEmail || 'No provisto'}</p>
             ${body.purchaseOrder ? `<p style="margin: 5px 0;"><strong>Nº Orden de Compra:</strong> ${body.purchaseOrder}</p>` : ''}
             
-            <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 8px;">
-                <p style="margin-top: 0; margin-bottom: 15px;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
-                
-                <p style="margin-top: 0; margin-bottom: 15px;"><strong>📍 Origen:</strong><br/>
-                    ${body.origin.split(' | ').join('<br/>')}
+            <div style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <p style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
+                <p style="margin-top: 0; margin-bottom: 12px;"><strong>📍 Origen:</strong><br/>
+                    <span style="color: #475569;">${body.origin.split(' | ').join('<br/>')}</span>
                 </p>
-                
-                <p style="margin-top: 0; margin-bottom: 15px;"><strong>🏁 Destino:</strong><br/>
-                    ${body.destination.split(' | ').join('<br/>')}
+                <p style="margin-top: 0; margin-bottom: 12px;"><strong>🏁 Destino:</strong><br/>
+                    <span style="color: #475569;">${body.destination.split(' | ').join('<br/>')}</span>
                 </p>
-
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
                 <p style="margin-bottom: 0;"><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
             </div>
 
-            <p><strong>📝 Observaciones:</strong><br/>
-               ${(body.observations || 'Sin observaciones').replace(/\n/g, '<br/>')}
+            <p style="margin: 20px 0;"><strong>📝 Observaciones:</strong><br/>
+               <span style="color: #475569;">${(body.observations || 'Sin observaciones').replace(/\n/g, '<br/>')}</span>
             </p>
 
-            <div style="margin-top: 25px; padding: 15px; background: #ecfdf5; border-radius: 8px; border: 1px solid #10b981;">
-                <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: #065f46;">Total Estimado: $${body.price.toLocaleString('es-AR')}</p>
+            <div style="margin-top: 25px; padding: 20px; background: #ecfdf5; border-radius: 12px; border: 1px solid #10b981; text-align: center;">
+                <p style="margin: 0; font-size: 1.4rem; font-weight: bold; color: #065f46;">Total Estimado: $${body.price.toLocaleString('es-AR')}</p>
             </div>
 
-            <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                <p style="font-size: 0.9rem; color: #64748b;">Este pedido requiere revisión manual para confirmar el presupuesto final.</p>
-            </div>
-
-            <div style="margin-top: 20px;">
-                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">VER EN PANEL</a>
+            <div style="margin-top: 30px; text-align: center;">
+                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 16px 32px; background: #3b82f6; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">ABRIR PANEL</a>
             </div>
         </div>
       `
