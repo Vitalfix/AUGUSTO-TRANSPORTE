@@ -128,42 +128,9 @@ export async function POST(request: Request) {
         }
     }
 
-    // Insert the order
-    let { data, error } = await supabase
-        .from('orders')
-        .insert([
-            {
-                id,
-                customer_name: body.customerName,
-                vehicle: body.vehicle,
-                destination: body.destination,
-                price: body.price,
-                origin: body.origin,
-                travel_date: body.travelDate,
-                travel_time: body.travelTime,
-                cuit: body.cuit,
-                tax_status: body.taxStatus,
-                customer_email: body.customerEmail,
-                customer_phone: body.customerPhone,
-                status: 'PENDING',
-                lat: body.lat,
-                lng: body.lng,
-                origin_lat: body.originLat,
-                origin_lng: body.originLng,
-                origin2_lat: body.origin2Lat,
-                origin2_lng: body.origin2Lng,
-                dest_lat: body.destLat,
-                dest_lng: body.destLng,
-                observations: body.observations,
-                distance_km: body.distanceKm,
-                travel_hours: body.travelHours,
-                activity_log: [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
-            }
-        ])
-        .select()
-        .single();
+    // Insert or update customer logic
+    let finalCustomerId = body.customerId;
 
-    // Detect customer data changes for existing customers or create new ones
     try {
         if (body.customerId) {
             const { data: existingCustomer } = await supabase
@@ -186,24 +153,79 @@ export async function POST(request: Request) {
                         time: new Date().toISOString(),
                         newData: { phone: body.customerPhone, email: body.customerEmail, cuit: body.cuit, tax_status: body.taxStatus, id: body.customerId }
                     });
-                    await supabase.from('orders').update({ activity_log: log }).eq('id', id);
+                    // Will update order log below after inserting it
+                    body.pendingCustomerUpdateLog = log;
                 }
             }
         } else if (body.customerName) {
-            // Just insert new customer normally if no customerId is provided
-            await supabase
+            // Check if it really doesn't exist by name/phone to prevent pure duplication if they didn't select it
+            const { data: existingByName } = await supabase
                 .from('customers')
-                .upsert({
-                    name: body.customerName,
-                    email: body.customerEmail,
-                    phone: body.customerPhone,
-                    cuit: body.cuit,
-                    tax_status: body.taxStatus
-                }, { onConflict: 'name, phone' });
+                .select('id')
+                .eq('name', body.customerName)
+                .eq('phone', body.customerPhone)
+                .maybeSingle();
+
+            if (existingByName) {
+                finalCustomerId = existingByName.id;
+            } else {
+                // Insert new customer and GET THE ID
+                const { data: newCustomer, error: newCustomerError } = await supabase
+                    .from('customers')
+                    .insert({
+                        name: body.customerName,
+                        email: body.customerEmail,
+                        phone: body.customerPhone,
+                        cuit: body.cuit,
+                        tax_status: body.taxStatus
+                    })
+                    .select()
+                    .single();
+
+                if (newCustomer) {
+                    finalCustomerId = newCustomer.id;
+                }
+            }
         }
     } catch (e) {
         console.error("Error evaluating customer changes", e);
     }
+
+    // Insert the order
+    let { data, error } = await supabase
+        .from('orders')
+        .insert([
+            {
+                id,
+                customer_name: body.customerName,
+                customer_id: finalCustomerId,
+                vehicle: body.vehicle,
+                destination: body.destination,
+                price: body.price,
+                origin: body.origin,
+                travel_date: body.travelDate,
+                travel_time: body.travelTime,
+                cuit: body.cuit,
+                tax_status: body.taxStatus,
+                customer_email: body.customerEmail,
+                customer_phone: body.customerPhone,
+                status: 'PENDING',
+                lat: body.lat,
+                lng: body.lng,
+                origin_lat: body.originLat,
+                origin_lng: body.originLng,
+                origin2_lat: body.origin2Lat,
+                origin2_lng: body.origin2Lng,
+                dest_lat: body.destLat,
+                dest_lng: body.destLng,
+                observations: body.observations,
+                distance_km: body.distanceKm,
+                travel_hours: body.travelHours,
+                activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
+            }
+        ])
+        .select()
+        .single();
 
     // Fallback if 'observations' column does not exist yet
     if (error && error.message.includes('column "observations" of relation "orders" does not exist')) {
