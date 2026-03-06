@@ -561,23 +561,16 @@ export default function AdminPage() {
 
             {/* Search and Filters */}
             <div className="glass-panel mb-20" style={{ padding: '15px' }}>
-                <div className="search-bar" style={{ marginBottom: '15px' }}>
+                <div className="search-bar mb-15">
                     <input
                         type="text"
                         placeholder="Buscar por ID o Cliente..."
-                        className="glass-input"
+                        className="glass-input flex-1"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ flex: 1 }}
                     />
                 </div>
-                <div className="filter-group" style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    width: '100%',
-                    marginTop: '10px'
-                }}>
+                <div className="filter-group mt-10">
                     {[
                         { id: 'ALL', label: 'Todos', color: 'var(--text-secondary)' },
                         { id: 'PENDING', label: 'NUEVO', color: '#f59e0b' },
@@ -595,15 +588,9 @@ export default function AdminPage() {
                                 className={`filter-btn ${filterStatus === s.id ? 'active' : ''}`}
                                 onClick={() => setFilterStatus(s.id as any)}
                                 style={{
-                                    fontSize: '0.75rem',
-                                    padding: '8px 14px',
                                     border: `1px solid ${filterStatus === s.id ? s.color : 'rgba(255,255,255,0.05)'}`,
                                     background: filterStatus === s.id ? `${s.color}15` : 'rgba(255,255,255,0.02)',
-                                    color: filterStatus === s.id ? s.color : 'var(--text-secondary)',
-                                    whiteSpace: 'nowrap',
-                                    borderRadius: '20px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s ease'
+                                    color: filterStatus === s.id ? s.color : 'var(--text-secondary)'
                                 }}
                             >
                                 {s.label} <span style={{ opacity: 0.6, marginLeft: '5px' }}>{count}</span>
@@ -651,46 +638,39 @@ export default function AdminPage() {
                                             <div key={order.id} className="glass-panel" style={{ padding: '0', overflow: 'hidden', border: '1px solid var(--glass-border)', transition: 'all 0.3s ease' }}>
                                                 {/* Header - Simple View */}
                                                 <div
+                                                    className="glass-panel"
                                                     onClick={() => toggleExpand(order.id)}
                                                     style={{
-                                                        padding: '20px',
-                                                        background: isExpanded ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
-                                                        borderBottom: isExpanded ? '1px solid var(--glass-border)' : '1px solid transparent',
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        gap: '12px',
                                                         cursor: 'pointer',
-                                                        transition: 'background 0.3s ease'
+                                                        borderLeft: `5px solid ${group.color}`
                                                     }}
                                                 >
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
-                                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                                                                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'white' }}>{order.customerName}</span>
-                                                                <div style={{
-                                                                    padding: '2px 10px',
-                                                                    borderRadius: '12px',
-                                                                    fontSize: '0.6rem',
-                                                                    fontWeight: 'bold',
-                                                                    background: `${group.color}22`,
-                                                                    color: group.color,
-                                                                    border: `1px solid ${group.color}44`,
-                                                                    textTransform: 'uppercase'
-                                                                }}>
+                                                    <div className="flex justify-between items-start w-full p-15">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-10 mb-8 flex-wrap">
+                                                                <span className="text-white" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{order.customerName}</span>
+                                                                <div
+                                                                    className="badge"
+                                                                    style={{
+                                                                        background: `${group.color}22`,
+                                                                        color: group.color,
+                                                                        border: `1px solid ${group.color}44`
+                                                                    }}
+                                                                >
                                                                     {group.label.split(' ')[1] || group.label}
                                                                 </div>
                                                             </div>
-                                                            <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>#{order.id.substring(0, 8)}</span>
-                                                                <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontWeight: '600' }}>📅 {order.travelDate || 'Pendiente'}</span>
-                                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>🚛 {formatVehicle(order.vehicle)}</span>
+                                                            <div className="flex gap-15 flex-wrap">
+                                                                <span className="text-secondary" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>#{order.id.substring(0, 8)}</span>
+                                                                <span className="text-accent" style={{ fontSize: '0.75rem', fontWeight: '600' }}>📅 {order.travelDate || 'Pendiente'}</span>
+                                                                <span className="text-secondary" style={{ fontSize: '0.75rem' }}>🚛 {formatVehicle(order.vehicle)}</span>
                                                             </div>
                                                         </div>
-                                                        <div style={{ textAlign: 'right', minWidth: '100px' }}>
+                                                        <div className="text-right" style={{ minWidth: '100px' }}>
                                                             <div style={{ fontSize: '1.2rem', fontWeight: '900', color: group.color, marginBottom: '4px' }}>
                                                                 ${order.price.toLocaleString('es-AR')}
                                                             </div>
-                                                            <div style={{ fontSize: '0.7rem', color: 'var(--success-color)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                                                            <div className="flex items-center justify-end gap-4 text-success" style={{ fontSize: '0.7rem' }}>
                                                                 {order.driverName ? (
                                                                     <>🚚 <span style={{ fontWeight: '600' }}>{order.driverName}</span></>
                                                                 ) : (
@@ -698,14 +678,15 @@ export default function AdminPage() {
                                                                 )}
                                                             </div>
                                                         </div>
-                                                        <span style={{
-                                                            paddingLeft: '10px',
-                                                            fontSize: '1.2rem',
-                                                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                                                            transition: 'transform 0.3s ease',
-                                                            opacity: 0.3,
-                                                            alignSelf: 'center'
-                                                        }}>⌄</span>
+                                                        <span
+                                                            className="pr-10 self-center"
+                                                            style={{
+                                                                fontSize: '1.2rem',
+                                                                transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                                transition: 'transform 0.3s ease',
+                                                                opacity: 0.3
+                                                            }}
+                                                        >⌄</span>
                                                     </div>
                                                 </div>
 
@@ -713,15 +694,13 @@ export default function AdminPage() {
                                                 {isExpanded && (
                                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                                                         {/* Status Timeline - Moved here */}
-                                                        <div style={{
-                                                            padding: '18px 20px',
-                                                            background: 'rgba(0,0,0,0.15)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            gap: '10px',
-                                                            borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                                        }}>
+                                                        <div
+                                                            className="flex items-center justify-center gap-10 p-20"
+                                                            style={{
+                                                                background: 'rgba(0,0,0,0.15)',
+                                                                borderBottom: '1px solid rgba(255,255,255,0.05)'
+                                                            }}
+                                                        >
                                                             {(() => {
                                                                 const allS = ['PENDING', 'APPROVED', 'CONFIRMED', 'STARTED', 'FINISHED', 'INVOICED', 'PAID'];
                                                                 const labels: Record<string, string> = { 'PENDING': 'NUEVO', 'APPROVED': 'APROBADO', 'CONFIRMED': 'PENDIENTE', 'STARTED': 'EN CURSO', 'FINISHED': 'FINALIZADO', 'INVOICED': 'FACTURADO', 'PAID': 'COBRADO' };
@@ -1050,8 +1029,8 @@ export default function AdminPage() {
                         {/* TAB: LOGISTICS */}
                         {activeTab === 'LOGISTICS' && (
                             <div className="flex-col gap-20">
-                                <h3 style={{ fontSize: '0.85rem', color: 'var(--success-color)' }}>🚚 ASIGNACIÓN DE CHOFER</h3>
-                                <div className="toggle-group" style={{ maxHeight: '180px', overflowY: 'auto', padding: '5px' }}>
+                                <h3 className="text-success" style={{ fontSize: '0.85rem' }}>🚚 ASIGNACIÓN DE CHOFER</h3>
+                                <div className="toggle-group p-5" style={{ maxHeight: '180px', overflowY: 'auto' }}>
                                     <button
                                         type="button"
                                         className={`toggle-btn ${!editForm.driverName ? 'active' : ''}`}
@@ -1073,7 +1052,7 @@ export default function AdminPage() {
                                     ))}
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                                <div className="grid-cols-auto">
                                     <div>
                                         <label className="glass-label">Chofer</label>
                                         <input type="text" className="glass-input" value={editForm.driverName} onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))} />
@@ -1090,10 +1069,10 @@ export default function AdminPage() {
                             </div>
                         )}
 
-                        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div className="mt-20 p-20" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                             <div className="flex gap-10">
-                                <button className="glass-button" style={{ flex: 1, background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
-                                <button className="glass-button" style={{ flex: 2, background: 'var(--accent-gradient)', fontWeight: 'bold' }} onClick={handleSaveEdit} disabled={saving}>
+                                <button className="glass-button flex-1" style={{ background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
+                                <button className="glass-button flex-2" style={{ fontWeight: 'bold' }} onClick={handleSaveEdit} disabled={saving}>
                                     {saving ? 'Guardando...' : '💾 GUARDAR CAMBIOS'}
                                 </button>
                             </div>

@@ -195,42 +195,36 @@ export default function CustomerManagementPage() {
 
     return (
         <div className="page-container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
+            <div className="flex justify-between items-center mb-40 flex-wrap gap-20">
                 <div>
                     <h1 className="text-gradient" style={{ fontSize: '2.5rem', marginBottom: '5px' }}>Base de Clientes</h1>
-                    <p style={{ color: 'var(--text-secondary)' }}>Gestiona tus clientes recurrentes</p>
+                    <p className="text-secondary">Gestiona tus clientes recurrentes</p>
                 </div>
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                    gap: '10px',
+                <div className="grid-cols-mobile p-10 rounded-12 w-full" style={{
                     background: 'rgba(255,255,255,0.02)',
-                    padding: '10px',
-                    borderRadius: '12px',
                     border: '1px solid var(--glass-border)',
-                    width: '100%',
                     maxWidth: '800px'
                 }}>
-                    <button onClick={() => window.location.reload()} className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
+                    <button onClick={() => window.location.reload()} className="glass-button p-10 text-sm" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', color: '#f59e0b' }}>
                         🔄 Actualizar
                     </button>
-                    <Link href="/admin" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
+                    <Link href="/admin" className="flex">
+                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
                             📦 Pedidos
                         </button>
                     </Link>
-                    <Link href="/admin/drivers" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)', color: 'var(--success-color)', width: '100%' }}>
+                    <Link href="/admin/drivers" className="flex">
+                        <button className="glass-button p-10 text-sm w-full text-success" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid var(--success-color)' }}>
                             👷 Choferes
                         </button>
                     </Link>
-                    <Link href="/admin/vehicles" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
+                    <Link href="/admin/vehicles" className="flex">
+                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
                             🚘 Vehículos
                         </button>
                     </Link>
-                    <Link href="/admin/config" style={{ display: 'flex' }}>
-                        <button className="glass-button" style={{ padding: '8px', fontSize: '0.7rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)', width: '100%' }}>
+                    <Link href="/admin/config" className="flex">
+                        <button className="glass-button p-10 text-sm w-full" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--accent-light)' }}>
                             ⚙️ Tarifas
                         </button>
                     </Link>
@@ -240,10 +234,10 @@ export default function CustomerManagementPage() {
                 </div>
             </div>
 
-            <div className="glass-panel mb-20" style={{ padding: '30px' }}>
-                <h3 style={{ marginBottom: '20px' }}>{editingCustomer ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}</h3>
+            <div className="glass-panel mb-20 p-20">
+                <h3 className="mb-20">{editingCustomer ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}</h3>
                 <form onSubmit={handleSave} className="flex-col gap-20" method="POST">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                    <div className="grid-cols-auto">
                         <div>
                             <label className="glass-label">Nombre / Empresa</label>
                             <input
