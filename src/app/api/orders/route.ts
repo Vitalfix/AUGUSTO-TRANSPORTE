@@ -78,7 +78,8 @@ export async function GET(request: Request) {
         activityLog: o.activity_log || [],
         distanceKm: o.distance_km,
         travelHours: o.travel_hours,
-        purchaseOrder: o.purchase_order
+        purchaseOrder: o.purchase_order,
+        pricingBreakdown: o.pricing_breakdown || []
     }));
 
     return NextResponse.json(orders);
