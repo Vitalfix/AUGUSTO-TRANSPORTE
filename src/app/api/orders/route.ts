@@ -347,7 +347,7 @@ export async function POST(request: Request) {
             </div>
 
             <div style="margin-top: 30px; text-align: center;">
-                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 16px 32px; background: #3b82f6; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">ABRIR PANEL</a>
+                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 16px 32px; background: #3b82f6; color: white; text-decoration: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);">ABRIR SEGUIMIENTO</a>
             </div>
 
             <div style="margin-top: 40px; padding: 15px; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4;">
@@ -392,7 +392,7 @@ export async function POST(request: Request) {
                             
                             <div style="margin: 30px 0; text-align: center;">
                                 <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Podés consultar el estado de tu pedido en cualquier momento:</p>
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">SEGUIMIENTO</a>
+                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">ABRIR SEGUIMIENTO</a>
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
