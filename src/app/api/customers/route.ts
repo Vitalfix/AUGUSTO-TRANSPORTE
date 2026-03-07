@@ -63,8 +63,6 @@ export async function POST(request: Request) {
                 phone,
                 cuit,
                 tax_status: taxStatus,
-                has_special_pricing: hasSpecialPricing,
-                special_prices: specialPrices,
                 is_corporate: isCorporate || false,
                 client_slug: clientSlug || null,
                 logo_url: logoUrl || null
@@ -97,8 +95,6 @@ export async function PATCH(request: Request) {
                 phone,
                 cuit,
                 tax_status: taxStatus,
-                has_special_pricing: hasSpecialPricing,
-                special_prices: specialPrices,
                 is_corporate: isCorporate,
                 client_slug: clientSlug,
                 logo_url: logoUrl
