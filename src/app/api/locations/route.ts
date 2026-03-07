@@ -40,11 +40,11 @@ export async function POST(req: Request) {
         if (!isAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const body = await req.json();
-        const { name, lat, lng, icon } = body;
+        const { name, lat, lng, icon, customerId } = body;
 
         const { data, error } = await supabase
             .from('locations')
-            .insert([{ name, lat, lng, icon }])
+            .insert([{ name, lat, lng, icon, customer_id: customerId || null }])
             .select();
 
         if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -62,11 +62,11 @@ export async function PATCH(req: Request) {
         if (!isAdmin) return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
 
         const body = await req.json();
-        const { id, name, lat, lng, icon } = body;
+        const { id, name, lat, lng, icon, customerId } = body;
 
         const { data, error } = await supabase
             .from('locations')
-            .update({ name, lat, lng, icon, updated_at: new Date() })
+            .update({ name, lat, lng, icon, customer_id: customerId, updated_at: new Date() })
             .eq('id', id)
             .select();
 

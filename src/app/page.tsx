@@ -10,9 +10,23 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
   const [adminClicks, setAdminClicks] = useState(0);
+  const [corporateClients, setCorporateClients] = useState<any[]>([]);
+
+  const fetchCorporateClients = async () => {
+    try {
+      const res = await fetch('/api/customers/public');
+      if (res.ok) {
+        const data = await res.json();
+        setCorporateClients(data.filter((c: any) => c.is_corporate));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
+    fetchCorporateClients();
   }, []);
 
   const handleLogoClick = () => {
@@ -128,6 +142,44 @@ export default function Home() {
         </div>
       </div>
 
+      {/* 4. Clientes Corporativos */}
+      {mounted && corporateClients.length > 0 && (
+        <div className="glass-panel" style={{ marginTop: '20px', padding: '25px', maxWidth: '800px', margin: '20px auto 0 auto', width: '100%' }}>
+          <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '20px', fontSize: '1.2rem', letterSpacing: '1px' }}>
+            ACCESO CORPORATIVO
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px', justifyContent: 'center' }}>
+            {corporateClients.map((client) => (
+              <Link key={client.id} href={`/quote?client=${client.client_slug}`} className="corporate-card">
+                <div style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '15px',
+                  padding: '20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '10px',
+                  border: '1px solid var(--glass-border)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer'
+                }}>
+                  {client.logo_url || client.client_slug === 'siemens' ? (
+                    <img
+                      src={client.logo_url || 'https://vitalfix.s3.amazonaws.com/siemens_logo_white.png'}
+                      alt={client.name}
+                      style={{ height: '40px', maxWidth: '120px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: '2rem' }}>🏢</div>
+                  )}
+                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Social / Admin Row */}
       <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 
@@ -185,6 +237,12 @@ export default function Home() {
           0% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
           50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(59,130,246,0.7); }
           100% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
+        }
+        .corporate-card:hover div {
+          transform: translateY(-5px);
+          background: rgba(255,255,255,0.1) !important;
+          border-color: var(--accent-color) !important;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
       `}</style>
     </div>

@@ -13,6 +13,9 @@ interface Customer {
     tax_status: string;
     has_special_pricing: boolean;
     special_prices: any;
+    is_corporate: boolean;
+    client_slug: string;
+    logo_url: string;
 }
 
 interface VehiclePricing {
@@ -41,7 +44,10 @@ export default function CustomerManagementPage() {
         cuit: '',
         taxStatus: 'responsable_inscripto',
         hasSpecialPricing: false,
-        specialPrices: {} as any
+        specialPrices: {} as any,
+        isCorporate: false,
+        clientSlug: '',
+        logoUrl: ''
     });
 
     useEffect(() => {
@@ -140,7 +146,10 @@ export default function CustomerManagementPage() {
                     cuit: '',
                     taxStatus: 'responsable_inscripto',
                     hasSpecialPricing: false,
-                    specialPrices: {}
+                    specialPrices: {},
+                    isCorporate: false,
+                    clientSlug: '',
+                    logoUrl: ''
                 });
                 setEditingCustomer(null);
                 fetchCustomers();
@@ -171,7 +180,7 @@ export default function CustomerManagementPage() {
                 // Limpiar estado de edición si el borrado era el que se estaba editando
                 if (editingCustomer?.id === id) {
                     setEditingCustomer(null);
-                    setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto', hasSpecialPricing: false, specialPrices: {} });
+                    setForm({ name: '', email: '', phone: '', cuit: '', taxStatus: 'responsable_inscripto', hasSpecialPricing: false, specialPrices: {}, isCorporate: false, clientSlug: '', logoUrl: '' });
                 }
                 fetchCustomers();
             }
@@ -191,7 +200,10 @@ export default function CustomerManagementPage() {
             cuit: c.cuit || '',
             taxStatus: c.tax_status || 'responsable_inscripto',
             hasSpecialPricing: c.has_special_pricing || false,
-            specialPrices: c.special_prices || {}
+            specialPrices: c.special_prices || {},
+            isCorporate: c.is_corporate || false,
+            clientSlug: c.client_slug || '',
+            logoUrl: c.logo_url || ''
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -420,25 +432,64 @@ export default function CustomerManagementPage() {
                                 <option value="exento">Exento</option>
                             </select>
                         </div>
-                        <div className="flex items-center gap-10 mt-10">
-                            <label className="glass-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                <input
-                                    type="checkbox"
-                                    checked={form.hasSpecialPricing}
-                                    onChange={(e) => setForm({ ...form, hasSpecialPricing: e.target.checked })}
-                                    style={{ width: '18px', height: '18px' }}
-                                />
-                                Tiene Precio Especial
-                            </label>
-                            {form.hasSpecialPricing && (
-                                <button
-                                    type="button"
-                                    className="glass-button"
-                                    style={{ padding: '5px 15px', background: 'var(--accent-gradient)', fontSize: '0.8rem' }}
-                                    onClick={() => setShowSpecialPricesModal(true)}
-                                >
-                                    ⚙️ Configurar Precios
-                                </button>
+                        <div className="flex items-center gap-10 mt-10" style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
+                            <div className="flex items-center gap-10">
+                                <label className="glass-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={form.hasSpecialPricing}
+                                        onChange={(e) => setForm({ ...form, hasSpecialPricing: e.target.checked })}
+                                        style={{ width: '18px', height: '18px' }}
+                                    />
+                                    Tiene Precio Especial
+                                </label>
+                                {form.hasSpecialPricing && (
+                                    <button
+                                        type="button"
+                                        className="glass-button"
+                                        style={{ padding: '5px 15px', background: 'var(--accent-gradient)', fontSize: '0.8rem' }}
+                                        onClick={() => setShowSpecialPricesModal(true)}
+                                    >
+                                        ⚙️ Configurar
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-10">
+                                <label className="glass-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={form.isCorporate}
+                                        onChange={(e) => setForm({ ...form, isCorporate: e.target.checked })}
+                                        style={{ width: '18px', height: '18px' }}
+                                    />
+                                    Es Cliente Corporativo
+                                </label>
+                            </div>
+
+                            {form.isCorporate && (
+                                <>
+                                    <div>
+                                        <label className="glass-label">Slug (ej: siemens)</label>
+                                        <input
+                                            type="text"
+                                            className="glass-input"
+                                            value={form.clientSlug}
+                                            onChange={(e) => setForm({ ...form, clientSlug: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '') })}
+                                            placeholder="siemens"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="glass-label">URL del Logo</label>
+                                        <input
+                                            type="text"
+                                            className="glass-input"
+                                            value={form.logoUrl}
+                                            onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+                                            placeholder="https://..."
+                                        />
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>
@@ -461,7 +512,10 @@ export default function CustomerManagementPage() {
                                         cuit: '',
                                         taxStatus: 'responsable_inscripto',
                                         hasSpecialPricing: false,
-                                        specialPrices: {}
+                                        specialPrices: {},
+                                        isCorporate: false,
+                                        clientSlug: '',
+                                        logoUrl: ''
                                     });
                                 }}
                             >
@@ -490,6 +544,7 @@ export default function CustomerManagementPage() {
                                         <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                             {c.name}
                                             {c.has_special_pricing && <span title="Precio Especial" style={{ fontSize: '0.9rem' }}>⭐</span>}
+                                            {c.is_corporate && <span title="Cliente Corporativo" style={{ fontSize: '0.9rem' }}>🏢</span>}
                                         </div>
                                         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{c.tax_status?.replace('_', ' ') || 'Sin clasificar'}</div>
                                     </td>

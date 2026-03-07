@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json();
-        const { name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices } = body;
+        const { name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices, isCorporate, clientSlug, logoUrl } = body;
 
         // Verificar si ya existe un cliente con ese nombre (case insensitive)
         const { data: existing } = await supabase
@@ -64,7 +64,10 @@ export async function POST(request: Request) {
                 cuit,
                 tax_status: taxStatus,
                 has_special_pricing: hasSpecialPricing,
-                special_prices: specialPrices
+                special_prices: specialPrices,
+                is_corporate: isCorporate || false,
+                client_slug: clientSlug || null,
+                logo_url: logoUrl || null
             })
             .select()
             .maybeSingle();
@@ -84,7 +87,7 @@ export async function PATCH(request: Request) {
         }
 
         const body = await request.json();
-        const { id, name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices } = body;
+        const { id, name, email, phone, cuit, taxStatus, hasSpecialPricing, specialPrices, isCorporate, clientSlug, logoUrl } = body;
 
         const { data, error } = await supabase
             .from('customers')
@@ -95,7 +98,10 @@ export async function PATCH(request: Request) {
                 cuit,
                 tax_status: taxStatus,
                 has_special_pricing: hasSpecialPricing,
-                special_prices: specialPrices
+                special_prices: specialPrices,
+                is_corporate: isCorporate,
+                client_slug: clientSlug,
+                logo_url: logoUrl
             })
             .eq('id', id)
             .select()

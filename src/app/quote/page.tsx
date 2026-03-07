@@ -14,11 +14,6 @@ interface Vehicle {
     priceStay: number;
 }
 
-const UTILITY_LOCATIONS = [
-    { id: 'custom', name: 'Dirección Exacta', icon: '📍' },
-    { id: 'multi', name: 'Múltiples Puntos', icon: '📎' }
-];
-
 interface SelectedVehicle {
     id: string;
     qty: number;
@@ -195,6 +190,7 @@ export default function QuotePageV2() {
     const [cargoVolume, setCargoVolume] = useState('');
     const [selectedVehicles, setSelectedVehicles] = useState<SelectedVehicle[]>([]);
     const [dbLocations, setDbLocations] = useState<any[]>([]);
+    const [corporateClient, setCorporateClient] = useState<any>(null);
 
     // Customers Data
     const [customers, setCustomers] = useState<any[]>([]);
@@ -211,11 +207,6 @@ export default function QuotePageV2() {
     // Real distance and route logic
     const [distanceKm, setDistanceKm] = useState(0);
     const [travelHours, setTravelHours] = useState(0);
-
-    // Standard coordinate accessors (backward compatibility for calculateRealDistance)
-    const originCoords = originCoordsList[0];
-    const origin2Coords = originCoordsList[1];
-    const destCoords = destCoordsList[0];
 
     // Fetch Prices and Customers from DB on load
     useEffect(() => {
@@ -262,7 +253,28 @@ export default function QuotePageV2() {
 
         fetchData();
         fetchLocations();
+
+        // Detectar si venimos por acceso corporativo
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientSlug = urlParams.get('client');
+        if (clientSlug) {
+            // Guardamos el slug para filtrar luego de que carguen los clientes
+            setStep(1); // Asegurar que empezamos en paso 1
+        }
     }, []);
+
+    // Efecto para vincular el cliente corporativo una vez que cargan la lista de clientes
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientSlug = urlParams.get('client');
+        if (clientSlug && customers.length > 0) {
+            const found = customers.find(c => c.client_slug === clientSlug);
+            if (found) {
+                setCorporateClient(found);
+                handleCustomerChange(found.id.toString());
+            }
+        }
+    }, [customers]);
 
     const calculateRealDistance = async () => {
         setCalculatingRoute(true);
@@ -499,8 +511,21 @@ export default function QuotePageV2() {
             <div className="flex justify-between items-start mb-20">
                 <div>
                     <Link href="/" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>← Cancelar</Link>
-                    <h1 className="text-gradient">Presupuesto Estimativo y Reserva</h1>
-                    <p style={{ fontSize: '0.8rem', opacity: 0.7, color: 'var(--text-secondary)' }}>El presupuesto será revisado, adaptado e informado por personal de EL CASAL.</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
+                        {corporateClient && (
+                            <img
+                                src={corporateClient.logo_url || 'https://vitalfix.s3.amazonaws.com/siemens_logo_white.png'}
+                                alt={corporateClient.name}
+                                style={{ height: '35px', filter: 'brightness(0) invert(1)' }}
+                            />
+                        )}
+                        <h1 className="text-gradient">
+                            {corporateClient ? `Panel Corporativo ${corporateClient.name}` : 'Presupuesto Estimativo y Reserva'}
+                        </h1>
+                    </div>
+                    <p style={{ fontSize: '0.8rem', opacity: 0.7, color: 'var(--text-secondary)' }}>
+                        {corporateClient ? 'Utilizá tus direcciones guardadas y tarifas personalizadas.' : 'El presupuesto será revisado, adaptado e informado por personal de EL CASAL.'}
+                    </p>
                 </div>
             </div>
 
@@ -526,13 +551,19 @@ export default function QuotePageV2() {
                                 onChange={(e) => handleCustomerChange(e.target.value)}
                                 style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
                             >
-                                <option value="new">🆕 Nuevo Cliente / Otro</option>
                                 {customerError ? (
                                     <option disabled>⚠️ Error al cargar clientes</option>
                                 ) : Array.isArray(customers) && customers.length > 0 ? (
-                                    customers.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))
+                                    corporateClient ? (
+                                        <option value={corporateClient.id}>{corporateClient.name}</option>
+                                    ) : (
+                                        <>
+                                            <option value="new">🆕 Nuevo Cliente / Otro</option>
+                                            {customers.map(c => (
+                                                <option key={c.id} value={c.id}>{c.name}</option>
+                                            ))}
+                                        </>
+                                    )
                                 ) : (
                                     <option disabled>Cargando clientes...</option>
                                 )}
@@ -567,7 +598,9 @@ export default function QuotePageV2() {
                                             <AddressAutocomplete
                                                 placeholder={`Dirección de origen ${idx + 1}`}
                                                 value={addr}
-                                                savedLocations={dbLocations}
+                                                savedLocations={dbLocations.filter(loc =>
+                                                    !loc.customer_id || (corporateClient && loc.customer_id.toString() === corporateClient.id.toString())
+                                                )}
                                                 onChange={val => {
                                                     const newO = [...customOrigins];
                                                     newO[idx] = val;
@@ -624,7 +657,9 @@ export default function QuotePageV2() {
                                             <AddressAutocomplete
                                                 placeholder={`Dirección de destino ${idx + 1}`}
                                                 value={addr}
-                                                savedLocations={dbLocations}
+                                                savedLocations={dbLocations.filter(loc =>
+                                                    !loc.customer_id || (corporateClient && loc.customer_id.toString() === corporateClient.id.toString())
+                                                )}
                                                 onChange={val => {
                                                     const newD = [...customDestinations];
                                                     newD[idx] = val;

@@ -10,6 +10,12 @@ interface Location {
     lat: number;
     lng: number;
     icon: string;
+    customer_id?: string;
+}
+
+interface Customer {
+    id: string;
+    name: string;
 }
 
 interface NominatimSuggestion {
@@ -111,13 +117,15 @@ export default function AdminLocationsPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [customers, setCustomers] = useState<Customer[]>([]);
 
     const [editingLocation, setEditingLocation] = useState<Location | null>(null);
     const [form, setForm] = useState({
         name: '',
         lat: '',
         lng: '',
-        icon: '📍'
+        icon: '📍',
+        customerId: ''
     });
 
     useEffect(() => {
@@ -127,7 +135,24 @@ export default function AdminLocationsPage() {
             setIsAuthenticated(true);
         }
         fetchLocations();
+        fetchCustomers();
     }, []);
+
+    const fetchCustomers = async () => {
+        const savedPass = sessionStorage.getItem('admin_password');
+        if (!savedPass) return;
+        try {
+            const res = await fetch('/api/customers', {
+                headers: { 'x-admin-password': savedPass }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCustomers(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     const fetchLocations = async () => {
         try {
@@ -181,7 +206,7 @@ export default function AdminLocationsPage() {
 
             if (res.ok) {
                 setEditingLocation(null);
-                setForm({ name: '', lat: '', lng: '', icon: '📍' });
+                setForm({ name: '', lat: '', lng: '', icon: '📍', customerId: '' });
                 fetchLocations();
             } else {
                 const data = await res.json();
@@ -213,7 +238,8 @@ export default function AdminLocationsPage() {
             name: loc.name,
             lat: loc.lat.toString(),
             lng: loc.lng.toString(),
-            icon: loc.icon || '📍'
+            icon: loc.icon || '📍',
+            customerId: loc.customer_id || ''
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -282,6 +308,19 @@ export default function AdminLocationsPage() {
                                 placeholder="Emoji (ej: 🏠)"
                             />
                         </div>
+                        <div style={{ flex: '2 1 200px' }}>
+                            <label className="glass-label">Asignar a Cliente (Opcional)</label>
+                            <select
+                                className="glass-input"
+                                value={form.customerId}
+                                onChange={e => setForm({ ...form, customerId: e.target.value })}
+                            >
+                                <option value="">🌍 Global (Visible para todos)</option>
+                                {customers.map(c => (
+                                    <option key={c.id} value={c.id}>🏢 {c.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div className="flex gap-15 opacity-50 transition-all hover:opacity-100" style={{ flexWrap: 'wrap', borderTop: '1px solid var(--glass-border)', paddingTop: '15px' }}>
@@ -323,7 +362,7 @@ export default function AdminLocationsPage() {
                                 style={{ flex: 1, background: 'var(--glass-bg-secondary)', color: 'var(--text-primary)' }}
                                 onClick={() => {
                                     setEditingLocation(null);
-                                    setForm({ name: '', lat: '', lng: '', icon: '📍' });
+                                    setForm({ name: '', lat: '', lng: '', icon: '📍', customerId: '' });
                                 }}
                             >
                                 Cancelar
@@ -363,6 +402,12 @@ export default function AdminLocationsPage() {
                                 <div>
                                     <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{loc.name}</div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                        {customers.find(c => c.id.toString() === loc.customer_id?.toString()) ? (
+                                            <span style={{ color: '#60a5fa' }}>🏢 Solo para {customers.find(c => c.id.toString() === loc.customer_id?.toString())?.name}</span>
+                                        ) : (
+                                            '🌍 Ubicación Global'
+                                        )}
+                                        <span style={{ margin: '0 8px' }}>•</span>
                                         {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                                     </div>
                                 </div>
