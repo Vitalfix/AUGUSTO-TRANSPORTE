@@ -515,13 +515,6 @@ export default function QuotePageV2() {
                 <div>
                     <Link href="/" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>← Cancelar</Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-                        {corporateClient && (
-                            <img
-                                src={corporateClient.logo_url || 'https://vitalfix.s3.amazonaws.com/siemens_logo_white.png'}
-                                alt={corporateClient.name}
-                                style={{ height: '35px', filter: 'brightness(0) invert(1)' }}
-                            />
-                        )}
                         <h1 className="text-gradient">
                             {corporateClient ? `Panel Corporativo ${corporateClient.name}` : 'Presupuesto Estimativo y Reserva'}
                         </h1>
