@@ -23,7 +23,8 @@ export async function POST(request: Request) {
         }
 
         const route = data.routes[0];
-        const distanceKm = Math.round(route.distance / 1000);
+        // Redondeo de a 5km hacia arriba (Regla de Oro Logística)
+        const distanceKm = Math.ceil((route.distance / 1000) / 5) * 5;
         const durationMin = Math.round(route.duration / 60);
 
         return NextResponse.json({
