@@ -342,7 +342,7 @@ export default function QuotePageV2() {
 
     const calculateTotalDetails = () => {
         let total = 0;
-        const items: { name: string, qty: number, unitPrice: number, subtotal: number, type: 'KM' | 'HOUR' }[] = [];
+        const items: { name: string, qty: number, unitPrice: number, subtotal: number, type: 'KM' | 'HOUR', factor: number }[] = [];
         const selectedCustomer = customers.find(c => String(c.id) === selectedCustomerId);
         const hasSpecial = selectedCustomer?.has_special_pricing && selectedCustomer?.special_prices;
 
@@ -361,15 +361,18 @@ export default function QuotePageV2() {
                 let subtotal = 0;
                 let type: 'KM' | 'HOUR' = 'HOUR';
                 let unitPrice = pHour;
+                let factor = 0;
 
                 if (distanceKm <= 100) {
                     subtotal = pHour * travelHours * sv.qty;
                     type = 'HOUR';
                     unitPrice = pHour;
+                    factor = travelHours;
                 } else {
                     subtotal = pKm * distanceKm * sv.qty;
                     type = 'KM';
                     unitPrice = pKm;
+                    factor = distanceKm;
                 }
 
                 total += subtotal;
@@ -378,7 +381,8 @@ export default function QuotePageV2() {
                     qty: sv.qty,
                     unitPrice,
                     subtotal,
-                    type
+                    type,
+                    factor
                 });
             }
         });

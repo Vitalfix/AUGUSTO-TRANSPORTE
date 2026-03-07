@@ -655,27 +655,37 @@ export default function AdminPage() {
                                                                     <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
                                                                         <thead>
                                                                             <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
-                                                                                <th style={{ textAlign: 'left', padding: '5px' }}>Concepto</th>
+                                                                                <th style={{ textAlign: 'left', padding: '5px' }}>Vehículo / Lógica</th>
                                                                                 <th style={{ textAlign: 'center', padding: '5px' }}>Cant.</th>
                                                                                 <th style={{ textAlign: 'right', padding: '5px' }}>P.Unit</th>
+                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>{order.pricingBreakdown[0]?.type === 'KM' ? 'Km' : 'Hs'}</th>
                                                                                 <th style={{ textAlign: 'right', padding: '5px' }}>Subtotal</th>
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody>
-                                                                            {order.pricingBreakdown.map((item, idx) => (
+                                                                            {order.pricingBreakdown.map((item: any, idx: number) => (
                                                                                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                                                                                     <td style={{ padding: '8px 5px' }}>
-                                                                                        <div>{item.name}</div>
-                                                                                        <div style={{ fontSize: '0.65rem', opacity: 0.6 }}>{item.type === 'KM' ? `Cobro por Km (>100Km)` : `Cobro por Hora (≤100Km)`}</div>
+                                                                                        <div style={{ fontWeight: 'bold' }}>{item.name}</div>
+                                                                                        <div style={{ fontSize: '0.65rem', opacity: 0.6 }}>
+                                                                                            {item.type === 'KM' ? 'Tarifa por Kilómetro' : 'Tarifa por Hora'}
+                                                                                        </div>
                                                                                     </td>
                                                                                     <td style={{ textAlign: 'center', padding: '8px 5px' }}>{item.qty}</td>
                                                                                     <td style={{ textAlign: 'right', padding: '8px 5px' }}>${item.unitPrice.toLocaleString('es-AR')}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px', fontWeight: 'bold' }}>${item.subtotal.toLocaleString('es-AR')}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>{item.factor}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px', fontWeight: 'bold', color: 'white' }}>
+                                                                                        ${item.subtotal.toLocaleString('es-AR')}
+                                                                                    </td>
                                                                                 </tr>
                                                                             ))}
-                                                                            <tr>
-                                                                                <td colSpan={3} style={{ textAlign: 'right', padding: '10px 5px', color: 'var(--text-secondary)' }}>TOTAL ESTIMADO:</td>
-                                                                                <td style={{ textAlign: 'right', padding: '10px 5px', fontWeight: '900', color: '#60a5fa', fontSize: '1rem' }}>${order.price.toLocaleString('es-AR')}</td>
+                                                                            <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                                                                                <td colSpan={4} style={{ textAlign: 'right', padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                                                                    TOTAL DEL PRESUPUESTO:
+                                                                                </td>
+                                                                                <td style={{ textAlign: 'right', padding: '12px 5px', fontWeight: '900', color: '#60a5fa', fontSize: '1.1rem' }}>
+                                                                                    ${order.price.toLocaleString('es-AR')}
+                                                                                </td>
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
