@@ -79,7 +79,8 @@ export async function GET(request: Request) {
         distanceKm: o.distance_km,
         travelHours: o.travel_hours,
         purchaseOrder: o.purchase_order,
-        pricingBreakdown: o.pricing_breakdown || []
+        pricingBreakdown: o.pricing_breakdown || [],
+        stops: o.stops || []
     }));
 
     return NextResponse.json(orders);

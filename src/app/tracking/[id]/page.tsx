@@ -51,6 +51,9 @@ export default function TrackingPage() {
     const markerRef = useRef<any>(null);
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const routeLayerRef = useRef<any>(null);
+    const originMarkerRef = useRef<any>(null);
+    const destMarkerRef = useRef<any>(null);
+    const stopMarkersRef = useRef<any[]>([]);
 
     const fetchOrder = async () => {
         try {
@@ -162,17 +165,21 @@ export default function TrackingPage() {
         // Origin Marker (🟢)
         if (currentOrder.originLat && currentOrder.originLng) {
             const startPos: [number, number] = [Number(currentOrder.originLat), Number(currentOrder.originLng)];
-            L.marker(startPos, {
-                icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-            }).addTo(mapRef.current).bindPopup('Origen');
+            if (!originMarkerRef.current) {
+                originMarkerRef.current = L.marker(startPos, {
+                    icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
+                }).addTo(mapRef.current).bindPopup('Origen');
+            }
         }
 
         // Destination Marker (🏁)
         if (currentOrder.destLat && currentOrder.destLng) {
             const endPos: [number, number] = [Number(currentOrder.destLat), Number(currentOrder.destLng)];
-            L.marker(endPos, {
-                icon: L.divIcon({ html: '🏁', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-            }).addTo(mapRef.current).bindPopup('Destino');
+            if (!destMarkerRef.current) {
+                destMarkerRef.current = L.marker(endPos, {
+                    icon: L.divIcon({ html: '🏁', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
+                }).addTo(mapRef.current).bindPopup('Destino');
+            }
         }
 
         // Driver/Truck Marker (🚚)
@@ -204,9 +211,12 @@ export default function TrackingPage() {
 
                         // Add markers for intermediate points
                         if (i > 0 && i < (currentOrder.stops?.length || 0) - 1) {
-                            L.marker([stop.lat, stop.lng], {
-                                icon: L.divIcon({ html: '📍', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-                            }).addTo(mapRef.current).bindPopup(stop.label || `Parada ${i + 1}`);
+                            if (stopMarkersRef.current.length < (currentOrder.stops?.length || 0) - 2) {
+                                const m = L.marker([stop.lat, stop.lng], {
+                                    icon: L.divIcon({ html: '📍', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
+                                }).addTo(mapRef.current).bindPopup(stop.label || `Parada ${i + 1}`);
+                                stopMarkersRef.current.push(m);
+                            }
                         }
                     });
                 } else if (currentOrder.originLat && currentOrder.destLat) {
@@ -259,7 +269,7 @@ export default function TrackingPage() {
         if (order && leafletReady) {
             updateMapMarkers(order);
         }
-    }, [order?.lat, order?.lng, order?.originLat, order?.origin2Lat, order?.destLat, leafletReady]);
+    }, [order?.lat, order?.lng, order?.originLat, order?.destLat, JSON.stringify(order?.stops), leafletReady]);
 
     if (loading) {
         return <div className="page-container" style={{ textAlign: 'center', paddingTop: '100px' }}>Cargando información del viaje...</div>;

@@ -36,7 +36,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         origin2Lng: data.origin2_lng,
         startedAt: data.started_at,
         finishedAt: data.finished_at,
-        activityLog: data.activity_log || []
+        activityLog: data.activity_log || [],
+        stops: data.stops || [],
+        pricingBreakdown: data.pricing_breakdown || []
     };
 
     return NextResponse.json(order);
