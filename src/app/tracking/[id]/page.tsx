@@ -169,27 +169,45 @@ export default function TrackingPage() {
         const L = (window as any).L;
         if (!L || !mapRef.current) return;
 
-        // Origin Marker (🟢)
-        if (currentOrder.originLat && currentOrder.originLng) {
-            const startPos: [number, number] = [Number(currentOrder.originLat), Number(currentOrder.originLng)];
-            if (!originMarkerRef.current) {
-                originMarkerRef.current = L.marker(startPos, {
-                    icon: L.divIcon({ html: '🟢', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-                }).addTo(mapRef.current).bindPopup('Origen');
+        // 1. Reconstruir lista de paradas si está vacía (retrocompatibilidad)
+        let stops = currentOrder.stops || [];
+        if (stops.length === 0 && currentOrder.originLat && currentOrder.destLat) {
+            stops = [
+                { lat: Number(currentOrder.originLat), lng: Number(currentOrder.originLng), label: 'Origen' }
+            ];
+            if (currentOrder.origin2Lat && currentOrder.origin2Lng) {
+                stops.push({ lat: Number(currentOrder.origin2Lat), lng: Number(currentOrder.origin2Lng), label: 'Punto Intermedio' });
             }
+            stops.push({ lat: Number(currentOrder.destLat), lng: Number(currentOrder.destLng), label: 'Destino' });
         }
 
-        // Destination Marker (🏁)
-        if (currentOrder.destLat && currentOrder.destLng) {
-            const endPos: [number, number] = [Number(currentOrder.destLat), Number(currentOrder.destLng)];
-            if (!destMarkerRef.current) {
-                destMarkerRef.current = L.marker(endPos, {
-                    icon: L.divIcon({ html: '🏁', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-                }).addTo(mapRef.current).bindPopup('Destino');
-            }
+        // 2. Limpiar marcadores de paradas previos
+        if (stopMarkersRef.current) {
+            stopMarkersRef.current.forEach(m => m.remove());
         }
+        stopMarkersRef.current = [];
+        if (originMarkerRef.current) originMarkerRef.current.remove();
+        originMarkerRef.current = null;
+        if (destMarkerRef.current) destMarkerRef.current.remove();
+        destMarkerRef.current = null;
 
-        // Driver/Truck Marker (🚚)
+        // 3. Dibujar marcadores numerados para todas las paradas
+        stops.forEach((stop, i) => {
+            const markerIcon = L.divIcon({
+                html: `<div class="numbered-marker">${i + 1}</div>`,
+                className: '',
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+
+            const m = L.marker([Number(stop.lat), Number(stop.lng)], { icon: markerIcon })
+                .addTo(mapRef.current)
+                .bindPopup(stop.label || `Parada ${i + 1}`);
+
+            stopMarkersRef.current.push(m);
+        });
+
+        // 4. Driver/Truck Marker (🚚)
         if (currentOrder.lat && currentOrder.lng) {
             const pos: [number, number] = [Number(currentOrder.lat), Number(currentOrder.lng)];
             if (!markerRef.current) {
@@ -206,63 +224,37 @@ export default function TrackingPage() {
             }
         }
 
-        // Draw Route Tracing (Actual streets)
-        if (!routeLayerRef.current) {
+        // 5. Draw Route Tracing (Actual streets)
+        if (!routeLayerRef.current && stops.length >= 2) {
             try {
-                const points: { lat: number, lng: number }[] = [];
+                const points = stops.map(s => ({ lat: Number(s.lat), lng: Number(s.lng) }));
 
-                if (currentOrder.stops && Array.isArray(currentOrder.stops) && currentOrder.stops.length >= 2) {
-                    // Use stops list if available
-                    currentOrder.stops.forEach((stop, i) => {
-                        points.push({ lat: Number(stop.lat), lng: Number(stop.lng) });
+                const res = await fetch('/api/route', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ points })
+                });
 
-                        // Add markers for intermediate points
-                        if (i > 0 && i < (currentOrder.stops?.length || 0) - 1) {
-                            if (stopMarkersRef.current.length < (currentOrder.stops?.length || 0) - 2) {
-                                const m = L.marker([stop.lat, stop.lng], {
-                                    icon: L.divIcon({ html: '📍', className: '', iconSize: [20, 20], iconAnchor: [10, 10] })
-                                }).addTo(mapRef.current).bindPopup(stop.label || `Parada ${i + 1}`);
-                                stopMarkersRef.current.push(m);
+                if (res.ok) {
+                    const routeData = await res.json();
+                    if (routeData.geometry) {
+                        // Drawing real road route (Bright vibrant blue and dashed)
+                        const route = L.geoJSON(routeData.geometry, {
+                            style: {
+                                color: '#00e5ff', // Bright Cyan/Blue
+                                weight: 6,
+                                opacity: 0.9,
+                                dashArray: '10, 15',
+                                lineCap: 'round'
                             }
-                        }
-                    });
-                } else if (currentOrder.originLat && currentOrder.destLat) {
-                    // Fallback to legacy single origin/destination
-                    points.push({ lat: Number(currentOrder.originLat), lng: Number(currentOrder.originLng) });
-                    if (currentOrder.origin2Lat && currentOrder.origin2Lng) {
-                        points.push({ lat: Number(currentOrder.origin2Lat), lng: Number(currentOrder.origin2Lng) });
-                    }
-                    points.push({ lat: Number(currentOrder.destLat), lng: Number(currentOrder.destLng) });
-                }
+                        }).addTo(mapRef.current);
+                        routeLayerRef.current = route;
+                        if (routeData.distance) setTripDistance(routeData.distance);
 
-                if (points.length >= 2) {
-                    const res = await fetch('/api/route', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ points })
-                    });
-
-                    if (res.ok) {
-                        const routeData = await res.json();
-                        if (routeData.geometry) {
-                            // Drawing real road route (Bright vibrant blue and dashed)
-                            const route = L.geoJSON(routeData.geometry, {
-                                style: {
-                                    color: '#00e5ff', // Bright Cyan/Blue
-                                    weight: 6,
-                                    opacity: 0.9,
-                                    dashArray: '10, 15',
-                                    lineCap: 'round'
-                                }
-                            }).addTo(mapRef.current);
-                            routeLayerRef.current = route;
-                            if (routeData.distance) setTripDistance(routeData.distance);
-
-                            // Fit bounds to show the whole route
-                            const bounds = route.getBounds();
-                            if (currentOrder.lat) bounds.extend([currentOrder.lat, currentOrder.lng]);
-                            mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-                        }
+                        // Fit bounds to show the whole route
+                        const bounds = route.getBounds();
+                        if (currentOrder.lat) bounds.extend([currentOrder.lat, currentOrder.lng]);
+                        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
                     }
                 }
             } catch (e) {

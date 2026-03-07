@@ -80,6 +80,22 @@ a {
   color: var(--text-primary);
 }
 
+.numbered-marker {
+  background: var(--accent-gradient);
+  color: white;
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  filter: none !important;
+}
+
 .glass-button {
   background: var(--accent-gradient);
   color: #fff;
