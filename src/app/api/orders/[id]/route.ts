@@ -38,7 +38,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         finishedAt: data.finished_at,
         activityLog: data.activity_log || [],
         stops: data.stops || [],
-        pricingBreakdown: data.pricing_breakdown || []
+        pricingBreakdown: (data.pricing_breakdown || []).map((item: any) => ({
+            ...item,
+            unitPrice: Math.round(item.unitPrice || 0),
+            factor: Math.round(item.factor || 0),
+            subtotal: Math.round(item.subtotal || 0)
+        }))
     };
 
     return NextResponse.json(order);

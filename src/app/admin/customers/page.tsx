@@ -114,6 +114,10 @@ export default function CustomerManagementPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         if (e) e.preventDefault();
+        if (nameExistsWarning && !editingCustomer) {
+            alert('No se puede crear: Ya existe un cliente con este nombre.');
+            return;
+        }
         setSaving(true);
         try {
             const method = editingCustomer ? 'PATCH' : 'POST';
@@ -272,6 +276,16 @@ export default function CustomerManagementPage() {
 
     return (
         <div className="page-container">
+            <AdminHeader title="Clientes" />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+                <button
+                    className="glass-button"
+                    style={{ background: 'rgba(234, 179, 8, 0.2)', border: '1px solid #eab308', color: '#facc15', fontSize: '0.8rem', padding: '10px 20px' }}
+                    onClick={handleMergeDuplicates}
+                >
+                    🧹 Limpiar Duplicados (Fusionar)
+                </button>
+            </div>
             {showSpecialPricesModal && (
                 <div className="modal-overlay" style={{
                     position: 'fixed',

@@ -521,7 +521,7 @@ export default function AdminPage() {
                                                         </div>
                                                         <div className="text-right" style={{ minWidth: '100px' }}>
                                                             <div style={{ fontSize: '1.2rem', fontWeight: '900', color: group.color, marginBottom: '4px' }}>
-                                                                ${order.price.toLocaleString('es-AR')}
+                                                                ${Math.round(order.price || 0).toLocaleString('es-AR')}
                                                             </div>
                                                             <div className="flex items-center justify-end gap-4 text-success" style={{ fontSize: '0.7rem' }}>
                                                                 {order.driverName ? (
@@ -684,10 +684,10 @@ export default function AdminPage() {
                                                                                         </div>
                                                                                     </td>
                                                                                     <td style={{ textAlign: 'center', padding: '8px 5px' }}>{item.qty}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>${item.unitPrice.toLocaleString('es-AR')}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>{item.factor}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>${Math.round(item.unitPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>{Math.round(item.factor || 0)}</td>
                                                                                     <td style={{ textAlign: 'right', padding: '8px 5px', fontWeight: 'bold', color: 'white' }}>
-                                                                                        ${item.subtotal.toLocaleString('es-AR')}
+                                                                                        ${Math.round(item.subtotal || 0).toLocaleString('es-AR')}
                                                                                     </td>
                                                                                 </tr>
                                                                             ))}
@@ -696,9 +696,16 @@ export default function AdminPage() {
                                                                                     TOTAL DEL PRESUPUESTO:
                                                                                 </td>
                                                                                 <td style={{ textAlign: 'right', padding: '12px 5px', fontWeight: '900', color: '#60a5fa', fontSize: '1.1rem' }}>
-                                                                                    ${order.price.toLocaleString('es-AR')}
+                                                                                    ${Math.round(order.price || 0).toLocaleString('es-AR')}
                                                                                 </td>
                                                                             </tr>
+                                                                            {order.pricingBreakdown[0]?.type === 'HOUR' && (
+                                                                                <tr style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
+                                                                                    <td colSpan={5} style={{ padding: '8px 10px', fontSize: '0.7rem', color: '#10b981', textAlign: 'center' }}>
+                                                                                        ✨ Lógica aplicada: Menos de 100km detectados. Se cobra por tiempo/disponibilidad por vehículo.
+                                                                                    </td>
+                                                                                </tr>
+                                                                            )}
                                                                         </tbody>
                                                                     </table>
                                                                     <div style={{ fontSize: '0.65rem', marginTop: '5px', opacity: 0.5, fontStyle: 'italic', textAlign: 'right' }}>
@@ -707,6 +714,7 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                         )}
+
                                                         <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
                                                             <div className="flex-col gap-15">
                                                                 <div>
@@ -841,7 +849,7 @@ export default function AdminPage() {
             )}
 
             {/* Modal de Edición */}
-            {editingOrder ? (
+            {editingOrder && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(15px)' }}>
                     <div className="glass-panel" style={{ width: '95%', maxWidth: '800px', padding: '25px', maxHeight: '95vh', overflowY: 'auto' }}>
                         <div className="flex justify-between items-center mb-20">
@@ -1040,57 +1048,121 @@ export default function AdminPage() {
                                 <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.3)', padding: '20px' }}>
                                     <div className="flex justify-between items-center mb-10 pb-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                                         <span className="text-secondary">Precio Base Pactado:</span>
-                                        <span style={{ fontWeight: 'bold' }}>${editingOrder.price.toLocaleString('es-AR')}</span>
+                                        <span style={{ fontWeight: 'bold' }}>${Math.round(editingOrder.price || 0).toLocaleString('es-AR')}</span>
                                     </div>
 
-                                    <div className="flex justify-between items-center mb-20 pb-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <span className="text-secondary">Tiempo de Espera ({editForm.waitingMinutes} min):</span>
-                                        <span className="text-warning">
-                                            + ${Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0)).toLocaleString('es-AR')}
-                                        </span>
-                                    </div>
+                                    {/* Nueva Sección de Calculadora de Extras */}
+                                    <div style={{ marginBottom: '20px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
+                                        <div className="glass-label" style={{ marginBottom: '10px', color: 'var(--accent-color)' }}>➕ SUMAR CARGOS ADICIONALES</div>
 
-                                    <div className="flex-col gap-10">
-                                        <label className="glass-label">Horas de Espera / Demoas (minutos)</label>
-                                        <input
-                                            type="number"
-                                            className="glass-input"
-                                            value={editForm.waitingMinutes}
-                                            onChange={e => setEditForm(p => ({ ...p, waitingMinutes: parseInt(e.target.value) || 0 }))}
-                                        />
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                                            <div>
+                                                <label className="glass-label">Horas de Demora (minutos)</label>
+                                                <input
+                                                    type="number"
+                                                    className="glass-input"
+                                                    value={editForm.waitingMinutes}
+                                                    onChange={e => {
+                                                        const mins = parseInt(e.target.value) || 0;
+                                                        const vPrice = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0;
+                                                        setEditForm(p => ({ ...p, waitingMinutes: mins }));
+                                                    }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '10px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
+                                                + ${Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0)).toLocaleString('es-AR')}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '15px' }}>
+                                            <div>
+                                                <label className="glass-label">Otros conceptos (Peajes, Estacionamiento, etc)</label>
+                                                <input
+                                                    type="text"
+                                                    className="glass-input"
+                                                    placeholder="Concepto..."
+                                                    id="extra-concept"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="glass-label">Monto ($)</label>
+                                                <input
+                                                    type="number"
+                                                    className="glass-input"
+                                                    placeholder="0"
+                                                    id="extra-amount"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            className="glass-button"
+                                            style={{ marginTop: '10px', padding: '8px', fontSize: '0.7rem', width: 'auto' }}
+                                            onClick={() => {
+                                                const conceptInput = document.getElementById('extra-concept') as HTMLInputElement;
+                                                const amountInput = document.getElementById('extra-amount') as HTMLInputElement;
+                                                const concept = conceptInput.value;
+                                                const amount = parseInt(amountInput.value) || 0;
+                                                if (amount > 0) {
+                                                    const lines = editForm.observations ? editForm.observations.split('\n') : [];
+                                                    const newObs = [...lines, `+ ${concept || 'Extra'}: $${amount}`].join('\n');
+                                                    setEditForm(p => ({ ...p, observations: newObs, price: p.price + amount }));
+                                                    conceptInput.value = '';
+                                                    amountInput.value = '';
+                                                }
+                                            }}
+                                        >
+                                            ➕ Agregar al Total
+                                        </button>
                                     </div>
 
                                     <div className="flex-col gap-10 mt-15">
-                                        <label className="glass-label">Observaciones de cobro / Extras</label>
+                                        <label className="glass-label">Observaciones de cobro / Resumen de extras</label>
                                         <textarea
                                             className="glass-input"
                                             placeholder="Ej: Peajes, carga extra, etc."
                                             value={editForm.observations}
                                             onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))}
-                                            style={{ minHeight: '60px' }}
+                                            style={{ minHeight: '100px' }}
                                         />
                                     </div>
 
                                     <div className="flex-col gap-10 mt-15">
-                                        <label className="glass-label">Precio Final a Cobrar ($)</label>
-                                        <input
-                                            type="number"
-                                            className="glass-input"
-                                            value={editForm.price}
-                                            onChange={e => setEditForm(p => ({ ...p, price: parseInt(e.target.value) || 0 }))}
-                                            style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--success-color)', border: '1px solid var(--success-color)' }}
-                                        />
+                                        <label className="glass-label" style={{ fontWeight: 'bold' }}>PRECIO FINAL A FACTURAR ($)</label>
+                                        <div style={{ position: 'relative' }}>
+                                            <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', fontSize: '1.2rem' }}>$</span>
+                                            <input
+                                                type="number"
+                                                className="glass-input"
+                                                value={editForm.price}
+                                                onChange={e => setEditForm(p => ({ ...p, price: parseInt(e.target.value) || 0 }))}
+                                                style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success-color)', border: '2px solid var(--success-color)', paddingLeft: '35px' }}
+                                            />
+                                        </div>
+                                        <button
+                                            className="filter-btn"
+                                            style={{ alignSelf: 'flex-end', fontSize: '0.65rem' }}
+                                            onClick={() => {
+                                                const base = editingOrder.price;
+                                                const vPrice = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0;
+                                                const waitExtra = Math.round((editForm.waitingMinutes / 60) * vPrice);
+                                                setEditForm(p => ({ ...p, price: base + waitExtra }));
+                                            }}
+                                        >
+                                            ↩️ Restablecer al Base + Demora
+                                        </button>
                                     </div>
 
                                     <div className="mt-20 p-15 rounded-12" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                        <p style={{ fontSize: '0.8rem', textAlign: 'center', margin: 0 }}>
-                                            Este precio es el que figurará en el resumen del cliente.
+                                        <p style={{ fontSize: '0.8rem', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>
+                                            PRECIO FINAL: $ {Math.round(editForm.price || 0).toLocaleString('es-AR')}
                                         </p>
                                     </div>
                                 </div>
                             </div>
                         )}
 
+                        {/* Modal Footer */}
                         <div className="mt-20 p-20" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
                             <div className="flex gap-10">
                                 <button className="glass-button flex-1" style={{ background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
@@ -1101,7 +1173,8 @@ export default function AdminPage() {
                         </div>
                     </div>
                 </div>
-            ) : null}
+            )}
+
             <InstallPrompt />
         </div>
     );

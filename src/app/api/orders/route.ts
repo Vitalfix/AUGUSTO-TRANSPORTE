@@ -79,7 +79,12 @@ export async function GET(request: Request) {
         distanceKm: o.distance_km ? Math.round(o.distance_km) : 0,
         travelHours: o.travel_hours,
         purchaseOrder: o.purchase_order,
-        pricingBreakdown: o.pricing_breakdown || [],
+        pricingBreakdown: (o.pricing_breakdown || []).map((item: any) => ({
+            ...item,
+            unitPrice: Math.round(item.unitPrice || 0),
+            factor: Math.round(item.factor || 0),
+            subtotal: Math.round(item.subtotal || 0)
+        })),
         stops: o.stops || []
     }));
 
@@ -148,23 +153,25 @@ export async function POST(request: Request) {
 
     try {
         if (body.customerName) {
-            // Buscamos si ya existe un cliente con este nombre y teléfono exactos
-            // No bloqueamos por email o cuit único
+            // Buscamos si ya existe un cliente con este nombre (insensible a mayúsculas)
             const { data: existing } = await supabase
                 .from('customers')
                 .select('id')
-                .eq('name', body.customerName)
-                .eq('phone', body.customerPhone)
+                .ilike('name', body.customerName.trim())
                 .maybeSingle();
 
             if (existing) {
                 finalCustomerId = existing.id;
-                // Actualizamos datos si cambiaron (email, cuit, etc)
-                await supabase.from('customers').update({
-                    email: body.customerEmail,
-                    cuit: body.cuit,
-                    tax_status: body.taxStatus
-                }).eq('id', finalCustomerId);
+                // Actualizamos datos si cambiaron (email, cuit, teléfono, etc)
+                const updateData: any = {};
+                if (body.customerEmail) updateData.email = body.customerEmail;
+                if (body.cuit) updateData.cuit = body.cuit;
+                if (body.taxStatus) updateData.tax_status = body.taxStatus;
+                if (body.customerPhone) updateData.phone = body.customerPhone;
+
+                if (Object.keys(updateData).length > 0) {
+                    await supabase.from('customers').update(updateData).eq('id', finalCustomerId);
+                }
             } else {
                 // Creamos nuevo
                 const { data: newCust, error: insErr } = await supabase
