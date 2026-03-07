@@ -239,10 +239,11 @@ export async function POST(request: Request) {
         .select()
         .single();
 
-    if (error && error.message.includes('column "customer_id" does not exist')) {
-        console.warn("Schema missing customer_id, retrying without it...");
+    if (error && (error.message.includes('column "customer_id" does not exist') || error.message.includes('column "stops" does not exist'))) {
+        console.warn("Schema missing new columns, retrying without them...");
         delete orderData.customer_id;
-        delete orderData.purchase_order; // Likely purchase_order is also missing
+        delete orderData.purchase_order;
+        delete orderData.stops;
         const retry = await supabase.from('orders').insert([orderData]).select().single();
         data = retry.data;
         error = retry.error;

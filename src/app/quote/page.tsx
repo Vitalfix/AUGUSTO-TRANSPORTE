@@ -397,6 +397,8 @@ export default function QuotePageV2() {
                     taxStatus,
                     originLat: originCoordsList[0]?.lat || 0,
                     originLng: originCoordsList[0]?.lng || 0,
+                    origin2Lat: originCoordsList.length > 1 ? originCoordsList[1]?.lat : (destCoordsList.length > 1 ? destCoordsList[0]?.lat : undefined),
+                    origin2Lng: originCoordsList.length > 1 ? originCoordsList[1]?.lng : (destCoordsList.length > 1 ? destCoordsList[0]?.lng : undefined),
                     destLat: destCoordsList[destCoordsList.length - 1]?.lat || 0,
                     destLng: destCoordsList[destCoordsList.length - 1]?.lng || 0,
                     stops: allPoints,
