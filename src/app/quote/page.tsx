@@ -127,7 +127,7 @@ function AddressAutocomplete({ value, onChange, placeholder, onSelect, savedLoca
                                 setShowSuggestions(false);
                             }}
                         >
-                            <span>{loc.icon || '📍'}</span> {loc.name}
+                            {loc.name}
                         </div>
                     ))}
 

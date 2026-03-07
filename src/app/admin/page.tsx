@@ -893,10 +893,9 @@ export default function AdminPage() {
                                     <div>
                                         <label className="glass-label">Condición IVA</label>
                                         <select
-                                            className="glass-input"
+                                            className="glass-select"
                                             value={editForm.taxStatus}
                                             onChange={e => setEditForm(p => ({ ...p, taxStatus: e.target.value }))}
-                                            style={{ color: 'white' }}
                                         >
                                             <option value="">Seleccionar...</option>
                                             <option value="responsable_inscripto">Responsable Inscripto</option>
@@ -935,7 +934,7 @@ export default function AdminPage() {
                                     </div>
                                     <div>
                                         <label className="glass-label">Franja Horaria</label>
-                                        <select className="glass-input" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))} style={{ background: 'var(--body-bg)', color: 'white' }}>
+                                        <select className="glass-select" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))}>
                                             <option value="manana">Mañana</option>
                                             <option value="mediodia">Medio día</option>
                                             <option value="tarde">Tarde</option>

@@ -422,7 +422,7 @@ export default function CustomerManagementPage() {
                         <div>
                             <label className="glass-label">Condición Fiscal</label>
                             <select
-                                className="glass-input"
+                                className="glass-select"
                                 value={form.taxStatus}
                                 onChange={(e) => setForm({ ...form, taxStatus: e.target.value })}
                             >

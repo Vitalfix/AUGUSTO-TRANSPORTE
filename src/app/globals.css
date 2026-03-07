@@ -153,16 +153,29 @@ a {
   padding-right: 40px;
 }
 
-.glass-select option {
-  background: #111;
-  color: #fff;
-}
-
 .glass-input:focus,
 .glass-select:focus {
   border-color: var(--accent-color);
   background: var(--glass-bg);
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.2);
+}
+
+/* Fix for dropdown menus legibility */
+.glass-select option,
+.glass-input option,
+select.glass-select option,
+select.glass-input option {
+  background-color: #1a1a1a !important;
+  /* Force dark background */
+  color: #ffffff !important;
+  /* Force white text */
+  padding: 10px;
+}
+
+/* For some browsers, we need to style the select itself when opened */
+select:focus option {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
 }
 
 .glass-label {
@@ -293,7 +306,7 @@ h4 {
 
 .flex-col {
   display: flex;
-  flexDirection: column;
+  flex-direction: column;
 }
 
 .items-center {

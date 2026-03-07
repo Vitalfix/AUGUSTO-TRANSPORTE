@@ -206,7 +206,7 @@ export default function AdminLocationsPage() {
 
             if (res.ok) {
                 setEditingLocation(null);
-                setForm({ name: '', lat: '', lng: '', icon: '📍', customerId: '' });
+                setForm({ name: '', lat: '', lng: '', icon: '', customerId: '' });
                 fetchLocations();
             } else {
                 const data = await res.json();
@@ -238,7 +238,7 @@ export default function AdminLocationsPage() {
             name: loc.name,
             lat: loc.lat.toString(),
             lng: loc.lng.toString(),
-            icon: loc.icon || '📍',
+            icon: '',
             customerId: loc.customer_id || ''
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -299,19 +299,10 @@ export default function AdminLocationsPage() {
                                 required
                             />
                         </div>
-                        <div style={{ flex: '1 1 80px' }}>
-                            <label className="glass-label">Icono (Opcional)</label>
-                            <input
-                                className="glass-input"
-                                value={form.icon}
-                                onChange={e => setForm({ ...form, icon: e.target.value })}
-                                placeholder="Emoji (ej: 🏠)"
-                            />
-                        </div>
                         <div style={{ flex: '2 1 200px' }}>
                             <label className="glass-label">Asignar a Cliente (Opcional)</label>
                             <select
-                                className="glass-input"
+                                className="glass-select"
                                 value={form.customerId}
                                 onChange={e => setForm({ ...form, customerId: e.target.value })}
                             >
@@ -362,7 +353,7 @@ export default function AdminLocationsPage() {
                                 style={{ flex: 1, background: 'var(--glass-bg-secondary)', color: 'var(--text-primary)' }}
                                 onClick={() => {
                                     setEditingLocation(null);
-                                    setForm({ name: '', lat: '', lng: '', icon: '📍', customerId: '' });
+                                    setForm({ name: '', lat: '', lng: '', icon: '', customerId: '' });
                                 }}
                             >
                                 Cancelar
@@ -386,19 +377,6 @@ export default function AdminLocationsPage() {
                             style={{ padding: '20px 30px', animationDelay: `${i * 100}ms` }}
                         >
                             <div className="flex items-center gap-20">
-                                <div style={{
-                                    fontSize: '1.5rem',
-                                    background: 'rgba(255,255,255,0.03)',
-                                    width: '60px',
-                                    height: '60px',
-                                    borderRadius: '16px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    border: '1px solid rgba(255,255,255,0.05)'
-                                }}>
-                                    {loc.icon || '📍'}
-                                </div>
                                 <div>
                                     <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>{loc.name}</div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
