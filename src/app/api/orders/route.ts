@@ -230,7 +230,7 @@ export async function POST(request: Request) {
         dest_lng: body.destLng,
         stops: body.stops || [],
         observations: body.observations,
-        distance_km: body.distanceKm ? Math.round(body.distanceKm) : 0,
+        distance_km: body.distanceKm ? Math.ceil(body.distanceKm / 5) * 5 : 0,
         travel_hours: body.travelHours,
         pricing_breakdown: body.pricingBreakdown ? body.pricingBreakdown.map((item: any) => ({
             ...item,
@@ -477,7 +477,7 @@ export async function PATCH(request: Request) {
     if (customerEmail !== undefined) updateData.customer_email = customerEmail;
     if (customerPhone !== undefined) updateData.customer_phone = customerPhone;
     if (observations !== undefined) updateData.observations = observations;
-    if (distanceKm !== undefined) updateData.distance_km = Math.round(distanceKm);
+    if (distanceKm !== undefined) updateData.distance_km = Math.ceil(distanceKm / 5) * 5;
     if (travelHours !== undefined) updateData.travel_hours = travelHours;
     if (cuit !== undefined) updateData.cuit = cuit;
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;

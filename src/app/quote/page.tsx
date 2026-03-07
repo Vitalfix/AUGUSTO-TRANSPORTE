@@ -283,7 +283,8 @@ export default function QuotePageV2() {
             });
             const data = await res.json();
             if (data.distance) {
-                const roundedDist = Math.round(data.distance);
+                // Redondeo de a 5km hacia arriba
+                const roundedDist = Math.ceil(data.distance / 5) * 5;
                 setDistanceKm(roundedDist);
                 const dh = roundedDist <= 10 ? 2 : roundedDist <= 20 ? 3 : roundedDist <= 50 ? 4 : roundedDist <= 70 ? 5 : 7;
                 setTravelHours(dh);
