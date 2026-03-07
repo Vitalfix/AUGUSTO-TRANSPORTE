@@ -283,8 +283,9 @@ export default function QuotePageV2() {
             });
             const data = await res.json();
             if (data.distance) {
-                setDistanceKm(data.distance);
-                const dh = data.distance <= 10 ? 2 : data.distance <= 20 ? 3 : data.distance <= 50 ? 4 : data.distance <= 70 ? 5 : 7;
+                const roundedDist = Math.round(data.distance);
+                setDistanceKm(roundedDist);
+                const dh = roundedDist <= 10 ? 2 : roundedDist <= 20 ? 3 : roundedDist <= 50 ? 4 : roundedDist <= 70 ? 5 : 7;
                 setTravelHours(dh);
             }
         } catch (e) {
@@ -360,19 +361,19 @@ export default function QuotePageV2() {
 
                 let subtotal = 0;
                 let type: 'KM' | 'HOUR' = 'HOUR';
-                let unitPrice = pHour;
+                let unitPrice = Math.round(pHour);
                 let factor = 0;
 
                 if (distanceKm <= 100) {
-                    subtotal = pHour * travelHours * sv.qty;
+                    subtotal = Math.round(pHour * travelHours * sv.qty);
                     type = 'HOUR';
-                    unitPrice = pHour;
-                    factor = travelHours;
+                    unitPrice = Math.round(pHour);
+                    factor = Math.round(travelHours);
                 } else {
-                    subtotal = pKm * distanceKm * sv.qty;
+                    subtotal = Math.round(pKm * distanceKm * sv.qty);
                     type = 'KM';
-                    unitPrice = pKm;
-                    factor = distanceKm;
+                    unitPrice = Math.round(pKm);
+                    factor = Math.round(distanceKm);
                 }
 
                 total += subtotal;

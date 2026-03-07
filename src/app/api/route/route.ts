@@ -23,8 +23,8 @@ export async function POST(request: Request) {
         }
 
         const route = data.routes[0];
-        const distanceKm = route.distance / 1000;
-        const durationMin = route.duration / 60;
+        const distanceKm = Math.round(route.distance / 1000);
+        const durationMin = Math.round(route.duration / 60);
 
         return NextResponse.json({
             distance: distanceKm,

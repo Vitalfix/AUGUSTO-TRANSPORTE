@@ -52,7 +52,7 @@ export async function GET(request: Request) {
         vehicle: o.vehicle,
         origin: o.origin,
         destination: o.destination,
-        price: o.price,
+        price: o.price ? Math.round(o.price) : 0,
         status: o.status,
         createdAt: o.created_at,
         travelDate: o.travel_date,
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         startedAt: o.started_at,
         finishedAt: o.finished_at,
         activityLog: o.activity_log || [],
-        distanceKm: o.distance_km,
+        distanceKm: o.distance_km ? Math.round(o.distance_km) : 0,
         travelHours: o.travel_hours,
         purchaseOrder: o.purchase_order,
         pricingBreakdown: o.pricing_breakdown || [],
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
         customer_name: body.customerName,
         vehicle: body.vehicle,
         destination: body.destination,
-        price: body.price,
+        price: body.price ? Math.round(body.price) : 0,
         origin: body.origin,
         travel_date: body.travelDate,
         travel_time: body.travelTime,
@@ -223,7 +223,7 @@ export async function POST(request: Request) {
         dest_lng: body.destLng,
         stops: body.stops || [],
         observations: body.observations,
-        distance_km: body.distanceKm,
+        distance_km: body.distanceKm ? Math.round(body.distanceKm) : 0,
         travel_hours: body.travelHours,
         pricing_breakdown: body.pricingBreakdown || null,
         activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
@@ -450,7 +450,7 @@ export async function PATCH(request: Request) {
     if (status) updateData.status = status;
     if (lat !== undefined) updateData.lat = lat;
     if (lng !== undefined) updateData.lng = lng;
-    if (price !== undefined) updateData.price = price;
+    if (price !== undefined) updateData.price = Math.round(price);
     if (driverName !== undefined) updateData.driver_name = driverName;
     if (driverPhone !== undefined) updateData.driver_phone = driverPhone;
     if (licensePlate !== undefined) updateData.license_plate = licensePlate;
@@ -465,7 +465,7 @@ export async function PATCH(request: Request) {
     if (customerEmail !== undefined) updateData.customer_email = customerEmail;
     if (customerPhone !== undefined) updateData.customer_phone = customerPhone;
     if (observations !== undefined) updateData.observations = observations;
-    if (distanceKm !== undefined) updateData.distance_km = distanceKm;
+    if (distanceKm !== undefined) updateData.distance_km = Math.round(distanceKm);
     if (travelHours !== undefined) updateData.travel_hours = travelHours;
     if (cuit !== undefined) updateData.cuit = cuit;
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;

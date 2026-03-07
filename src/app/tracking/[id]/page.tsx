@@ -371,7 +371,7 @@ export default function TrackingPage() {
                         {tripDistance !== null && (
                             <div style={{ position: 'absolute', top: '55px', right: '15px', background: 'var(--glass-bg)', backdropFilter: 'blur(10px)', border: '1px solid var(--glass-border)', padding: '8px 15px', borderRadius: '15px', zIndex: 1000, boxShadow: '0 4px 15px rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span style={{ fontSize: '1rem' }}>📏</span>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{tripDistance.toFixed(1)} km</span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{Math.round(tripDistance)} km</span>
                             </div>
                         )}
                     </div>
