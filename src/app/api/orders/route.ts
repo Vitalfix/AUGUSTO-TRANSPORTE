@@ -363,7 +363,7 @@ export async function POST(request: Request) {
             </div>
 
             <div style="margin-top: 40px; padding: 15px; border-top: 1px solid #e2e8f0; font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4;">
-                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                                <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
             </div>
         </div>
       `
@@ -410,7 +410,7 @@ export async function POST(request: Request) {
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                             
                             <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; margin-bottom: 20px;">
-                                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                                                <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
                             </div>
                             <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
                         </div>
@@ -575,7 +575,7 @@ export async function PATCH(request: Request) {
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                             
                             <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; margin-bottom: 20px;">
-                                <strong>Aviso Legal:</strong> Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                                                <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
                             </div>
 
                             <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>

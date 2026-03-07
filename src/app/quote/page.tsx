@@ -547,12 +547,14 @@ export default function QuotePageV2() {
                         <h2 className="mb-10">1. Ruta y Fechas</h2>
 
                         <div className="flex-col gap-10">
-                            <label className="glass-label">Identificación del Cliente</label>
+                            <label className="glass-label">
+                                {selectedCustomerId === 'new' ? '👤 Identificación del Cliente' : '👤 Cliente Seleccionado'}
+                            </label>
                             <select
                                 className="glass-select"
                                 value={selectedCustomerId}
                                 onChange={(e) => handleCustomerChange(e.target.value)}
-                                style={{ fontSize: '1rem', padding: '12px', marginBottom: '10px' }}
+                                style={{ fontSize: '1rem', padding: '12px' }}
                             >
                                 {customerError ? (
                                     <option disabled>⚠️ Error al cargar clientes</option>
@@ -571,17 +573,16 @@ export default function QuotePageV2() {
                                     <option disabled>Cargando clientes...</option>
                                 )}
                             </select>
-
-                            <label className="glass-label">{selectedCustomerId === 'new' ? 'Nombre / Empresa' : 'Cliente Seleccionado'}</label>
-                            <input
-                                type="text"
-                                className="glass-input"
-                                value={customerName}
-                                onChange={e => setCustomerName(e.target.value)}
-                                placeholder="Nombre completo o Razón Social"
-                                disabled={selectedCustomerId !== 'new'}
-                                required
-                            />
+                            {selectedCustomerId === 'new' && (
+                                <input
+                                    type="text"
+                                    className="glass-input"
+                                    value={customerName}
+                                    onChange={e => setCustomerName(e.target.value)}
+                                    placeholder="Nombre completo o Razón Social"
+                                    required
+                                />
+                            )}
                         </div>
 
                         {/* ORIGINES */}
