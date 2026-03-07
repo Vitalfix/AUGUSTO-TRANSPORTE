@@ -71,6 +71,45 @@ export default function Home() {
         />
       </header>
 
+      {/* ACCESO CORPORATIVO - justo debajo del logo */}
+      {mounted && corporateClients.length > 0 && (
+        <div className="glass-panel" style={{ marginBottom: '20px', padding: '20px 25px', maxWidth: '800px', margin: '0 auto 20px auto', width: '100%' }}>
+          <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '15px', fontSize: '1.1rem', letterSpacing: '1px' }}>
+            ACCESO CORPORATIVO
+          </h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center' }}>
+            {corporateClients.map((client) => (
+              <Link key={client.id} href={`/quote?client=${client.client_slug}`} className="corporate-card">
+                <div style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '15px',
+                  padding: '16px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '8px',
+                  border: '1px solid var(--glass-border)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  minWidth: '120px'
+                }}>
+                  {client.logo_url ? (
+                    <img
+                      src={client.logo_url}
+                      alt={client.name}
+                      style={{ height: '36px', maxWidth: '110px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                    />
+                  ) : (
+                    <div style={{ fontSize: '2rem' }}>🏢</div>
+                  )}
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'stretch', maxWidth: '800px', margin: '0 auto' }}>
 
         {/* 1. Pedir Viaje */}
@@ -142,43 +181,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 4. Clientes Corporativos */}
-      {mounted && corporateClients.length > 0 && (
-        <div className="glass-panel" style={{ marginTop: '20px', padding: '25px', maxWidth: '800px', margin: '20px auto 0 auto', width: '100%' }}>
-          <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '20px', fontSize: '1.2rem', letterSpacing: '1px' }}>
-            ACCESO CORPORATIVO
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '20px', justifyContent: 'center' }}>
-            {corporateClients.map((client) => (
-              <Link key={client.id} href={`/quote?client=${client.client_slug}`} className="corporate-card">
-                <div style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '15px',
-                  padding: '20px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px',
-                  border: '1px solid var(--glass-border)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer'
-                }}>
-                  {client.logo_url || client.client_slug === 'siemens' ? (
-                    <img
-                      src={client.logo_url || '/logos/siemens.png'}
-                      alt={client.name}
-                      style={{ height: '40px', maxWidth: '120px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                    />
-                  ) : (
-                    <div style={{ fontSize: '2rem' }}>🏢</div>
-                  )}
-                  <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Social / Admin Row */}
       <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
