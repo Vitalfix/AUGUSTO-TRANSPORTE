@@ -223,6 +223,7 @@ export async function POST(request: Request) {
         observations: body.observations,
         distance_km: body.distanceKm,
         travel_hours: body.travelHours,
+        pricing_breakdown: body.pricingBreakdown || null,
         activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
     };
 

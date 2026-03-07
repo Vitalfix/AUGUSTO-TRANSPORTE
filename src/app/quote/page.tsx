@@ -340,8 +340,9 @@ export default function QuotePageV2() {
         setCoords(newCoords);
     };
 
-    const calculateTotal = () => {
+    const calculateTotalDetails = () => {
         let total = 0;
+        const items: { name: string, qty: number, unitPrice: number, subtotal: number, type: 'KM' | 'HOUR' }[] = [];
         const selectedCustomer = customers.find(c => String(c.id) === selectedCustomerId);
         const hasSpecial = selectedCustomer?.has_special_pricing && selectedCustomer?.special_prices;
 
@@ -357,14 +358,35 @@ export default function QuotePageV2() {
                     if (sp.priceHour > 0) pHour = sp.priceHour;
                 }
 
-                if (distanceKm <= 100) total += pHour * travelHours * sv.qty;
-                else total += pKm * distanceKm * sv.qty;
+                let subtotal = 0;
+                let type: 'KM' | 'HOUR' = 'HOUR';
+                let unitPrice = pHour;
+
+                if (distanceKm <= 100) {
+                    subtotal = pHour * travelHours * sv.qty;
+                    type = 'HOUR';
+                    unitPrice = pHour;
+                } else {
+                    subtotal = pKm * distanceKm * sv.qty;
+                    type = 'KM';
+                    unitPrice = pKm;
+                }
+
+                total += subtotal;
+                items.push({
+                    name: vData.name,
+                    qty: sv.qty,
+                    unitPrice,
+                    subtotal,
+                    type
+                });
             }
         });
-        return Math.round(total);
+        return { total: Math.round(total), items };
     };
 
-    const price = calculateTotal();
+    const calculation = calculateTotalDetails();
+    const price = calculation.total;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -395,13 +417,13 @@ export default function QuotePageV2() {
                     customerEmail,
                     customerPhone: `${customerPhone}${customerPhone2 ? ' / ' + customerPhone2 : ''}`,
                     taxStatus,
-                    originLat: originCoordsList[0]?.lat || 0,
                     originLng: originCoordsList[0]?.lng || 0,
                     origin2Lat: originCoordsList.length > 1 ? originCoordsList[1]?.lat : (destCoordsList.length > 1 ? destCoordsList[0]?.lat : undefined),
                     origin2Lng: originCoordsList.length > 1 ? originCoordsList[1]?.lng : (destCoordsList.length > 1 ? destCoordsList[0]?.lng : undefined),
                     destLat: destCoordsList[destCoordsList.length - 1]?.lat || 0,
                     destLng: destCoordsList[destCoordsList.length - 1]?.lng || 0,
                     stops: allPoints,
+                    pricingBreakdown: calculation.items,
                     observations,
                     distanceKm,
                     travelHours,

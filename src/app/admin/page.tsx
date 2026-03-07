@@ -29,6 +29,7 @@ export interface Order {
     travelHours?: number;
     waitingMinutes?: number;
     activityLog?: { type: string; timestamp: string;[key: string]: any }[];
+    pricingBreakdown?: { name: string, qty: number, unitPrice: number, subtotal: number, type: 'KM' | 'HOUR' }[];
 }
 
 interface Driver {
@@ -645,6 +646,45 @@ export default function AdminPage() {
                                                             }
                                                             return null;
                                                         })()}
+
+                                                        {/* Pricing Breakdown Detail */}
+                                                        {order.pricingBreakdown && order.pricingBreakdown.length > 0 && (
+                                                            <div style={{ padding: '0 20px 15px' }}>
+                                                                <div className="glass-panel" style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '15px' }}>
+                                                                    <div className="glass-label" style={{ fontSize: '0.65rem', color: '#60a5fa', marginBottom: '10px' }}>📊 DETALLE DEL CÁLCULO (PRESUPUESTO INICIAL)</div>
+                                                                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                                                                        <thead>
+                                                                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
+                                                                                <th style={{ textAlign: 'left', padding: '5px' }}>Concepto</th>
+                                                                                <th style={{ textAlign: 'center', padding: '5px' }}>Cant.</th>
+                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>P.Unit</th>
+                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>Subtotal</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            {order.pricingBreakdown.map((item, idx) => (
+                                                                                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                                                                                    <td style={{ padding: '8px 5px' }}>
+                                                                                        <div>{item.name}</div>
+                                                                                        <div style={{ fontSize: '0.65rem', opacity: 0.6 }}>{item.type === 'KM' ? `Cobro por Km (>100Km)` : `Cobro por Hora (≤100Km)`}</div>
+                                                                                    </td>
+                                                                                    <td style={{ textAlign: 'center', padding: '8px 5px' }}>{item.qty}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>${item.unitPrice.toLocaleString('es-AR')}</td>
+                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px', fontWeight: 'bold' }}>${item.subtotal.toLocaleString('es-AR')}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                            <tr>
+                                                                                <td colSpan={3} style={{ textAlign: 'right', padding: '10px 5px', color: 'var(--text-secondary)' }}>TOTAL ESTIMADO:</td>
+                                                                                <td style={{ textAlign: 'right', padding: '10px 5px', fontWeight: '900', color: '#60a5fa', fontSize: '1rem' }}>${order.price.toLocaleString('es-AR')}</td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                    <div style={{ fontSize: '0.65rem', marginTop: '5px', opacity: 0.5, fontStyle: 'italic', textAlign: 'right' }}>
+                                                                        * El cálculo utiliza {Math.round(order.distanceKm || 0)} Km y {order.travelHours} Hs de base.
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                         <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
                                                             <div className="flex-col gap-15">
                                                                 <div>
