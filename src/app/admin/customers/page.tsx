@@ -480,14 +480,50 @@ export default function CustomerManagementPage() {
                                         />
                                     </div>
                                     <div>
-                                        <label className="glass-label">URL del Logo</label>
-                                        <input
-                                            type="text"
-                                            className="glass-input"
-                                            value={form.logoUrl}
-                                            onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
-                                            placeholder="https://..."
-                                        />
+                                        <label className="glass-label">Logo del Cliente</label>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            {/* Preview del logo actual */}
+                                            {form.logoUrl && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid var(--glass-border)' }}>
+                                                    <img
+                                                        src={form.logoUrl}
+                                                        alt="Logo preview"
+                                                        style={{ height: '40px', maxWidth: '120px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                    />
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{form.logoUrl}</span>
+                                                </div>
+                                            )}
+                                            {/* Botón examinar */}
+                                            <label style={{ cursor: 'pointer' }}>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (!file) return;
+                                                        const fd = new FormData();
+                                                        fd.append('file', file);
+                                                        fd.append('slug', form.clientSlug || form.name.toLowerCase().replace(/[^a-z0-9]/g, '-'));
+                                                        try {
+                                                            const res = await fetch('/api/upload-logo', { method: 'POST', body: fd });
+                                                            const data = await res.json();
+                                                            if (data.url) {
+                                                                setForm({ ...form, logoUrl: data.url });
+                                                            } else {
+                                                                alert('Error al subir logo: ' + (data.error || 'desconocido'));
+                                                            }
+                                                        } catch {
+                                                            alert('Error de red al subir el logo');
+                                                        }
+                                                    }}
+                                                />
+                                                <span className="glass-button" style={{ display: 'inline-block', padding: '10px 20px', fontSize: '0.9rem', cursor: 'pointer' }}>
+                                                    📂 Examinar imagen...
+                                                </span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </>
                             )}
