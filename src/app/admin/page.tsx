@@ -60,7 +60,7 @@ const formatVehicle = (v: string) => {
     return vehicles[v] || v;
 };
 
-const renderInLines = (text: string | undefined, separator: string | RegExp = /[|]/) => {
+const renderInLines = (text: string | undefined, separator: string | RegExp = /[|,]/) => {
     if (!text) return null;
     return text.split(separator).filter(Boolean).map((t, i) => (
         <div key={i} style={{ display: 'block', marginBottom: '2px' }}>{t.trim()}</div>

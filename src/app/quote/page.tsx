@@ -409,7 +409,7 @@ export default function QuotePageV2() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    vehicle: selectedVehicles.map(v => `${v.qty}x ${vehiclesData.find(x => x.id === v.id)?.name}`).join(', '),
+                    vehicle: selectedVehicles.map(v => `${v.qty}x ${vehiclesData.find(x => x.id === v.id)?.name}`).join(' | '),
                     destination: customDestinations.filter(d => d.trim()).join(' | '),
                     price,
                     customerName,
