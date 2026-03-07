@@ -33,4 +33,13 @@ Esta skill define los estándares técnicos y visuales para el proyecto El Casal
 3. **Verificación de Base de Datos**: Antes de subir cambios que involucren nuevas columnas o tablas (como `customer_id` en `orders`), verificar siempre que el esquema de la base de datos en Supabase esté sincronizado con el código propuesto para evitar errores de ejecución en producción.
 4. **Auto-Auditoría**: Antes de finalizar cualquier tarea o entregar un cambio, realizar un chequeo general del flujo afectado para asegurar que nada se haya roto y prever posibles errores o fallas.
 5. Mantener siempre actualizado el `plan_maestro_El Casal.md`.
-6. **Sincronización Continua**: Cada vez que se realice una modificación en el código o configuración, el agente DEBE realizar un `git add`, `git commit` y `git push` inmediatamente para asegurar que la "nube" esté siempre sincronizada con el estado local.
+
+## [REGLA CRÍTICA] Sincronización Obligatoria
+
+**CADA VEZ** que realices cualquier cambio en el código, archivos de configuración o documentación, es **OBLIGATORIO** ejecutar la siguiente secuencia antes de dar la tarea por finalizada:
+
+1. `git add .`
+2. `git commit -m "Descripción clara del cambio"`
+3. `git push origin main`
+
+Nunca asumas que la sincronización es opcional. El estado local y el remoto deben ser idénticos tras cada intervención del agente.
