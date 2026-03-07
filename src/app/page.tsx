@@ -165,7 +165,7 @@ export default function Home() {
                 }}>
                   {client.logo_url || client.client_slug === 'siemens' ? (
                     <img
-                      src={client.logo_url || 'https://vitalfix.s3.amazonaws.com/siemens_logo_white.png'}
+                      src={client.logo_url || '/logos/siemens.png'}
                       alt={client.name}
                       style={{ height: '40px', maxWidth: '120px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
                     />
