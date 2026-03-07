@@ -94,11 +94,13 @@ export default function Home() {
                   minWidth: '120px'
                 }}>
                   {client.logo_url ? (
-                    <img
-                      src={client.logo_url}
-                      alt={client.name}
-                      style={{ height: '36px', maxWidth: '110px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
-                    />
+                    <div style={{ background: 'white', borderRadius: '10px', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img
+                        src={client.logo_url}
+                        alt={client.name}
+                        style={{ height: '32px', maxWidth: '100px', objectFit: 'contain' }}
+                      />
+                    </div>
                   ) : (
                     <>
                       <div style={{ fontSize: '2rem' }}>🏢</div>
