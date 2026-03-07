@@ -100,9 +100,11 @@ export default function Home() {
                       style={{ height: '36px', maxWidth: '110px', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
                     />
                   ) : (
-                    <div style={{ fontSize: '2rem' }}>🏢</div>
+                    <>
+                      <div style={{ fontSize: '2rem' }}>🏢</div>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
+                    </>
                   )}
-                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
                 </div>
               </Link>
             ))}
