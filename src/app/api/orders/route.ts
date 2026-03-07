@@ -398,6 +398,13 @@ export async function POST(request: Request) {
                                 </p>
                             </div>
 
+                            ${body.observations ? `
+                            <div style="margin: 15px 0; padding: 15px; background: #f0f9ff; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                                <p style="margin: 0;"><strong>📝 Observaciones:</strong><br/>
+                                    <span style="color: #475569;">${body.observations.replace(/\n/g, '<br/>')}</span>
+                                </p>
+                            </div>` : ''}
+
                             <p style="background: #fffbeb; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; color: #92400e;">
                                 <strong>Nota Importante:</strong> El presupuesto de <strong style="color: #059669;">$${body.price.toLocaleString('es-AR')}</strong> es de carácter <strong>estimativo</strong>. Nuestro equipo evaluará los detalles manualmente y te contactará a la brevedad para confirmar el valor definitivo y la disponibilidad.
                             </p>
