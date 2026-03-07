@@ -104,6 +104,30 @@ export default function Home() {
 
       </div>
 
+      {/* 3. Servicios Ofrecidos */}
+      <div className="glass-panel" style={{ marginTop: '20px', padding: '25px', maxWidth: '800px', margin: '20px auto 0 auto', width: '100%' }}>
+        <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '20px', fontSize: '1.4rem', letterSpacing: '1px' }}>
+          NUESTROS SERVICIOS
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+          {[
+            { tag: '🛒', text: 'E-commerce' },
+            { tag: '📦', text: 'Flete puerta a puerta' },
+            { tag: '🚚', text: 'Reparto' },
+            { tag: '🚛', text: 'Servicio de Expresos' },
+            { tag: '🏠', text: 'Mudanzas' },
+            { tag: '🏗️', text: 'Camiones Plancha' },
+            { tag: '❄️', text: 'Camiones Refrigerados' },
+            { tag: '🚢', text: 'Camiones Portacontenedores' },
+          ].map((srv, idx) => (
+            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
+              <span style={{ fontSize: '1.2rem' }}>{srv.tag}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{srv.text}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Social / Admin Row */}
       <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
 
