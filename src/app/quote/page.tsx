@@ -603,7 +603,9 @@ export default function QuotePageV2() {
                                                 placeholder={`Dirección de origen ${idx + 1}`}
                                                 value={addr}
                                                 savedLocations={dbLocations.filter(loc =>
-                                                    !loc.customer_id || (corporateClient && loc.customer_id.toString() === corporateClient.id.toString())
+                                                    corporateClient
+                                                        ? loc.customer_id?.toString() === corporateClient.id.toString()
+                                                        : !loc.customer_id
                                                 )}
                                                 onChange={val => {
                                                     const newO = [...customOrigins];
@@ -662,7 +664,9 @@ export default function QuotePageV2() {
                                                 placeholder={`Dirección de destino ${idx + 1}`}
                                                 value={addr}
                                                 savedLocations={dbLocations.filter(loc =>
-                                                    !loc.customer_id || (corporateClient && loc.customer_id.toString() === corporateClient.id.toString())
+                                                    corporateClient
+                                                        ? loc.customer_id?.toString() === corporateClient.id.toString()
+                                                        : !loc.customer_id
                                                 )}
                                                 onChange={val => {
                                                     const newD = [...customDestinations];
