@@ -221,16 +221,19 @@ export default function QuotePageV2() {
                 const custRes = await fetch('/api/customers/public');
                 if (custRes.ok) {
                     const custData = await custRes.json();
-                    const sorted = [...custData].sort((a, b) => {
-                        const nameA = (a.name || '').toUpperCase();
-                        const nameB = (b.name || '').toUpperCase();
-                        const aSiemens = nameA.includes('SIEMENS');
-                        const bSiemens = nameB.includes('SIEMENS');
+                    // Detectar acceso corporativo desde URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const clientSlugFromUrl = urlParams.get('client');
 
-                        if (aSiemens && !bSiemens) return -1;
-                        if (!aSiemens && bSiemens) return 1;
-                        return nameA.localeCompare(nameB);
-                    });
+                    // Si es acceso normal (sin ?client=), ocultar clientes corporativos
+                    // Si es acceso corporativo (con ?client=siemens), mostrar solo ese cliente corporativo
+                    const filtered = clientSlugFromUrl
+                        ? custData.filter((c: any) => c.client_slug === clientSlugFromUrl)
+                        : custData.filter((c: any) => !c.is_corporate);
+
+                    const sorted = [...filtered].sort((a: any, b: any) =>
+                        (a.name || '').localeCompare(b.name || '')
+                    );
                     setCustomers(sorted);
                 } else {
                     setCustomerError(true);
