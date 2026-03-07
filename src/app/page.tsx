@@ -94,11 +94,11 @@ export default function Home() {
                   minWidth: '120px'
                 }}>
                   {client.logo_url ? (
-                    <div style={{ background: 'white', borderRadius: '12px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '160px', height: '80px', overflow: 'hidden' }}>
+                    <div style={{ background: 'white', borderRadius: '12px', padding: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '240px', height: '120px', overflow: 'hidden' }}>
                       <img
                         src={client.logo_url}
                         alt={client.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '10px' }}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '12px' }}
                       />
                     </div>
                   ) : (
