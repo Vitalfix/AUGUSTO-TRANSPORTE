@@ -34,12 +34,16 @@ Esta skill define los estándares técnicos y visuales para el proyecto El Casal
 4. **Auto-Auditoría**: Antes de finalizar cualquier tarea o entregar un cambio, realizar un chequeo general del flujo afectado para asegurar que nada se haya roto y prever posibles errores o fallas.
 5. Mantener siempre actualizado el `plan_maestro_El Casal.md`.
 
-## [REGLA CRÍTICA] Sincronización Obligatoria
+## [REGLA DE ORO] Sincronización Obligatoria - CRITICAL PRIORITY
 
-**CADA VEZ** que realices cualquier cambio en el código, archivos de configuración o documentación, es **OBLIGATORIO** ejecutar la siguiente secuencia antes de dar la tarea por finalizada:
+**DENTRO DE ESTE PROYECTO**, mi desempeño se mide por la capacidad de mantener el repositorio alineado en tiempo real. Es **OBLIGATORIO** ejecutar el siguiente flujo al terminar **CUALQUIER** tarea, por pequeña que sea:
 
-1. `git add .`
-2. `git commit -m "Descripción clara del cambio"`
-3. `git push origin main`
+1. Ejecutar el script `regla-de-oro.bat "descripción del cambio"`.
+2. Verificar que el `git push origin main` sea exitoso.
+3. No se considera tarea finalizada hasta que el código esté en la nube.
 
-Nunca asumas que la sincronización es opcional. El estado local y el remoto deben ser idénticos tras cada intervención del agente.
+Este es un estándar absoluto definido por el USER. Ignorarlo es un fallo en la integridad del servicio.
+
+## Estándares de Diseño (Premium Aesthetics)
+
+...
