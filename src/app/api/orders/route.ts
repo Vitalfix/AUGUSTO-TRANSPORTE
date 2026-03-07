@@ -232,7 +232,12 @@ export async function POST(request: Request) {
         observations: body.observations,
         distance_km: body.distanceKm ? Math.round(body.distanceKm) : 0,
         travel_hours: body.travelHours,
-        pricing_breakdown: body.pricingBreakdown || null,
+        pricing_breakdown: body.pricingBreakdown ? body.pricingBreakdown.map((item: any) => ({
+            ...item,
+            unitPrice: Math.round(item.unitPrice || 0),
+            factor: Math.round(item.factor || 0),
+            subtotal: Math.round(item.subtotal || 0)
+        })) : null,
         activity_log: body.pendingCustomerUpdateLog || [{ type: 'CREATED', label: 'Pedido Generado (Presupuesto Estimativo)', time: new Date().toISOString() }]
     };
 
@@ -477,6 +482,14 @@ export async function PATCH(request: Request) {
     if (cuit !== undefined) updateData.cuit = cuit;
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;
     if (purchaseOrder !== undefined) updateData.purchase_order = purchaseOrder;
+    if (body.pricingBreakdown !== undefined) {
+        updateData.pricing_breakdown = body.pricingBreakdown.map((item: any) => ({
+            ...item,
+            unitPrice: Math.round(item.unitPrice || 0),
+            factor: Math.round(item.factor || 0),
+            subtotal: Math.round(item.subtotal || 0)
+        }));
+    }
 
     // Fetch current log to append
     const { data: currentOrder } = await supabase.from('orders').select('activity_log').eq('id', id).single();
