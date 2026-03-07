@@ -38,6 +38,13 @@ const formatDestination = (d: string) => {
     return d;
 };
 
+const renderInLines = (text: string | undefined, separator: string | RegExp = /[|]/) => {
+    if (!text) return null;
+    return text.split(separator).filter(Boolean).map((t, i) => (
+        <div key={i} style={{ display: 'block', marginBottom: '2px' }}>{t.trim()}</div>
+    ));
+};
+
 export default function TrackingPage() {
     const params = useParams();
     const id = params?.id as string;
@@ -483,13 +490,19 @@ export default function TrackingPage() {
                     <div style={{ padding: '20px', borderRight: '1px solid var(--glass-border)' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '10px' }}>DETALLES DEL VIAJE</div>
                         <div style={{ fontSize: '0.9rem' }}>
-                            <div style={{ marginBottom: '5px' }}>📍 <span style={{ color: 'var(--text-secondary)' }}>Desde:</span> {order.origin || 'Base'}</div>
-                            <div>🎯 <span style={{ color: 'var(--text-secondary)' }}>Hasta:</span> {formatDestination(order.destination)}</div>
+                            <div style={{ marginBottom: '8px', display: 'flex', gap: '5px' }}>
+                                <span>📍</span>
+                                <div><span style={{ color: 'var(--text-secondary)' }}>Desde:</span> {renderInLines(order.origin) || 'Base'}</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <span>🎯</span>
+                                <div><span style={{ color: 'var(--text-secondary)' }}>Hasta:</span> {renderInLines(formatDestination(order.destination))}</div>
+                            </div>
                         </div>
                     </div>
                     <div style={{ padding: '20px', background: 'rgba(255,255,255,0.02)' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', letterSpacing: '1px', marginBottom: '10px' }}>VEHÍCULO Y CÓDIGO</div>
-                        <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{order.vehicle}</div>
+                        <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>{renderInLines(order.vehicle)}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--accent-color)', fontFamily: 'monospace', marginTop: '5px' }}>#{order.id}</div>
                     </div>
                 </div>

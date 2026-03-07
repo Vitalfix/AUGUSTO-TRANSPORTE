@@ -10,7 +10,15 @@ interface Order {
     destination: string;
     status: string;
     waitingMinutes: number;
+    vehicle: string;
 }
+
+const renderInLines = (text: string | undefined, separator: string | RegExp = /[|]/) => {
+    if (!text) return null;
+    return text.split(separator).filter(Boolean).map((t, i) => (
+        <div key={i} style={{ display: 'block', marginBottom: '2px' }}>{t.trim()}</div>
+    ));
+};
 
 export default function DriverPage(props: { params: Promise<{ id: string }> }) {
     const params = use(props.params);
@@ -321,11 +329,14 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                     <div className="glass-label">CLIENTE</div>
                     <div style={{ fontWeight: 'bold', fontSize: '1.1rem', marginBottom: '15px' }}>{order.customerName}</div>
 
+                    <div className="glass-label">VEHÍCULO</div>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '15px' }}>{renderInLines(order.vehicle)}</div>
+
                     <div className="glass-label">PUNTO DE CARGA</div>
-                    <div style={{ fontSize: '0.9rem', marginBottom: '15px', color: 'var(--accent-color)' }}>{order.origin || 'No especificado'}</div>
+                    <div style={{ fontSize: '0.9rem', marginBottom: '15px', color: 'var(--accent-color)' }}>{renderInLines(order.origin) || 'No especificado'}</div>
 
                     <div className="glass-label">DESTINO</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--success-color)' }}>{order.destination}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--success-color)' }}>{renderInLines(order.destination)}</div>
                 </div>
 
                 {/* TIMELINE STAGE ACTIONS */}

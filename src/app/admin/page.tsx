@@ -60,6 +60,13 @@ const formatVehicle = (v: string) => {
     return vehicles[v] || v;
 };
 
+const renderInLines = (text: string | undefined, separator: string | RegExp = /[|]/) => {
+    if (!text) return null;
+    return text.split(separator).filter(Boolean).map((t, i) => (
+        <div key={i} style={{ display: 'block', marginBottom: '2px' }}>{t.trim()}</div>
+    ));
+};
+
 
 export default function AdminPage() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -504,7 +511,12 @@ export default function AdminPage() {
                                                             <div className="flex gap-15 flex-wrap">
                                                                 <span className="text-secondary" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>#{order.id.substring(0, 8)}</span>
                                                                 <span className="text-accent" style={{ fontSize: '0.75rem', fontWeight: '600' }}>📅 {order.travelDate || 'Pendiente'}</span>
-                                                                <span className="text-secondary" style={{ fontSize: '0.75rem' }}>🚛 {formatVehicle(order.vehicle)}</span>
+                                                                <div className="text-secondary" style={{ fontSize: '0.75rem', display: 'flex', gap: '5px' }}>
+                                                                    <span>🚛</span>
+                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                        {renderInLines(formatVehicle(order.vehicle))}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="text-right" style={{ minWidth: '100px' }}>
@@ -699,7 +711,10 @@ export default function AdminPage() {
                                                             <div className="flex-col gap-15">
                                                                 <div>
                                                                     <div className="glass-label" style={{ fontSize: '0.6rem' }}>📟 INFORMACIÓN DE CARGA</div>
-                                                                    <div style={{ fontSize: '0.85rem', marginTop: '10px' }}><strong>Vehículo:</strong> {formatVehicle(order.vehicle)}</div>
+                                                                    <div style={{ fontSize: '0.85rem', marginTop: '10px', display: 'flex', gap: '5px' }}>
+                                                                        <strong>Vehículo:</strong>
+                                                                        <div>{renderInLines(formatVehicle(order.vehicle))}</div>
+                                                                    </div>
                                                                     <div style={{ fontSize: '0.85rem' }}><strong>Fecha y Hora:</strong> {order.travelDate} ({order.travelTime})</div>
                                                                     {order.observations && (
                                                                         <div style={{
@@ -725,8 +740,14 @@ export default function AdminPage() {
                                                             <div className="flex-col gap-15">
                                                                 <div>
                                                                     <div className="glass-label" style={{ fontSize: '0.6rem' }}>📍 RUTA</div>
-                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Origen:</strong> {order.origin}</div>
-                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px' }}><strong>Destino:</strong> {order.destination}</div>
+                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', display: 'flex', gap: '5px' }}>
+                                                                        <strong>Origen:</strong>
+                                                                        <div>{renderInLines(order.origin)}</div>
+                                                                    </div>
+                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', display: 'flex', gap: '5px' }}>
+                                                                        <strong>Destino:</strong>
+                                                                        <div>{renderInLines(order.destination)}</div>
+                                                                    </div>
                                                                     <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'var(--text-secondary)' }}>
                                                                         {Math.round(order.distanceKm || 0)} Km | {order.travelHours} hs est.
                                                                     </div>

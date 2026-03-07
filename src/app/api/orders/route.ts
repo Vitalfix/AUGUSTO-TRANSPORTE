@@ -326,13 +326,13 @@ export async function POST(request: Request) {
             ${body.purchaseOrder ? `<p style="margin: 5px 0;"><strong>Nº Orden de Compra:</strong> ${body.purchaseOrder}</p>` : ''}
             
             <div style="margin: 20px 0; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <p style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle}</p>
+                <p style="margin-top: 0; margin-bottom: 12px; font-size: 1.1rem;"><strong>📦 Vehículo(s):</strong><br/>${body.vehicle.split(/[|,]/).map((v: string) => v.trim()).filter(Boolean).join('<br/>')}</p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
                 <p style="margin-top: 0; margin-bottom: 12px;"><strong>📍 Origen:</strong><br/>
-                    <span style="color: #475569;">${body.origin.split(' | ').join('<br/>')}</span>
+                    <span style="color: #475569;">${body.origin.split(/[|]/).map((s: string) => s.trim()).filter(Boolean).join('<br/>')}</span>
                 </p>
                 <p style="margin-top: 0; margin-bottom: 12px;"><strong>🏁 Destino:</strong><br/>
-                    <span style="color: #475569;">${body.destination.split(' | ').join('<br/>')}</span>
+                    <span style="color: #475569;">${body.destination.split(/[|]/).map((s: string) => s.trim()).filter(Boolean).join('<br/>')}</span>
                 </p>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
                 <p style="margin-bottom: 0;"><strong>📅 Fecha/Hora:</strong> ${body.travelDate} (${body.travelTime})</p>
@@ -379,10 +379,10 @@ export async function POST(request: Request) {
                             
                             <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
                                 <p style="margin-top: 0; margin-bottom: 10px;"><strong>📍 Origen:</strong><br/>
-                                    ${body.origin.split(' | ').join('<br/>')}
+                                    ${body.origin.split(/[|]/).map((s: string) => s.trim()).filter(Boolean).join('<br/>')}
                                 </p>
                                 <p style="margin-bottom: 0;"><strong>🏁 Destino:</strong><br/>
-                                    ${body.destination.split(' | ').join('<br/>')}
+                                    ${body.destination.split(/[|]/).map((s: string) => s.trim()).filter(Boolean).join('<br/>')}
                                 </p>
                             </div>
 

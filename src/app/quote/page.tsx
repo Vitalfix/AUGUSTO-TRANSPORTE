@@ -756,7 +756,9 @@ export default function QuotePageV2() {
                                     <div style={{ flex: 1 }}>
                                         <div className="glass-label" style={{ fontSize: '0.7rem' }}>FLOTA</div>
                                         <div style={{ fontSize: '0.85rem' }}>
-                                            {selectedVehicles.map(v => `${v.qty}x ${vehiclesData.find(x => x.id === v.id)?.name}`).join(', ')}
+                                            {selectedVehicles.map((v, i) => (
+                                                <div key={i} style={{ marginBottom: '2px' }}>{v.qty}x {vehiclesData.find(x => x.id === v.id)?.name}</div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
