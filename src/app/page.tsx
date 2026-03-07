@@ -119,21 +119,7 @@ export default function Home() {
 
       <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'stretch', maxWidth: '800px', margin: '0 auto' }}>
 
-        {/* 1. Pedir Viaje */}
-        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
-          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Pedir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
-            Cotizá y reservá tu transporte de carga de forma inmediata y profesional.
-          </p>
-          <Link href="/quote" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
-              Nueva Solicitud
-            </button>
-          </Link>
-        </div>
-
-        {/* 2. Seguir Viaje */}
+        {/* 1. Seguir Viaje */}
         <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📍</div>
           <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Seguir Viaje</h2>
@@ -160,6 +146,20 @@ export default function Home() {
               Ver Mapa
             </button>
           </form>
+        </div>
+
+        {/* 2. Pedir Viaje */}
+        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
+          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Pedir Viaje</h2>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+            Cotizá y reservá tu transporte de carga de forma inmediata y profesional.
+          </p>
+          <Link href="/quote" style={{ width: '100%' }}>
+            <button className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
+              Nueva Solicitud
+            </button>
+          </Link>
         </div>
 
       </div>
