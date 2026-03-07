@@ -32,6 +32,7 @@ export default function CustomerManagementPage() {
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [vehicles, setVehicles] = useState<VehiclePricing[]>([]);
     const [showSpecialPricesModal, setShowSpecialPricesModal] = useState(false);
+    const [nameExistsWarning, setNameExistsWarning] = useState(false);
 
     const [form, setForm] = useState({
         name: '',
@@ -178,6 +179,7 @@ export default function CustomerManagementPage() {
 
     const handleEdit = (c: Customer) => {
         setEditingCustomer(c);
+        setNameExistsWarning(false);
         setForm({
             name: c.name,
             email: c.email || '',
@@ -188,6 +190,37 @@ export default function CustomerManagementPage() {
             specialPrices: c.special_prices || {}
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleNameChange = (newName: string) => {
+        setForm({ ...form, name: newName });
+        const exists = customers.some(c =>
+            c.name.toLowerCase().trim() === newName.toLowerCase().trim() &&
+            c.id !== editingCustomer?.id
+        );
+        setNameExistsWarning(exists);
+    };
+
+    const handleMergeDuplicates = async () => {
+        if (!confirm('Esto fusionará los clientes con el mismo nombre y re-vinculará sus pedidos al registro principal. ¿Continuar?')) return;
+        setLoading(true);
+        try {
+            const res = await fetch('/api/customers', {
+                method: 'PUT',
+                headers: { 'x-admin-password': password }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`¡Limpieza completada! Se fusionaron ${data.mergedCount} registros.`);
+                fetchCustomers();
+            } else {
+                alert(`Error: ${data.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const updateSpecialPrice = (vehicleId: string, field: string, value: string) => {
@@ -303,7 +336,16 @@ export default function CustomerManagementPage() {
                 </div>
             )}
 
-            <AdminHeader title="Base de Clientes" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <AdminHeader title="Base de Clientes" />
+                <button
+                    onClick={handleMergeDuplicates}
+                    className="glass-button"
+                    style={{ background: 'rgba(59, 130, 246, 0.1)', borderColor: 'rgba(59, 130, 246, 0.3)', fontSize: '0.8rem', padding: '8px 15px' }}
+                >
+                    🧹 Limpiar Duplicados
+                </button>
+            </div>
 
             <div className="glass-panel mb-20 p-20">
                 <h3 className="mb-20">{editingCustomer ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}</h3>
@@ -313,11 +355,16 @@ export default function CustomerManagementPage() {
                             <label className="glass-label">Nombre / Empresa</label>
                             <input
                                 type="text"
-                                className="glass-input"
+                                className={`glass-input ${nameExistsWarning ? 'warning-border' : ''}`}
                                 value={form.name}
-                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                onChange={(e) => handleNameChange(e.target.value)}
                                 required
                             />
+                            {nameExistsWarning && (
+                                <p style={{ color: '#fbbf24', fontSize: '0.75rem', marginTop: '5px' }}>
+                                    ⚠️ Ya existe un cliente con este nombre.
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="glass-label">Email</label>
@@ -392,6 +439,7 @@ export default function CustomerManagementPage() {
                                 style={{ background: 'rgba(255,255,255,0.05)', border: 'none' }}
                                 onClick={() => {
                                     setEditingCustomer(null);
+                                    setNameExistsWarning(false);
                                     setForm({
                                         name: '',
                                         email: '',
