@@ -1212,13 +1212,53 @@ button:focus-visible {
 }
 
 .admin-order-card {
-  border-left-width: 5px;
+  border-left-width: 6px;
   border-left-style: solid;
-  transition: transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .admin-order-card:hover {
-  transform: translateX(3px);
+  transform: translateY(-2px) translateX(4px);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: var(--glass-shadow);
+}
+
+.admin-orders-board {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.status-section-header {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-transform: uppercase;
+}
+
+.status-orders-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+@media (min-width: 1024px) {
+  .status-orders-grid {
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+  }
+}
+
+@media (min-width: 1600px) {
+  .status-orders-grid {
+    grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
+  }
 }
 
 .pricing-table {

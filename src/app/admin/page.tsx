@@ -421,7 +421,7 @@ export default function AdminPage() {
                     </p>
                 </div>
             ) : (
-                <div className="admin-form-grid" style={{ gap: '30px' }}>
+                <div className="admin-orders-board">
                     {[
                         { id: 'PENDING', label: '🆕 NUEVO A REVISAR', color: '#f59e0b' },
                         { id: 'APPROVED', label: '✅ APROBADO', color: '#3b82f6' },
@@ -436,11 +436,11 @@ export default function AdminPage() {
 
                         return (
                             <div key={group.id} className="status-section animate-fade-in">
-                                <h2 className="text-sm text-secondary mb-15 flex items-center gap-10" style={{ color: group.color }}>
+                                <h2 className="status-section-header" style={{ color: group.color }}>
                                     {group.label}
                                     <span className="badge bg-white-05 text-secondary">{groupOrders.length}</span>
                                 </h2>
-                                <div className="flex-col gap-15">
+                                <div className="status-orders-grid">
                                     {groupOrders.map(order => {
                                         const isExpanded = expandedOrders.includes(order.id);
 

@@ -3,7 +3,7 @@
 ## 🔄 Estado Actual
 
 - **Fase**: Fase 2 (Piel / Refactor Admin Elite)
-- **Última Actualización**: 2026-03-07 23:05
+- **Última Actualización**: 2026-03-08 00:08
 
 ## ✅ Tareas Completadas
 
@@ -13,6 +13,7 @@
 - [x] **Optimización Premium**: Actualización de la Home a v1.4 con mejores prácticas de React (clicks counters ocultos, hidratación segura).
 - [x] **Refactor Admin Elite**: Eliminación de estilos inline y tipado estricto en toda el área de administración.
 - [x] **Dinamización de Notificaciones**: Corrección de emails hardcodeados y envío masivo a administradores configurados.
+- [x] **Optimización Admin PC**: Rediseño del tablero para visualización 'a lo largo' en PC, eliminando columnas comprimidas.
 
 ## ⏳ Tareas Pendientes
 
