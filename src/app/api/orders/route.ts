@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: 'smtp.mail.yahoo.com',
     port: 465, // SSL
     secure: true,
     auth: {
