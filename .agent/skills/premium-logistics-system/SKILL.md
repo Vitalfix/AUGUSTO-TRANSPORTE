@@ -1,53 +1,86 @@
 ---
-name: Premium Logistics System (VitalFix Elite Enhanced)
-description: Especialización en desarrollo de sistemas de transporte de alta gama, integrada con el Skill Maestro Universal de VitalFix. UX Premium, optimización de recursos y protocolos de integridad absoluta.
+name: El Casal Logistics System (VitalFix Elite Full Stack)
+description: Constitución técnica total. Combina el Skill Maestro Universal v14.1 con la lógica específica de transporte y protocolos de sincronización de El Casal.
 ---
 
-# 🌀 Skill: Premium Logistics System (El Casal-TRANSPORTE)
+# 🌀 Constitución Técnica: El Casal (VitalFix Elite)
 
-Este documento combina el **Skill Maestro Universal de VitalFix (v14.0)** con los requisitos específicos del proyecto El Casal. Es la memoria técnica y constitución operativa del proyecto.
+Este documento es la **Constitución de Desarrollo** absoluta para el proyecto El Casal. Define el estilo, la arquitectura y los protocolos de autogestión, integrando el Skill Maestro Universal de VitalFix con la lógica de negocio logística.
 
-## 🏛️ 1. Estándares Globales (VitalFix Universal)
+## 🏛️ 1. Estándares de Diseño (Premium UI/UX)
 
-- **Aesthetics First**: Mezcla de Glassmorphism (`backdrop-filter: blur()`), gradientes profundos y sombras suaves.
-- **Código y Comunicación**: Código en **Inglés**. Documentación, commits y diálogos en **Español (Argentina)**.
-- **Pureza Técnica**: Prioridad a Vanilla JS/CSS (Native-First). Evitar librerías pesadas (Anti-Bloatware).
-- **Memoria Local**: El asistente debe leer este archivo, el `TASKS.md` y el plan maestro al iniciar cada sesión (Protocolo Sesión Fresca).
-- **Protección contra Alucinaciones**: Prohibido suponer rutas, IPs o credenciales. Verificar siempre con `list_dir` y `view_file`.
+* **Aesthetics First**: Cada interfaz debe ser impactante. Uso de `backdrop-filter: blur()`, gradientes `linear-gradient(135deg, ...)` y sombras suaves.
+* **Interactive Elements**: Botones con estados de hover animados, transiciones de página fluidas y feedback visual inmediato.
+* **TV Optimization**: Fuentes grandes (mínimo `1.2rem`), alto contraste y navegación pensada para control remoto o pantallas táctiles.
+* **Protocolo Anti-Overflow**: Para asegurar responsividad absoluta, prohibido usar `min-width` superiores a **280px** en contenedores de grid/flex sin media queries compensatorias. Todo layout debe ser testeado para evitar scroll horizontal en dispositivos de 320px de ancho.
+* **Cero Estilos Inline**: Todo debe residir en `globals.css` o módulos CSS.
 
-## 🎨 2. Estándares de Diseño Específicos (El Casal)
+## 🚚 2. Lógica Logística Central (El Casal)
 
-- **Paleta de Identidad**: Gradientes oscuros (`#0a0a14`) con acentos en **dorado/ámbar** (`--accent-color`).
-- **Responsividad Extrema**: Diseño fluido optimizado para móviles (choferes) y pantallas grandes/TV (monitoreo).
-- **Protocolo Anti-Overflow**: Prohibido usar `min-width` superiores a **280px** en contenedores de grid sin media queries compensatorias. Siempre verificar que no exista scroll horizontal en dispositivos de 320px de ancho.
-- **Cero Estilos Inline**: Todo debe residir en `globals.css` o módulos CSS.
+* **Geocodificación**: Uso dinámico de la tabla `locations` y validación de direcciones via API si es necesario.
+* **Tarifas**: Lógica centralizada por Km, tipo de vehículo y tiempo de espera.
+* **Flujo de Estados**: PENDIENTE (Recibido) -> APROBADO (Cotizado) -> EN CURSO (Con Chofer) -> FINALIZADO (Entregado).
+* **Seguridad**: Row Level Security (RLS) mandatorio en Supabase para proteger datos de clientes y choferes.
 
-## 🛠️ 3. Protocolos de Desarrollo e Integridad
+## 💻 3. Calidad de Código y Desarrollo
 
-- **Zero Breaks**: Antes de finalizar, realizar análisis de efectos colaterales y validación de sintaxis línea por línea.
-- **Tipado Estricto**: Prohibido el uso de `any` en TypeScript.
-- **Seguridad Supabase**: Implementación obligatoria de Row Level Security (RLS) en cada tabla.
-- **Desacoplamiento (Config-First)**: Prohibido el hardcoding de IPs, URLs o credenciales. Usar `.env` o archivos de configuración.
-- **Circuit Breaker**: Si una solución falla 2 veces, detenerse y replantear la estrategia (Regla de los 2 Intentos).
+* **Lenguaje**: Código y variables en **Inglés**. Documentación, commits y diálogos en **Español (Argentina)**.
+* **Tipado Estricto**: Prohibido el uso de `any` en TypeScript. Usar interfaces definidas en `lib/types.ts`.
+* **Pureza**: Prioridad a Vanilla JS/CSS. Evitar librerías pesadas (Anti-Bloatware).
+* **Manejo de Errores**: Todo proceso crítico debe tener `try-catch` y loggeo de errores amigable.
 
-## 🚚 4. Lógica Logística Central
+## 🚀 4. DevOps y Hardware (Armbian / TVBox)
 
-- **Geocodificación**: Uso dinámico de la tabla `locations`.
-- **Tarifas**: Lógica centralizada por Km/Tiempo de espera.
-- **Flujo de Estados**: PENDIENTE -> APROBADO -> EN CURSO -> FINALIZADO.
+* **Optimización ARM**: Minimizar el uso de RAM. Las aplicaciones deben correr 24/7 en TVBoxes sin degradación.
+* **Native First**: Antes de sugerir una librería, buscar la solución nativa.
+* **Deployment**: Scripts de instalación deben ser compatibles con Debian/Armbian.
 
-## 📋 5. Gestión de Tareas y Papelera
+## 🛡️ 5. Protección contra Alucinaciones (Verificación de Realidad)
 
-- **TASKS.md**: Mantener actualizada la bitácora de vuelo en la raíz del proyecto.
-- **Backup Preventivo**: Ante borrados o cambios masivos, mover archivos a una carpeta temporal (ej: `.trash/`) en lugar de usar `rm` directo.
+* **No Suponer Rutas**: Verificar existencia con `list_dir` o `view_file`.
+* **IPs y Credenciales**: Consultar siempre el Skill Local o `.env`. NUNCA inventar datos técnicos.
+* **Sinceridad Técnica**: Si no se tiene acceso o algo es ambiguo, declararlo explícitamente.
+
+## 🛠️ 6. Protocolo de Integridad Técnica (Zero Breaks)
+
+Antes de finalizar cualquier tarea:
+1. **Análisis de Impacto**: Evaluar efectos colaterales en el sistema.
+2. **Validación Crítica**: Lectura línea por línea para detectar errores tipográficos o lógica rota.
+3. **Consistencia UI**: Asegurar que el Responsive no se rompa (especialmente en móviles).
+4. **Confirmación de Éxito**: Solo reportar finalizado tras verificar funcionalidad total y ausencia de regresiones.
+
+## 🛑 7. Protocolo Anti-Estancamiento (Circuit Breaker)
+
+* **Regla de los 2 Intentos**: Si algo falla 2 veces igual, prohibido intentarlo por tercera vez. Cambiar de estrategia radicalmente.
+* **Detención Proactiva**: Admitir estancamiento tras 3 turnos sin progreso y replantear el problema con el usuario.
+
+## 🔄 8. Sincronización y Gestión de Caché
+
+* **Cache Busting**: Añadir parámetro de versión (ej: `?v=20260307`) a archivos estáticos tras cambios mayores.
+* **Verificación Post-Despliegue**: Validar que la versión en la nube sea la correcta.
+
+## 🧠 9. Gestión de Sesión (Protocolo Sesión Fresca)
+
+* **Arranque en Frío**: Al iniciar un chat, leer automáticamente: `SKILL.md`, `local.md` y `TASKS.md`.
+* **Transferencia de Contexto**: Asegurar que la bitácora esté al día antes de que el chat se vuelva lento.
+
+## 🗑️ 10. Bitácora y Papelera (Task Management)
+
+* **TASKS.md**: Mantener actualizada la bitácora de vuelo en la raíz.
+* **Backup Preventivo**: Ante borrados masivos, mover a carpeta temporal (`.trash/`) - NO USAR `rm` directo.
+
+## 🧱 11. Desacoplamiento Total (Config-First)
+
+* **Zero Hardcoding**: IPs, URLs y credenciales en `.env` o archivos de configuración.
+* **Estilos Centralizados**: Tokens de diseño en variables CSS (`:root`).
 
 ## 🚀 [REGLA DE ORO] Sincronización Obligatoria - CRITICAL PRIORITY
 
 Mi desempeño se mide por la alineación en tiempo real del repositorio. Es **OBLIGATORIO** ejecutar el siguiente flujo al terminar **CUALQUIER** tarea:
 
-1. Ejecutar el script `regla-de-oro.bat "descripción del cambio"`.
+1. Ejecutar el script `regla-de-oro.bat "descripción clara del cambio"`.
 2. Verificar que el `git push origin main` sea exitoso.
 3. No se considera tarea finalizada hasta que el código esté en la nube.
 
 ---
-*Este skill es autodidacta y evolutivo. Si se detecta una mejora técnica, debe incorporarse aquí.*
+*Este skill es la ley del proyecto. Su cumplimiento es obligatorio y su evolución constante.*
