@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465, // SSL
+    secure: true,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 async function authenticate(password: string | null) {
     if (!password) return false;
@@ -321,8 +329,9 @@ export async function POST(request: Request) {
         const otherAdminEmails = bccEmails.length > 1 ? bccEmails.slice(1) : undefined;
 
         // Admin Notification
-        await resend.emails.send({
-            from: 'EL CASAL <onboarding@resend.dev>',
+        console.log(`Enviando notificación admin a: ${mainAdminEmail} (Bcc: ${otherAdminEmails})`);
+        await transporter.sendMail({
+            from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
             to: mainAdminEmail,
             bcc: otherAdminEmails,
             subject: `Nueva Solicitud: ${id}`,
@@ -373,8 +382,9 @@ export async function POST(request: Request) {
 
         // Customer Confirmation (Optional but recommended by UI)
         if (body.customerEmail) {
-            await resend.emails.send({
-                from: 'EL CASAL <onboarding@resend.dev>',
+            console.log(`Enviando confirmación al cliente: ${body.customerEmail}`);
+            await transporter.sendMail({
+                from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
                 to: body.customerEmail,
                 bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `Recibimos tu solicitud de presupuesto - ID ${id}`,
@@ -427,8 +437,8 @@ export async function POST(request: Request) {
                 `
             });
         }
-    } catch (emailError) {
-        console.error("Error enviando email", emailError);
+    } catch (emailError: any) {
+        console.error("Error enviando email:", emailError.message || emailError);
     }
 
     return NextResponse.json({
@@ -553,8 +563,8 @@ export async function PATCH(request: Request) {
     // Notificaciones
     if (status === 'CONFIRMED' && data.customer_email) {
         try {
-            await resend.emails.send({
-                from: 'EL CASAL <onboarding@resend.dev>',
+            await transporter.sendMail({
+                from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
                 to: data.customer_email,
                 bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `¡Pedido Confirmado! - ID ${id}`,
