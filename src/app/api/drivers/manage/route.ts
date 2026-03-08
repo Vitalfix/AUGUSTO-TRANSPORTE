@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { Driver } from '@/lib/types';
 
 // Helper to authenticate master password
 async function authenticate(password: string) {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
         .order('name', { ascending: true });
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+    return NextResponse.json(data as Driver[]);
 }
 
 export async function POST(request: Request) {
@@ -48,7 +49,7 @@ export async function POST(request: Request) {
         .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+    return NextResponse.json(data as Driver);
 }
 
 export async function PATCH(request: Request) {
@@ -60,7 +61,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const updateData: any = {};
+    const updateData: Partial<Driver> = {};
     if (is_active !== undefined) updateData.is_active = is_active;
     if (name) updateData.name = name;
     if (phone) updateData.phone = phone;
@@ -75,7 +76,7 @@ export async function PATCH(request: Request) {
         .single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    return NextResponse.json(data);
+    return NextResponse.json(data as Driver);
 }
 
 export async function DELETE(request: Request) {
@@ -89,7 +90,7 @@ export async function DELETE(request: Request) {
 
     // Move to recycle bin before deleting
     const { data: driver } = await supabase.from('drivers').select('*').eq('id', id).single();
-    if (driver) {
+    if (driver as Driver) {
         await supabase.from('recycle_bin').insert({
             original_id: driver.id.toString(),
             table_name: 'drivers',

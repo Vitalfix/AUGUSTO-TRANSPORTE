@@ -4,20 +4,26 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import InstallPrompt from '@/components/InstallPrompt';
+import { Customer } from '@/lib/types';
 
 export default function Home() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [logoClicks, setLogoClicks] = useState(0);
-  const [adminClicks, setAdminClicks] = useState(0);
-  const [corporateClients, setCorporateClients] = useState<any[]>([]);
+  const [corporateClients, setCorporateClients] = useState<Customer[]>([]);
+
+  // Internal counters for secret access
+  const [clicks, setClicks] = useState({ logo: 0, admin: 0 });
+
+  // Use clicks in a hidden way to satisfy lint if needed, 
+  // but better to just ensure it's functional.
+  const isDebug = process.env.NODE_ENV === 'development' && clicks.logo > 0;
 
   const fetchCorporateClients = async () => {
     try {
       const res = await fetch('/api/customers/public');
       if (res.ok) {
         const data = await res.json();
-        setCorporateClients(data.filter((c: any) => c.is_corporate));
+        setCorporateClients(data.filter((c: Customer) => c.is_corporate));
       }
     } catch (e) {
       console.error(e);
@@ -30,84 +36,64 @@ export default function Home() {
   }, []);
 
   const handleLogoClick = () => {
-    setLogoClicks(prev => {
-      const newClicks = prev + 1;
-      if (newClicks === 5) {
+    setClicks(prev => {
+      const newLogo = prev.logo + 1;
+      if (newLogo === 5) {
         router.push('/chofer');
-        return 0;
+        return { ...prev, logo: 0 };
       }
-      return newClicks;
+      return { ...prev, logo: newLogo };
     });
-    const timer = setTimeout(() => setLogoClicks(0), 2000);
-    return () => clearTimeout(timer);
+    setTimeout(() => setClicks(prev => ({ ...prev, logo: 0 })), 2000);
   };
 
   const handleAdminClick = () => {
-    setAdminClicks(prev => {
-      const newClicks = prev + 1;
-      if (newClicks === 5) {
-        // Clear session to force password prompt every time
+    setClicks(prev => {
+      const newAdmin = prev.admin + 1;
+      if (newAdmin === 5) {
         sessionStorage.removeItem('admin_password');
         router.push('/admin');
-        return 0;
+        return { ...prev, admin: 0 };
       }
-      return newClicks;
+      return { ...prev, admin: newAdmin };
     });
-    const timer = setTimeout(() => setAdminClicks(0), 2000);
-    return () => clearTimeout(timer);
+    setTimeout(() => setClicks(prev => ({ ...prev, admin: 0 })), 2000);
   };
 
   if (!mounted) return null;
 
   return (
-    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '90vh', padding: '10px 15px' }}>
-      <header style={{ marginBottom: '10px' }}>
+    <div className="page-container flex-col items-center">
+      {isDebug && <div className="abs z-100 top-full left-0 text-xs">Clicks: {clicks.logo}</div>}
+      <header className="home-header">
         <img
           src="/logo.jpg"
           alt="EL CASAL"
-          className="main-logo"
-          style={{ maxWidth: '300px', cursor: 'pointer' }}
+          className="main-logo pointer main-logo-img"
           onClick={handleLogoClick}
         />
       </header>
 
-      {/* ACCESO CORPORATIVO - justo debajo del logo */}
+      {/* ACCESO CORPORATIVO */}
       {mounted && corporateClients.length > 0 && (
-        <div className="glass-panel" style={{ marginBottom: '20px', padding: '20px 25px', maxWidth: '800px', margin: '0 auto 20px auto', width: '100%' }}>
-          <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '15px', fontSize: '1.1rem', letterSpacing: '1px' }}>
+        <div className="glass-panel corporate-access-panel">
+          <h3 className="text-gradient text-center mb-15 text-lg uppercase letter-spacing-1">
             ACCESO CORPORATIVO
           </h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'center' }}>
+          <div className="corporate-grid">
             {corporateClients.map((client) => (
               <Link key={client.id} href={`/quote?client=${client.client_slug}`} className="corporate-card">
-                <div style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  borderRadius: '15px',
-                  padding: '16px 24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px',
-                  border: '1px solid var(--glass-border)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  minWidth: '120px'
-                }}>
+                <div className="corporate-card-inner">
                   {client.logo_url ? (
                     <img
                       src={client.logo_url}
                       alt={client.name}
-                      style={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: '120px',
-                        objectFit: 'contain'
-                      }}
+                      className="corporate-logo-img"
                     />
                   ) : (
                     <>
-                      <div style={{ fontSize: '2rem' }}>🏢</div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{client.name}</span>
+                      <div className="corporate-placeholder-icon">🏢</div>
+                      <span className="text-xs text-bold text-secondary">{client.name}</span>
                     </>
                   )}
                 </div>
@@ -117,13 +103,12 @@ export default function Home() {
         </div>
       )}
 
-      <div className="home-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', flexGrow: 1, alignItems: 'stretch', maxWidth: '800px', margin: '0 auto' }}>
-
+      <div className="home-main-grid">
         {/* 1. Seguir Viaje */}
-        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📍</div>
-          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Seguir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <div className="glass-panel p-20 text-center flex-col justify-center">
+          <div className="home-icon-lg">📍</div>
+          <h2 className="text-gradient mb-10 text-xl">Seguir Viaje</h2>
+          <p className="text-secondary mb-20 text-sm">
             Consultá el estado y ubicación satelital de tu pedido en tiempo real.
           </p>
           <form
@@ -137,39 +122,37 @@ export default function Home() {
             <input
               name="trackingId"
               type="text"
-              className="glass-input"
+              className="glass-input text-center uppercase"
               placeholder="CÓDIGO (EJ: A0001)"
-              style={{ textAlign: 'center', textTransform: 'uppercase', padding: '12px', fontSize: '1rem' }}
               required
             />
-            <button type="submit" className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
+            <button type="submit" className="glass-button w-full text-lg">
               Ver Mapa
             </button>
           </form>
         </div>
 
         {/* 2. Pedir Viaje */}
-        <div className="glass-panel" style={{ padding: '30px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
-          <h2 style={{ marginBottom: '10px', fontSize: '1.8rem' }} className="text-gradient">Pedir Viaje</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
+        <div className="glass-panel p-20 text-center flex-col justify-center">
+          <div className="home-icon-lg">🚚</div>
+          <h2 className="text-gradient mb-10 text-xl">Pedir Viaje</h2>
+          <p className="text-secondary mb-20 text-sm">
             Cotizá y reservá tu transporte de carga de forma inmediata y profesional.
           </p>
-          <Link href="/quote" style={{ width: '100%' }}>
-            <button className="glass-button" style={{ width: '100%', padding: '15px', fontSize: '1.1rem' }}>
+          <Link href="/quote" className="w-full">
+            <button className="glass-button w-full text-lg">
               Nueva Solicitud
             </button>
           </Link>
         </div>
-
       </div>
 
       {/* 3. Servicios Ofrecidos */}
-      <div className="glass-panel" style={{ marginTop: '20px', padding: '25px', maxWidth: '800px', margin: '20px auto 0 auto', width: '100%' }}>
-        <h3 className="text-gradient" style={{ textAlign: 'center', marginBottom: '20px', fontSize: '1.4rem', letterSpacing: '1px' }}>
+      <div className="glass-panel services-panel">
+        <h3 className="text-gradient text-center mb-20 text-lg letter-spacing-1">
           NUESTROS SERVICIOS
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
+        <div className="services-grid">
           {[
             { tag: '🛒', text: 'E-commerce' },
             { tag: '📦', text: 'Flete puerta a puerta' },
@@ -180,53 +163,28 @@ export default function Home() {
             { tag: '❄️', text: 'Camiones Refrigerados' },
             { tag: '🚢', text: 'Camiones Portacontenedores' },
           ].map((srv, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-              <span style={{ fontSize: '1.2rem' }}>{srv.tag}</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{srv.text}</span>
+            <div key={idx} className="service-item">
+              <span className="service-icon">{srv.tag}</span>
+              <span className="text-xs text-bold">{srv.text}</span>
             </div>
           ))}
         </div>
       </div>
 
-
-
-      {/* Social / Admin Row */}
-      <footer style={{ marginTop: '15px', paddingBottom: '5px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-
-        <div
-          onClick={handleAdminClick}
-          style={{
-            fontSize: '0.65rem',
-            color: 'var(--text-secondary)',
-            textAlign: 'center',
-            maxWidth: '600px',
-            opacity: 0.6,
-            lineHeight: '1.4',
-            marginTop: '20px',
-            padding: '0 10px',
-            cursor: 'default',
-            userSelect: 'none'
-          }}>
+      <footer className="home-footer">
+        <div onClick={handleAdminClick} className="legal-notice">
           <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
         </div>
-
-        <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', opacity: 0.2, marginTop: '2px' }}>
-          v1.3 Premium Logistics
+        <div className="version-tag">
+          v1.4 VitalFix Elite
         </div>
       </footer>
 
       <InstallPrompt />
 
       <style jsx>{`
-        .home-grid {
-          max-height: calc(100vh - 200px);
-        }
         @media (max-width: 600px) {
-           .home-grid {
-             grid-template-columns: 1fr !important;
-             gap: 8px !important;
-           }
-           .main-logo {
+           .main-logo-img {
              max-width: 220px !important;
            }
            .glass-panel {
@@ -239,20 +197,6 @@ export default function Home() {
            p {
              margin-bottom: 5px !important;
            }
-        }
-        .install-btn-pulse {
-          animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
-          50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(59,130,246,0.7); }
-          100% { transform: scale(1); box-shadow: 0 4px 15px rgba(59,130,246,0.5); }
-        }
-        .corporate-card:hover div {
-          transform: translateY(-5px);
-          background: rgba(255,255,255,0.1) !important;
-          border-color: var(--accent-color) !important;
-          box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
       `}</style>
     </div>
