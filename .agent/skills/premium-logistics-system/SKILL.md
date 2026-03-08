@@ -1,86 +1,108 @@
 ---
-name: El Casal Logistics System (VitalFix Elite Full Stack)
-description: Constitución técnica total. Combina el Skill Maestro Universal v14.1 con la lógica específica de transporte y protocolos de sincronización de El Casal.
+name: El Casal Logistics System (VitalFix Elite Master)
+description: Constitución técnica total. Versión extendida de 23 protocolos universales + Lógica de Negocio El Casal + Regla de Oro.
 ---
 
-# 🌀 Constitución Técnica: El Casal (VitalFix Elite)
+# 🌀 Constitución Técnica Suprema: El Casal (VitalFix Elite)
 
-Este documento es la **Constitución de Desarrollo** absoluta para el proyecto El Casal. Define el estilo, la arquitectura y los protocolos de autogestión, integrando el Skill Maestro Universal de VitalFix con la lógica de negocio logística.
+Este documento es la **Constitución de Desarrollo** absoluta. Integra el **Skill Maestro Universal v14.1** (23 áreas de control) con la especialización logística de El Casal.
 
 ## 🏛️ 1. Estándares de Diseño (Premium UI/UX)
+* **Aesthetics First**: Cada interfaz debe ser impactante. Uso de `backdrop-filter: blur()`, gradientes y sombras suaves.
+* **Interactive Elements**: Botones con estados de hover animados y feedback visual inmediato.
+* **TV Optimization**: Fuentes grandes (mínimo `1.2rem`), alto contraste y navegación pensada para pantallas táctiles.
+* **Protocolo Anti-Overflow**: Prohibido usar `min-width` superiores a **280px** en contenedores de grid/flex sin media queries compensatorias. Testeo en 320px.
 
-* **Aesthetics First**: Cada interfaz debe ser impactante. Uso de `backdrop-filter: blur()`, gradientes `linear-gradient(135deg, ...)` y sombras suaves.
-* **Interactive Elements**: Botones con estados de hover animados, transiciones de página fluidas y feedback visual inmediato.
-* **TV Optimization**: Fuentes grandes (mínimo `1.2rem`), alto contraste y navegación pensada para control remoto o pantallas táctiles.
-* **Protocolo Anti-Overflow**: Para asegurar responsividad absoluta, prohibido usar `min-width` superiores a **280px** en contenedores de grid/flex sin media queries compensatorias. Todo layout debe ser testeado para evitar scroll horizontal en dispositivos de 320px de ancho.
-* **Cero Estilos Inline**: Todo debe residir en `globals.css` o módulos CSS.
-
-## 🚚 2. Lógica Logística Central (El Casal)
-
-* **Geocodificación**: Uso dinámico de la tabla `locations` y validación de direcciones via API si es necesario.
-* **Tarifas**: Lógica centralizada por Km, tipo de vehículo y tiempo de espera.
-* **Flujo de Estados**: PENDIENTE (Recibido) -> APROBADO (Cotizado) -> EN CURSO (Con Chofer) -> FINALIZADO (Entregado).
-* **Seguridad**: Row Level Security (RLS) mandatorio en Supabase para proteger datos de clientes y choferes.
+## 🏛️ 2. Arquitectura de Proyectos (Standard Folder Structure)
+* `/src`, `/public`, `/skills`, `/scripts`, `/docs`.
+* **TASKS.md**: Bitácora de vuelo y estado del proyecto siempre en la raíz.
 
 ## 💻 3. Calidad de Código y Desarrollo
+* **Lenguaje**: Código/Variables en **Inglés**. Documentación/Diálogos en **Español (Argentina)**.
+* **Pureza**: Priorizar Vanilla JS/CSS (Native-First) para dispositivos ARM.
+* **Manejo de Errores**: Todo proceso crítico con `try-catch` y loggeo amigable.
 
-* **Lenguaje**: Código y variables en **Inglés**. Documentación, commits y diálogos en **Español (Argentina)**.
-* **Tipado Estricto**: Prohibido el uso de `any` en TypeScript. Usar interfaces definidas en `lib/types.ts`.
-* **Pureza**: Prioridad a Vanilla JS/CSS. Evitar librerías pesadas (Anti-Bloatware).
-* **Manejo de Errores**: Todo proceso crítico debe tener `try-catch` y loggeo de errores amigable.
+## 🚀 4. DevOps y Hardware (Armbian / TVBox / Proxmox)
+* **IPs y Redes**: Consultar el Skill Local/`.env` antes de peticiones.
+* **Optimization**: Minimizar uso de RAM. Evitar leaks en aplicaciones de "Kiosk Mode".
 
-## 🚀 4. DevOps y Hardware (Armbian / TVBox)
+## 📊 5. Bitácora de Vuelo (Task Management)
+* El asistente **DEBE** mantener `TASKS.md`.
+* Lectura obligatoria al iniciar sesión para continuidad total.
 
-* **Optimización ARM**: Minimizar el uso de RAM. Las aplicaciones deben correr 24/7 en TVBoxes sin degradación.
-* **Native First**: Antes de sugerir una librería, buscar la solución nativa.
-* **Deployment**: Scripts de instalación deben ser compatibles con Debian/Armbian.
+## ⚡ 6. Rendimiento Armbian-First
+* Prohibido usar librerías pesadas si una función nativa de JS lo resuelve.
+* Aplicaciones capaces de correr 24/7 en dispositivos de bajos recursos.
 
-## 🛡️ 5. Protección contra Alucinaciones (Verificación de Realidad)
+## 💬 7. Protocolo de Comunicación Elite
+1. Investigación Eficiente (Leer antes de preguntar).
+2. Confirmación Técnica (Implementation Plan).
+3. Proactividad en mejoras.
 
-* **No Suponer Rutas**: Verificar existencia con `list_dir` o `view_file`.
-* **IPs y Credenciales**: Consultar siempre el Skill Local o `.env`. NUNCA inventar datos técnicos.
-* **Sinceridad Técnica**: Si no se tiene acceso o algo es ambiguo, declararlo explícitamente.
+## 🛡️ 8. Protección contra Alucinaciones (Verificación de Realidad)
+* No suponer rutas, IPs o credenciales. Verificar con herramientas.
+* IPs y Credenciales: NUNCA inventar. Preguntar si no están en la configuración.
 
-## 🛠️ 6. Protocolo de Integridad Técnica (Zero Breaks)
+## 🛠️ 9. Protocolo de Integridad Técnica (Zero Breaks)
+Revisión obligatoria: Impacto en dependencias, validación sintaxis línea a línea y consistencia responsiva.
 
-Antes de finalizar cualquier tarea:
-1. **Análisis de Impacto**: Evaluar efectos colaterales en el sistema.
-2. **Validación Crítica**: Lectura línea por línea para detectar errores tipográficos o lógica rota.
-3. **Consistencia UI**: Asegurar que el Responsive no se rompa (especialmente en móviles).
-4. **Confirmación de Éxito**: Solo reportar finalizado tras verificar funcionalidad total y ausencia de regresiones.
+## 🏛️ 10. Sistema de Herencia y Persistencia de Memoria
+* `/skills/local.md` es la memoria a largo plazo.
+* Guardar allí toda decisión técnica, IP o "hack" descubierto.
 
-## 🛑 7. Protocolo Anti-Estancamiento (Circuit Breaker)
+## ✨ 11. Filosofía "Menos es Más" (Simplicidad y Eficiencia)
+* Minimalismo de Código: Legibilidad sobre astucia.
+* Simple UX: Menos pasos para el usuario = mejor diseño.
 
-* **Regla de los 2 Intentos**: Si algo falla 2 veces igual, prohibido intentarlo por tercera vez. Cambiar de estrategia radicalmente.
-* **Detención Proactiva**: Admitir estancamiento tras 3 turnos sin progreso y replantear el problema con el usuario.
+## 🛑 12. Protocolo Anti-Estancamiento (Circuit Breaker)
+* **Regla de los 2 Intentos**: Si falla 2 veces igual, prohibido intentar lo mismo. Replantear estrategia.
 
-## 🔄 8. Sincronización y Gestión de Caché
+## 🔄 13. Protocolo de Sincronización y Gestión de Caché
+* **Cache Busting**: Versionado de archivos estáticos (`?v=...`) tras cambios.
+* Verificación post-despliegue obligatoria.
 
-* **Cache Busting**: Añadir parámetro de versión (ej: `?v=20260307`) a archivos estáticos tras cambios mayores.
-* **Verificación Post-Despliegue**: Validar que la versión en la nube sea la correcta.
+## 🧠 14. Gestión de Sesión y Rendimiento (Sesión Fresca)
+* Transferencia de contexto a `TASKS.md` antes de que el chat colapse por longitud.
 
-## 🧠 9. Gestión de Sesión (Protocolo Sesión Fresca)
+## 🛡️ 15. Protocolo de Alcance y Clarificación (Escudo de Contexto)
+* Prioridad al directorio raíz actual. Duda ante órdenes globales ("borrar todo").
 
-* **Arranque en Frío**: Al iniciar un chat, leer automáticamente: `SKILL.md`, `local.md` y `TASKS.md`.
-* **Transferencia de Contexto**: Asegurar que la bitácora esté al día antes de que el chat se vuelva lento.
+## 🗑️ 16. Protocolo de Papelera Temporal (Backup Preventivo)
+* **No Borrar, Mover**: Usar `.trash/` o similar antes de cualquier `rm` masivo.
 
-## 🗑️ 10. Bitácora y Papelera (Task Management)
+## 🧱 17. Desacoplamiento Total (Config-First)
+* **Zero Hardcoding**: Todo valor variable en `.env` o archivos de configuración.
 
-* **TASKS.md**: Mantener actualizada la bitácora de vuelo en la raíz.
-* **Backup Preventivo**: Ante borrados masivos, mover a carpeta temporal (`.trash/`) - NO USAR `rm` directo.
+## 📊 18. Arquitectura Visual (Diagramas de Flujo)
+* Presentar lógica compleja via Mermaid o listas secuenciales antes de programar.
 
-## 🧱 11. Desacoplamiento Total (Config-First)
+## 🔍 19. El Modo Perito (Edge Case Testing)
+* Análisis de "Puntos de Falla": ¿Qué pasa si falla el internet o el servidor? sugerir mejoras preventivas.
 
-* **Zero Hardcoding**: IPs, URLs y credenciales en `.env` o archivos de configuración.
-* **Estilos Centralizados**: Tokens de diseño en variables CSS (`:root`).
+## 🚀 20. Metodología de Desarrollo por Fases (Agile VitalFix)
+1. Esqueleto (Lógica) -> 2. Piel (Premium UI) -> 3. Blindaje (Optimización).
 
-## 🚀 [REGLA DE ORO] Sincronización Obligatoria - CRITICAL PRIORITY
+## 📋 21. Checklist de Instrucciones (Anti-Olvidos)
+* Mapeo de peticiones múltiples al inicio del turno. Validación al cierre.
 
-Mi desempeño se mide por la alineación en tiempo real del repositorio. Es **OBLIGATORIO** ejecutar el siguiente flujo al terminar **CUALQUIER** tarea:
+## 🛠️ 22. Protocolo de Verdad de Hardware (Anti-Error Repetitivo)
+* Consulta de precedentes en resúmenes para no sugerir flags o configuraciones que ya fallaron.
 
-1. Ejecutar el script `regla-de-oro.bat "descripción clara del cambio"`.
-2. Verificar que el `git push origin main` sea exitoso.
-3. No se considera tarea finalizada hasta que el código esté en la nube.
+## 🐣 23. Protocolo de Inicialización Automática (Auto-Provisioning)
+* Detección de vacío y creación mandatoria de `/skills/` y `TASKS.md` en nuevos entornos.
+
+---
+
+## 🚚 [LEGADO EL CASAL] Especialización Logística
+
+24. **Lógica de Negocio**: Geocodificación dinámica, Tarifas centralizadas y Flujo de estados (PENDIENTE -> FINALIZADO).
+25. **Tipado Maestro**: TypeScript estricto (No `any`). Interfaces en `lib/types.ts`.
+26. **Seguridad Crítica**: Row Level Security (RLS) mandatorio en toda tabla de Supabase.
+
+## 🚀 [REGLA DE ORO] Sincronización Total
+
+27. **Sincronización Mandatoria**: Ejecutar `regla-de-oro.bat` tras **CADA** tarea.
+28. **Estado Nube**: La tarea no termina hasta que el `git push` sea exitoso y verificado.
 
 ---
 *Este skill es la ley del proyecto. Su cumplimiento es obligatorio y su evolución constante.*
