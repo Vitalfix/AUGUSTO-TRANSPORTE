@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import nodemailer from 'nodemailer';
+import { PricingBreakdownItem } from '@/lib/types';
 
 const transporter = nodemailer.createTransport({
     host: 'smtp.mail.yahoo.com',
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
         distanceKm: o.distance_km ? Math.round(o.distance_km) : 0,
         travelHours: o.travel_hours,
         purchaseOrder: o.purchase_order,
-        pricingBreakdown: (o.pricing_breakdown || []).map((item: any) => ({
+        pricingBreakdown: (o.pricing_breakdown || []).map((item: PricingBreakdownItem) => ({
             ...item,
             unitPrice: Math.round(item.unitPrice || 0),
             factor: Math.round(item.factor || 0),
@@ -171,7 +172,7 @@ export async function POST(request: Request) {
             if (existing) {
                 finalCustomerId = existing.id;
                 // Actualizamos datos si cambiaron (email, cuit, teléfono, etc)
-                const updateData: any = {};
+                const updateData: Record<string, string> = {};
                 if (body.customerEmail) updateData.email = body.customerEmail;
                 if (body.cuit) updateData.cuit = body.cuit;
                 if (body.taxStatus) updateData.tax_status = body.taxStatus;
@@ -195,7 +196,7 @@ export async function POST(request: Request) {
                     .single();
 
                 if (newCust) {
-                    finalCustomerId = (newCust as any).id;
+                    finalCustomerId = newCust.id;
                 } else if (insErr) {
                     console.error("Customer creation failed, trying fallback search", insErr.message);
                     // Si falló por alguna restricción de email/cuit repetido, buscamos CUALQUIER cliente con ese nombre
@@ -214,7 +215,7 @@ export async function POST(request: Request) {
     }
 
     // Insert the order with a flexible object to handle potential missing columns
-    const orderData: any = {
+    const orderData: Record<string, unknown> = {
         id,
         customer_name: body.customerName,
         vehicle: body.vehicle,
@@ -240,7 +241,7 @@ export async function POST(request: Request) {
         observations: body.observations,
         distance_km: body.distanceKm ? Math.ceil(body.distanceKm / 5) * 5 : 0,
         travel_hours: body.travelHours,
-        pricing_breakdown: body.pricingBreakdown ? body.pricingBreakdown.map((item: any) => ({
+        pricing_breakdown: body.pricingBreakdown ? body.pricingBreakdown.map((item: PricingBreakdownItem) => ({
             ...item,
             unitPrice: Math.round(item.unitPrice || 0),
             factor: Math.round(item.factor || 0),
@@ -386,7 +387,6 @@ export async function POST(request: Request) {
             await transporter.sendMail({
                 from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
                 to: body.customerEmail,
-                bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `Recibimos tu solicitud de presupuesto - ID ${id}`,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -437,8 +437,8 @@ export async function POST(request: Request) {
                 `
             });
         }
-    } catch (emailError: any) {
-        console.error("Error enviando email:", emailError.message || emailError);
+    } catch (emailError: unknown) {
+        console.error("Error enviando email:", emailError instanceof Error ? emailError.message : emailError);
     }
 
     return NextResponse.json({
@@ -477,7 +477,7 @@ export async function PATCH(request: Request) {
         distanceKm, travelHours, cuit, taxStatus, purchaseOrder
     } = body;
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
     if (status) updateData.status = status;
     if (lat !== undefined) updateData.lat = lat;
     if (lng !== undefined) updateData.lng = lng;
@@ -502,7 +502,7 @@ export async function PATCH(request: Request) {
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;
     if (purchaseOrder !== undefined) updateData.purchase_order = purchaseOrder;
     if (body.pricingBreakdown !== undefined) {
-        updateData.pricing_breakdown = body.pricingBreakdown.map((item: any) => ({
+        updateData.pricing_breakdown = body.pricingBreakdown.map((item: PricingBreakdownItem) => ({
             ...item,
             unitPrice: Math.round(item.unitPrice || 0),
             factor: Math.round(item.factor || 0),
@@ -552,21 +552,12 @@ export async function PATCH(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Fetch bcc emails
-    const { data: dbSetting } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'notification_emails')
-        .maybeSingle();
-    const bccEmails = dbSetting?.value ? dbSetting.value.split(',').map((e: string) => e.trim()).filter(Boolean) : [];
-
     // Notificaciones
     if (status === 'CONFIRMED' && data.customer_email) {
         try {
             await transporter.sendMail({
                 from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
                 to: data.customer_email,
-                bcc: bccEmails.length > 0 ? bccEmails : undefined,
                 subject: `¡Pedido Confirmado! - ID ${id}`,
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
@@ -678,7 +669,7 @@ export async function DELETE(request: Request) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
