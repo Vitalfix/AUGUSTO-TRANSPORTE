@@ -1,49 +1,52 @@
 ---
-name: Premium Logistics System
-description: Especialización en desarrollo de sistemas de transporte de alta gama, enfocada en UX Premium (Glassmorphism), optimización de rutas y código escalable.
+name: Premium Logistics System (VitalFix Elite Enhanced)
+description: Especialización en desarrollo de sistemas de transporte de alta gama, integrada con el Skill Maestro Universal de VitalFix. UX Premium, optimización de recursos y protocolos de integridad absoluta.
 ---
 
-# Skill: Premium Logistics System (El Casal-TRANSPORTE)
+# 🌀 Skill: Premium Logistics System (El Casal-TRANSPORTE)
 
-Esta skill define los estándares técnicos y visuales para el proyecto El Casal.
+Este documento combina el **Skill Maestro Universal de VitalFix (v14.0)** con los requisitos específicos del proyecto El Casal. Es la memoria técnica y constitución operativa del proyecto.
 
-## Estándares de Diseño (Premium Aesthetics)
+## 🏛️ 1. Estándares Globales (VitalFix Universal)
 
-- **Glassmorphism**: Uso consistente de `backdrop-filter: blur()`, bordes semitransparentes y sombras suaves.
-- **Paleta de Colores**: Uso de gradientes oscuros (`#0a0a14`) y acentos en dorado/ámbar (`--accent-color`).
-- **Responsividad**: Prioridad absoluta a la visualización móvil para choferes y clientes.
+- **Aesthetics First**: Mezcla de Glassmorphism (`backdrop-filter: blur()`), gradientes profundos y sombras suaves.
+- **Código y Comunicación**: Código en **Inglés**. Documentación, commits y diálogos en **Español (Argentina)**.
+- **Pureza Técnica**: Prioridad a Vanilla JS/CSS (Native-First). Evitar librerías pesadas (Anti-Bloatware).
+- **Memoria Local**: El asistente debe leer este archivo, el `TASKS.md` y el plan maestro al iniciar cada sesión (Protocolo Sesión Fresca).
+- **Protección contra Alucinaciones**: Prohibido suponer rutas, IPs o credenciales. Verificar siempre con `list_dir` y `view_file`.
 
-## Estándares de Código (Clean Logistics Code)
+## 🎨 2. Estándares de Diseño Específicos (El Casal)
 
-- **Cero Estilos Inline**: Todos los estilos deben residir en `globals.css` o módulos CSS.
-- **Tipado Estricto**: Evitar el uso de `any` en las interfaces de TypeScript, especialmente en modelos de Pedidos y Ubicaciones.
-- **Seguridad**: Implementación de Row Level Security (RLS) en cada nueva tabla de Supabase.
-- **Simplicidad y Eficiencia**: Valorar siempre la solución más simple y directa que resuelva el problema de forma eficiente (mínimo código, máximo impacto).
+- **Paleta de Identidad**: Gradientes oscuros (`#0a0a14`) con acentos en **dorado/ámbar** (`--accent-color`).
+- **Responsividad Extrema**: Diseño fluido optimizado para móviles (choferes) y pantallas grandes/TV (monitoreo).
+- **Cero Estilos Inline**: Todo debe residir en `globals.css` o módulos CSS.
 
-## Lógica Logística
+## 🛠️ 3. Protocolos de Desarrollo e Integridad
 
-- **Geocodificación Dinámica**: Uso de la tabla `locations` para puntos predefinidos.
-- **Cálculo de Tarifas**: Lógica centralizada basada en kilómetros o tiempo de espera, según la distancia.
-- **Gestión de Estados**: Flujo controlado de pedidos (PENDIENTE -> APROBADO -> EN CURSO -> FINALIZADO).
+- **Zero Breaks**: Antes de finalizar, realizar análisis de efectos colaterales y validación de sintaxis línea por línea.
+- **Tipado Estricto**: Prohibido el uso de `any` en TypeScript.
+- **Seguridad Supabase**: Implementación obligatoria de Row Level Security (RLS) en cada tabla.
+- **Desacoplamiento (Config-First)**: Prohibido el hardcoding de IPs, URLs o credenciales. Usar `.env` o archivos de configuración.
+- **Circuit Breaker**: Si una solución falla 2 veces, detenerse y replantear la estrategia (Regla de los 2 Intentos).
 
-## Instrucciones para el Agente
+## 🚚 4. Lógica Logística Central
 
-1. Antes de crear cualquier UI, verificar el cumplimiento de las variables CSS globales.
-2. Al modificar APIs, asegurar la validación de la sesión de administrador mediante encabezados seguros.
-3. **Verificación de Base de Datos**: Antes de subir cambios que involucren nuevas columnas o tablas (como `customer_id` en `orders`), verificar siempre que el esquema de la base de datos en Supabase esté sincronizado con el código propuesto para evitar errores de ejecución en producción.
-4. **Auto-Auditoría**: Antes de finalizar cualquier tarea o entregar un cambio, realizar un chequeo general del flujo afectado para asegurar que nada se haya roto y prever posibles errores o fallas.
-5. Mantener siempre actualizado el `plan_maestro_El Casal.md`.
+- **Geocodificación**: Uso dinámico de la tabla `locations`.
+- **Tarifas**: Lógica centralizada por Km/Tiempo de espera.
+- **Flujo de Estados**: PENDIENTE -> APROBADO -> EN CURSO -> FINALIZADO.
 
-## [REGLA DE ORO] Sincronización Obligatoria - CRITICAL PRIORITY
+## 📋 5. Gestión de Tareas y Papelera
 
-**DENTRO DE ESTE PROYECTO**, mi desempeño se mide por la capacidad de mantener el repositorio alineado en tiempo real. Es **OBLIGATORIO** ejecutar el siguiente flujo al terminar **CUALQUIER** tarea, por pequeña que sea:
+- **TASKS.md**: Mantener actualizada la bitácora de vuelo en la raíz del proyecto.
+- **Backup Preventivo**: Ante borrados o cambios masivos, mover archivos a una carpeta temporal (ej: `.trash/`) en lugar de usar `rm` directo.
+
+## 🚀 [REGLA DE ORO] Sincronización Obligatoria - CRITICAL PRIORITY
+
+Mi desempeño se mide por la alineación en tiempo real del repositorio. Es **OBLIGATORIO** ejecutar el siguiente flujo al terminar **CUALQUIER** tarea:
 
 1. Ejecutar el script `regla-de-oro.bat "descripción del cambio"`.
 2. Verificar que el `git push origin main` sea exitoso.
 3. No se considera tarea finalizada hasta que el código esté en la nube.
 
-Este es un estándar absoluto definido por el USER. Ignorarlo es un fallo en la integridad del servicio.
-
-## Estándares de Diseño (Premium Aesthetics)
-
-...
+---
+*Este skill es autodidacta y evolutivo. Si se detecta una mejora técnica, debe incorporarse aquí.*
