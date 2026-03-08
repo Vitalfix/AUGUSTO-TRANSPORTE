@@ -19,6 +19,7 @@ Este documento combina el **Skill Maestro Universal de VitalFix (v14.0)** con lo
 
 - **Paleta de Identidad**: Gradientes oscuros (`#0a0a14`) con acentos en **dorado/ámbar** (`--accent-color`).
 - **Responsividad Extrema**: Diseño fluido optimizado para móviles (choferes) y pantallas grandes/TV (monitoreo).
+- **Protocolo Anti-Overflow**: Prohibido usar `min-width` superiores a **280px** en contenedores de grid sin media queries compensatorias. Siempre verificar que no exista scroll horizontal en dispositivos de 320px de ancho.
 - **Cero Estilos Inline**: Todo debe residir en `globals.css` o módulos CSS.
 
 ## 🛠️ 3. Protocolos de Desarrollo e Integridad
