@@ -771,6 +771,15 @@ h4 {
   color: white;
 }
 
+.filter-btn.status-all.active { border-color: white; background: rgba(255,255,255,0.15); }
+.filter-btn.status-pending.active { border-color: #f59e0b; background: rgba(245,158,11,0.15); color: #f59e0b; }
+.filter-btn.status-approved.active { border-color: #3b82f6; background: rgba(59,130,246,0.15); color: #3b82f6; }
+.filter-btn.status-confirmed.active { border-color: #10b981; background: rgba(16,185,129,0.15); color: #10b981; }
+.filter-btn.status-started.active { border-color: var(--accent-color); background: rgba(220,38,38,0.15); color: var(--accent-color); }
+.filter-btn.status-finished.active { border-color: #8b5cf6; background: rgba(139,92,246,0.15); color: #8b5cf6; }
+.filter-btn.status-invoiced.active { border-color: #ec4899; background: rgba(236,72,153,0.15); color: #ec4899; }
+.filter-btn.status-paid.active { border-color: #059669; background: rgba(5,150,105,0.15); color: #059669; }
+
 .status-indicator {
   width: 8px;
   height: 8px;
@@ -1067,4 +1076,171 @@ button:focus-visible {
 
 .delay-300 {
   animation-delay: 300ms;
+}
+
+/* Admin Elite Styles */
+.admin-login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.admin-login-panel {
+  padding: 40px 25px;
+  width: 100%;
+  text-align: center;
+}
+
+.admin-tabs-container {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 5px 0 15px 0;
+  -ms-overflow-style: none;
+}
+
+.admin-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  padding: 15px;
+}
+
+.admin-modal-content {
+  background: rgba(15, 15, 25, 0.95);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 850px;
+  max-height: 95vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.admin-modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: rgba(15, 15, 25, 0.98);
+  z-index: 2;
+}
+
+.admin-modal-body {
+  padding: 25px;
+}
+
+.admin-modal-footer {
+  padding: 20px 25px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  gap: 15px;
+  position: sticky;
+  bottom: 0;
+  background: rgba(15, 15, 25, 0.98);
+  z-index: 2;
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-timeline-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--glass-border);
+  overflow-x: auto;
+}
+
+.timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 80px;
+  position: relative;
+}
+
+.timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.timeline-line {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  z-index: 1;
+}
+
+.admin-order-card {
+  border-left-width: 5px;
+  border-left-style: solid;
+  transition: transform 0.2s ease;
+}
+
+.admin-order-card:hover {
+  transform: translateX(3px);
+}
+
+.pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.pricing-table th, .pricing-table td {
+  padding: 12px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+@media (max-width: 600px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-modal-content {
+    border-radius: 0;
+    height: 100%;
+    max-height: 100vh;
+  }
 }

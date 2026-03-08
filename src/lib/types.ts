@@ -26,7 +26,7 @@ export interface Order {
   origin?: string;
   destination: string;
   price: number;
-  status: 'PENDING' | 'APPROVED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  status: 'PENDING' | 'APPROVED' | 'CONFIRMED' | 'STARTED' | 'FINISHED' | 'INVOICED' | 'PAID';
   created_at: string;
   travel_date?: string;
   travel_time?: string;
@@ -46,8 +46,64 @@ export interface Order {
   started_at?: string;
   finished_at?: string;
   waiting_minutes?: number;
-  activity_log: unknown[];
+  activity_log: ActivityLog[];
   distance_km?: number;
   travel_hours?: number;
   observations?: string;
+  tax_status?: string;
+  pricing_breakdown?: {
+    name: string;
+    qty: number;
+    unitPrice: number;
+    subtotal: number;
+    type: 'KM' | 'HOUR';
+    factor?: number;
+  }[];
+  // CamelCase aliases for legacy/admin code compatibility
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  driverName?: string;
+  driverPhone?: string;
+  licensePlate?: string;
+  travelDate?: string;
+  travelTime?: string;
+  distanceKm?: number;
+  travelHours?: number;
+  waitingMinutes?: number;
+  activityLog?: ActivityLog[];
+  pricingBreakdown?: PricingBreakdownItem[];
+  taxStatus?: string;
+}
+
+export interface ActivityLog {
+  type: string;
+  label: string;
+  time: string;
+  user?: string;
+  observations_fallback?: string;
+  newData?: {
+    customer_id?: string;
+    phone?: string;
+    email?: string;
+    cuit?: string;
+    tax_status?: string;
+  };
+}
+
+export interface PricingBreakdownItem {
+  name: string;
+  qty: number;
+  unitPrice: number;
+  subtotal: number;
+  type: 'KM' | 'HOUR';
+  factor?: number;
+}
+
+export interface VehiclePricing {
+  id: string;
+  name: string;
+  priceKm: number;
+  priceHour: number;
+  priceWaitHour?: number;
 }

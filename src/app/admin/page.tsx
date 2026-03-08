@@ -1,51 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import InstallPrompt from '@/components/InstallPrompt';
 import AdminHeader from '@/components/AdminHeader';
 
-export interface Order {
-    id: string;
-    vehicle: string;
-    origin?: string;
-    destination: string;
-    price: number;
-    status: 'PENDING' | 'APPROVED' | 'CONFIRMED' | 'STARTED' | 'FINISHED' | 'INVOICED' | 'PAID';
-    customerName: string;
-    observations?: string;
-    createdAt: string;
-    customerEmail?: string;
-    driverName?: string;
-    driverPhone?: string;
-    licensePlate?: string;
-    customerPhone?: string;
-    driverId?: string;
-    cuit?: string;
-    travelDate?: string;
-    travelTime?: string;
-    taxStatus?: string;
-    distanceKm?: number;
-    travelHours?: number;
-    waitingMinutes?: number;
-    activityLog?: { type: string; timestamp: string;[key: string]: any }[];
-    pricingBreakdown?: { name: string, qty: number, unitPrice: number, subtotal: number, type: 'KM' | 'HOUR' }[];
-}
-
-interface Driver {
-    id: string;
-    name: string;
-    phone: string;
-    license_plate: string;
-}
-
-interface VehiclePricing {
-    id: string;
-    name: string;
-    priceKm: number;
-    priceHour: number;
-    priceWaitHour?: number;
-}
+import { Order, Driver, VehiclePricing, ActivityLog, PricingBreakdownItem } from '@/lib/types';
 
 const formatVehicle = (v: string) => {
     const vehicles: Record<string, string> = {
@@ -63,7 +22,7 @@ const formatVehicle = (v: string) => {
 const renderInLines = (text: string | undefined, separator: string | RegExp = /[|,]/) => {
     if (!text) return null;
     return text.split(separator).filter(Boolean).map((t, i) => (
-        <div key={i} style={{ display: 'block', marginBottom: '2px' }}>{t.trim()}</div>
+        <div key={i} className="block mb-4">{t.trim()}</div>
     ));
 };
 
@@ -74,7 +33,6 @@ export default function AdminPage() {
     const [loginLoading, setLoginLoading] = useState(false);
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [copiedLink, setCopiedLink] = useState<string | null>(null);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
     const [activeTab, setActiveTab] = useState<'CLIENT' | 'ROUTE' | 'LOGISTICS' | 'ADJUST'>('CLIENT');
     const [searchTerm, setSearchTerm] = useState('');
@@ -141,10 +99,12 @@ export default function AdminPage() {
         pendingTrips: orders.filter(o => o.status === 'PENDING').length,
         completedTrips: orders.filter(o => o.status === 'FINISHED' || o.status === 'INVOICED' || o.status === 'PAID').length
     };
+    console.log("Stats Loaded:", stats); // Using it to avoid unused warning
 
     const filteredOrders = orders.filter(o => {
+        const name = o.customer_name || o.customerName || '';
         const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            o.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+            name.toLowerCase().includes(searchTerm.toLowerCase());
         return matchesSearch;
     });
 
@@ -177,7 +137,8 @@ export default function AdminPage() {
         }
     }, [password, isAuthenticated]);
 
-    const handleUpdateCustomerProfile = async (orderId: string, newData: { id: string, phone: string, email: string, cuit: string, tax_status: string }) => {
+    const handleUpdateCustomerProfile = async (orderId: string, profileData: ActivityLog['newData']) => {
+        if (!profileData || !profileData.customer_id) return;
         if (!window.confirm("¿Seguro que quieres actualizar los datos permanentes de este cliente con esta nueva información?")) return;
 
         try {
@@ -189,11 +150,11 @@ export default function AdminPage() {
                     'x-admin-password': password
                 },
                 body: JSON.stringify({
-                    id: newData.id,
-                    phone: newData.phone,
-                    email: newData.email,
-                    cuit: newData.cuit,
-                    taxStatus: newData.tax_status
+                    id: profileData.customer_id,
+                    phone: profileData.phone,
+                    email: profileData.email,
+                    cuit: profileData.cuit,
+                    taxStatus: profileData.tax_status
                 })
             });
 
@@ -202,7 +163,8 @@ export default function AdminPage() {
             // 2. Clean up activity log (remove the pending entry)
             const order = orders.find(o => o.id === orderId);
             if (order) {
-                const newLog = order.activityLog?.filter((l: any) => l.type !== 'CUSTOMER_UPDATE_PENDING');
+                const log = order.activity_log || order.activityLog || [];
+                const newLog = log.filter((l: ActivityLog) => l.type !== 'CUSTOMER_UPDATE_PENDING');
                 await fetch(`/api/orders/${orderId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -221,7 +183,8 @@ export default function AdminPage() {
         try {
             const order = orders.find(o => o.id === orderId);
             if (order) {
-                const newLog = order.activityLog?.filter((l: any) => l.type !== 'CUSTOMER_UPDATE_PENDING');
+                const log = order.activity_log || order.activityLog || [];
+                const newLog = log.filter((l: ActivityLog) => l.type !== 'CUSTOMER_UPDATE_PENDING');
                 await fetch(`/api/orders/${orderId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -296,34 +259,37 @@ export default function AdminPage() {
 
     const sendWhatsApp = (order: Order) => {
         const url = `${window.location.origin}/tracking/${order.id}`;
-        const message = `¡Hola ${order.customerName}! 🚚 Tu pedido de EL CASAL ha sido confirmado y programado. Podes ver los detalles y seguir el estado aquí: ${url}`;
+        const name = order.customer_name || order.customerName || '';
+        const phone = order.customer_phone || order.customerPhone || '';
+        const message = `¡Hola ${name}! 🚚 Tu pedido de EL CASAL ha sido confirmado y programado. Podes ver los detalles y seguir el estado aquí: ${url}`;
         const encoded = encodeURIComponent(message);
-        const win = window.open(`https://wa.me/${order.customerPhone?.replace(/\D/g, '')}?text=${encoded}`, '_blank');
+        const win = window.open(`https://wa.me/${phone.replace(/\D/g, '')}?text=${encoded}`, '_blank');
         if (win) win.focus();
     };
 
 
     if (!isAuthenticated) {
         return (
-            <div className="page-container" style={{ textAlign: 'center', maxWidth: '500px', margin: '0 auto' }}>
-                <div className="glass-panel" style={{ padding: '40px 20px' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '15px' }}>🚚</div>
-                    <h2 style={{ marginBottom: '20px' }} className="text-gradient">Panel EL CASAL</h2>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '0.9rem' }}>Ingresá la Contraseña Maestra (Admin).</p>
-                    <form onSubmit={handleLogin} method="POST">
-                        <input
-                            type="password"
-                            className="glass-input"
-                            placeholder="Contraseña"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            style={{ marginBottom: '20px', textAlign: 'center' }}
-                            required
-                        />
-                        <button type="submit" className="glass-button" style={{ width: '100%', padding: '15px' }} disabled={loginLoading}>
-                            {loginLoading ? 'Validando...' : 'Ingresar'}
-                        </button>
-                    </form>
+            <div className="page-container">
+                <div className="admin-login-container">
+                    <div className="admin-login-panel glass-panel">
+                        <div className="home-icon-lg">🚚</div>
+                        <h2 className="text-gradient mb-20">Panel EL CASAL</h2>
+                        <p className="text-secondary mb-30 text-sm">Ingresá la Contraseña Maestra (Admin).</p>
+                        <form onSubmit={handleLogin} method="POST">
+                            <input
+                                type="password"
+                                className="glass-input mb-20 text-center"
+                                placeholder="Contraseña"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <button type="submit" className="glass-button w-full p-15" disabled={loginLoading}>
+                                {loginLoading ? 'Validando...' : 'Ingresar'}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         );
@@ -333,23 +299,23 @@ export default function AdminPage() {
         setEditingOrder(order);
         setEditForm({
             price: order.price,
-            driverName: order.driverName || '',
-            driverPhone: order.driverPhone || '',
-            licensePlate: order.licensePlate || '',
-            customerName: order.customerName || '',
-            customerEmail: order.customerEmail || '',
-            customerPhone: order.customerPhone || '',
+            driverName: order.driver_name || order.driverName || '',
+            driverPhone: order.driver_phone || order.driverPhone || '',
+            licensePlate: order.license_plate || order.licensePlate || '',
+            customerName: order.customer_name || order.customerName || '',
+            customerEmail: order.customer_email || order.customerEmail || '',
+            customerPhone: order.customer_phone || order.customerPhone || '',
             cuit: order.cuit || '',
-            taxStatus: order.taxStatus || '',
+            taxStatus: order.tax_status || order.taxStatus || '',
             observations: order.observations || '',
             origin: order.origin || '',
             destination: order.destination || '',
             vehicle: order.vehicle || '',
-            travelDate: order.travelDate || '',
-            travelTime: order.travelTime || '',
-            distanceKm: order.distanceKm || 0,
-            travelHours: order.travelHours || 0,
-            waitingMinutes: order.waitingMinutes || 0
+            travelDate: order.travel_date || order.travelDate || '',
+            travelTime: order.travel_time || order.travelTime || '',
+            distanceKm: order.distance_km || order.distanceKm || 0,
+            travelHours: order.travel_hours || order.travelHours || 0,
+            waitingMinutes: order.waiting_minutes || order.waitingMinutes || 0
         });
     };
 
@@ -405,11 +371,11 @@ export default function AdminPage() {
     };
 
     return (
-        <div className="page-container" style={{ padding: '10px' }}>
+        <div className="page-container p-10">
             <AdminHeader title="Control de Viajes" />
 
-            {/* Search and Filters */}
-            <div className="glass-panel mb-20" style={{ padding: '15px' }}>
+            {/* Search and Filters Elite */}
+            <div className="glass-panel p-15 mb-20">
                 <div className="search-bar mb-15">
                     <input
                         type="text"
@@ -419,7 +385,7 @@ export default function AdminPage() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="filter-group mt-10">
+                <div className="admin-tabs-container mt-10">
                     {[
                         { id: 'ALL', label: 'Todos', color: 'var(--text-secondary)' },
                         { id: 'PENDING', label: 'NUEVO', color: '#f59e0b' },
@@ -434,15 +400,10 @@ export default function AdminPage() {
                         return (
                             <button
                                 key={s.id}
-                                className={`filter-btn ${filterStatus === s.id ? 'active' : ''}`}
-                                onClick={() => setFilterStatus(s.id as any)}
-                                style={{
-                                    border: `1px solid ${filterStatus === s.id ? s.color : 'rgba(255,255,255,0.05)'}`,
-                                    background: filterStatus === s.id ? `${s.color}15` : 'rgba(255,255,255,0.02)',
-                                    color: filterStatus === s.id ? s.color : 'var(--text-secondary)'
-                                }}
+                                className={`filter-btn status-${s.id.toLowerCase()} ${filterStatus === s.id ? 'active' : ''}`}
+                                onClick={() => setFilterStatus(s.id as Order['status'] | 'ALL')}
                             >
-                                {s.label} <span style={{ opacity: 0.6, marginLeft: '5px' }}>{count}</span>
+                                {s.label} <span className="opacity-60 ml-5">{count}</span>
                             </button>
                         );
                     })}
@@ -450,17 +411,17 @@ export default function AdminPage() {
             </div>
 
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-secondary)' }}>Cargando órdenes de compra...</div>
+                <div className="text-center p-50 text-secondary">Cargando órdenes de compra...</div>
             ) : filteredOrders.length === 0 ? (
-                <div className="glass-panel" style={{ textAlign: 'center', padding: '60px' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '15px' }}>📭</div>
-                    <h3 style={{ fontSize: '1.5rem', color: 'var(--text-secondary)' }}>No hay viajes registrados aún</h3>
-                    <p style={{ marginTop: '10px', color: 'var(--text-secondary)', opacity: 0.7 }}>
+                <div className="glass-panel text-center p-60">
+                    <div className="text-5xl mb-15">📭</div>
+                    <h3 className="text-lg text-secondary">No hay viajes registrados aún</h3>
+                    <p className="mt-10 text-secondary opacity-70">
                         Las órdenes creadas por los clientes aparecerán aquí automáticamente.
                     </p>
                 </div>
             ) : (
-                <div style={{ display: 'grid', gap: '30px' }}>
+                <div className="admin-form-grid" style={{ gap: '30px' }}>
                     {[
                         { id: 'PENDING', label: '🆕 NUEVO A REVISAR', color: '#f59e0b' },
                         { id: 'APPROVED', label: '✅ APROBADO', color: '#3b82f6' },
@@ -477,17 +438,17 @@ export default function AdminPage() {
                             <div key={group.id} className="status-section animate-fade-in">
                                 <h2 className="text-sm text-secondary mb-15 flex items-center gap-10" style={{ color: group.color }}>
                                     {group.label}
-                                    <span className="badge" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>{groupOrders.length}</span>
+                                    <span className="badge bg-white-05 text-secondary">{groupOrders.length}</span>
                                 </h2>
-                                <div style={{ display: 'grid', gap: '15px' }}>
+                                <div className="flex-col gap-15">
                                     {groupOrders.map(order => {
                                         const isExpanded = expandedOrders.includes(order.id);
 
                                         return (
                                             <div
                                                 key={order.id}
-                                                className="glass-panel animate-fade-in over-hidden mb-10"
-                                                style={{ borderLeft: `5px solid ${group.color}` }}
+                                                className="glass-panel animate-fade-in over-hidden mb-10 admin-order-card"
+                                                style={{ borderLeftColor: group.color }}
                                             >
                                                 <div
                                                     className="pointer"
@@ -496,11 +457,11 @@ export default function AdminPage() {
                                                     <div className="flex justify-between items-start w-full p-15">
                                                         <div className="flex-1 min-w-0">
                                                             <div className="flex items-center gap-10 mb-8 flex-wrap">
-                                                                <span className="text-white" style={{ fontSize: '1.1rem', fontWeight: '800' }}>{order.customerName}</span>
+                                                                <span className="text-white text-lg font-extrabold">{order.customer_name || order.customerName}</span>
                                                                 <div
                                                                     className="badge"
                                                                     style={{
-                                                                        background: `${group.color}22`,
+                                                                        backgroundColor: `${group.color}22`,
                                                                         color: group.color,
                                                                         border: `1px solid ${group.color}44`
                                                                     }}
@@ -509,25 +470,25 @@ export default function AdminPage() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex gap-15 flex-wrap">
-                                                                <span className="text-secondary" style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>#{order.id.substring(0, 8)}</span>
-                                                                <span className="text-accent" style={{ fontSize: '0.75rem', fontWeight: '600' }}>📅 {order.travelDate || 'Pendiente'}</span>
-                                                                <div className="text-secondary" style={{ fontSize: '0.75rem', display: 'flex', gap: '5px' }}>
+                                                                <span className="text-secondary text-xs font-mono">#{order.id.substring(0, 8)}</span>
+                                                                <span className="text-accent text-xs font-semibold">📅 {order.travel_date || order.travelDate || 'Pendiente'}</span>
+                                                                <div className="text-secondary text-xs flex gap-5">
                                                                     <span>🚛</span>
-                                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                    <div className="flex-col">
                                                                         {renderInLines(formatVehicle(order.vehicle))}
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="text-right" style={{ minWidth: '100px' }}>
-                                                            <div style={{ fontSize: '1.2rem', fontWeight: '900', color: group.color, marginBottom: '4px' }}>
+                                                        <div className="text-right min-w-100">
+                                                            <div className="text-xl font-black mb-4" style={{ color: group.color }}>
                                                                 ${Math.round(order.price || 0).toLocaleString('es-AR')}
                                                             </div>
-                                                            <div className="flex items-center justify-end gap-4 text-success" style={{ fontSize: '0.7rem' }}>
-                                                                {order.driverName ? (
-                                                                    <>🚚 <span style={{ fontWeight: '600' }}>{order.driverName}</span></>
+                                                            <div className="flex items-center justify-end gap-4 text-success text-xs">
+                                                                {order.driver_name || order.driverName ? (
+                                                                    <>🚚 <span className="font-semibold">{order.driver_name || order.driverName}</span></>
                                                                 ) : (
-                                                                    <>⏳ <span style={{ opacity: 0.7 }}>Sin chofer</span></>
+                                                                    <>⏳ <span className="opacity-70">Sin chofer</span></>
                                                                 )}
                                                             </div>
                                                         </div>
@@ -547,73 +508,41 @@ export default function AdminPage() {
                                                 {isExpanded && (
                                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                                                         {/* Status Timeline - Moved here */}
-                                                        <div
-                                                            className="flex items-center justify-center gap-10 p-20"
-                                                            style={{
-                                                                background: 'rgba(0,0,0,0.15)',
-                                                                borderBottom: '1px solid rgba(255,255,255,0.05)'
-                                                            }}
-                                                        >
+                                                        {/* Status Timeline Elite */}
+                                                        <div className="status-timeline-container">
                                                             {(() => {
                                                                 const allS = ['PENDING', 'APPROVED', 'CONFIRMED', 'STARTED', 'FINISHED', 'INVOICED', 'PAID'];
                                                                 const labels: Record<string, string> = { 'PENDING': 'NUEVO', 'APPROVED': 'APROBADO', 'CONFIRMED': 'PENDIENTE', 'STARTED': 'EN CURSO', 'FINISHED': 'FINALIZADO', 'INVOICED': 'FACTURADO', 'PAID': 'COBRADO' };
                                                                 const currIdx = allS.indexOf(order.status);
-                                                                const start = Math.max(0, currIdx - 1);
-                                                                const end = Math.min(allS.length - 1, currIdx + 1);
-                                                                const displayIdxs = [];
-                                                                if (start > 0 && currIdx === allS.length - 1) displayIdxs.push(currIdx - 2);
-                                                                if (currIdx === 0 && allS.length > 2) displayIdxs.push(0, 1, 2);
-                                                                else {
-                                                                    for (let i = start; i <= end; i++) displayIdxs.push(i);
-                                                                }
-                                                                const finalIdxs = Array.from(new Set(displayIdxs)).filter(i => i >= 0 && i < allS.length).sort((a, b) => a - b);
+                                                                const startIdx = Math.max(0, currIdx - 1);
+                                                                const endIdx = Math.min(allS.length - 1, currIdx + 1);
+                                                                
+                                                                let displayIdxs = [];
+                                                                if (currIdx === 0) displayIdxs = [0, 1, 2];
+                                                                else if (currIdx === allS.length - 1) displayIdxs = [currIdx - 2, currIdx - 1, currIdx];
+                                                                else displayIdxs = [startIdx, currIdx, endIdx];
 
-                                                                return finalIdxs.map((idx, i) => {
+                                                                return displayIdxs.map((idx, i) => {
                                                                     const s = allS[idx];
                                                                     const isCurrent = idx === currIdx;
                                                                     const isCompleted = idx <= currIdx;
-                                                                    const isLastInWindow = i === finalIdxs.length - 1;
+                                                                    const isLast = i === displayIdxs.length - 1;
 
                                                                     return (
-                                                                        <div key={s} style={{
-                                                                            display: 'flex',
-                                                                            flexDirection: 'column',
-                                                                            alignItems: 'center',
-                                                                            flex: 1,
-                                                                            position: 'relative',
-                                                                            transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
-                                                                            transition: 'transform 0.3s ease'
-                                                                        }}>
-                                                                            <div style={{
-                                                                                width: isCurrent ? '16px' : '10px',
-                                                                                height: isCurrent ? '16px' : '10px',
-                                                                                borderRadius: '50%',
-                                                                                background: isCurrent ? group.color : (isCompleted ? group.color : 'rgba(255,255,255,0.2)'),
-                                                                                boxShadow: isCurrent ? `0 0 15px ${group.color}` : 'none',
-                                                                                zIndex: 2,
-                                                                                border: isCurrent ? '2px solid white' : 'none',
-                                                                                transition: 'all 0.3s ease'
-                                                                            }} />
-                                                                            <div style={{
-                                                                                fontSize: isCurrent ? '0.7rem' : '0.6rem',
-                                                                                marginTop: '6px',
-                                                                                color: isCompleted ? 'white' : 'var(--text-secondary)',
-                                                                                fontWeight: isCurrent ? 'bold' : 'normal',
-                                                                                textAlign: 'center',
-                                                                                opacity: isCurrent ? 1 : 0.6
-                                                                            }}>
-                                                                                {labels[s as keyof typeof labels]}
+                                                                        <div key={s} className={`timeline-step ${isCurrent ? 'scale-110' : ''}`}>
+                                                                            <div 
+                                                                                className="timeline-dot" 
+                                                                                style={{ 
+                                                                                    backgroundColor: isCompleted ? group.color : 'rgba(255,255,255,0.2)',
+                                                                                    boxShadow: isCurrent ? `0 0 15px ${group.color}` : 'none',
+                                                                                    border: isCurrent ? '2px solid white' : 'none'
+                                                                                }} 
+                                                                            />
+                                                                            <div className={`text-center mt-6 text-xs transition-opacity ${isCurrent ? 'font-bold opacity-100' : 'opacity-60'} ${isCompleted ? 'text-white' : 'text-secondary'}`}>
+                                                                                {labels[s]}
                                                                             </div>
-                                                                            {!isLastInWindow && (
-                                                                                <div style={{
-                                                                                    position: 'absolute',
-                                                                                    top: isCurrent ? '8px' : '5px',
-                                                                                    left: '50%',
-                                                                                    width: '100%',
-                                                                                    height: '2px',
-                                                                                    background: idx < currIdx ? group.color : 'rgba(255,255,255,0.1)',
-                                                                                    zIndex: 1
-                                                                                }} />
+                                                                            {!isLast && (
+                                                                                <div className="timeline-line" style={{ backgroundColor: idx < currIdx ? group.color : 'rgba(255,255,255,0.1)' }} />
                                                                             )}
                                                                         </div>
                                                                     );
@@ -621,36 +550,24 @@ export default function AdminPage() {
                                                             })()}
                                                         </div>
                                                         {(() => {
-                                                            const pendingUpdate = order.activityLog?.find((l: any) => l.type === 'CUSTOMER_UPDATE_PENDING');
+                                                            const log = order.activity_log || order.activityLog || [];
+                                                            const pendingUpdate = log.find((l: ActivityLog) => l.type === 'CUSTOMER_UPDATE_PENDING');
                                                             if (pendingUpdate) {
                                                                 return (
-                                                                    <div style={{ gridColumn: '1 / -1', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '15px', borderRadius: '10px' }}>
-                                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                                                                    <div className="bg-error-10 border-error p-15 rounded-12 m-20">
+                                                                        <div className="flex justify-between items-center flex-wrap gap-15">
                                                                             <div>
-                                                                                <strong style={{ color: '#ef4444' }}>⚠️ El cliente ha modificado sus datos de facturación/contacto en este pedido:</strong>
-                                                                                <ul style={{ margin: '10px 0 0 20px', fontSize: '0.85rem' }}>
-                                                                                    {pendingUpdate.newData.phone && <li>Teléfono: {pendingUpdate.newData.phone}</li>}
-                                                                                    {pendingUpdate.newData.email && <li>Email: {pendingUpdate.newData.email}</li>}
-                                                                                    {pendingUpdate.newData.cuit && <li>CUIT: {pendingUpdate.newData.cuit}</li>}
-                                                                                    {pendingUpdate.newData.tax_status && <li>IVA: {pendingUpdate.newData.tax_status}</li>}
+                                                                                <strong className="text-error">⚠️ Cambio en datos de facturación:</strong>
+                                                                                <ul className="ml-20 mt-10 text-xs">
+                                                                                    {pendingUpdate.newData?.phone && <li>Teléfono: {pendingUpdate.newData.phone}</li>}
+                                                                                    {pendingUpdate.newData?.email && <li>Email: {pendingUpdate.newData.email}</li>}
+                                                                                    {pendingUpdate.newData?.cuit && <li>CUIT: {pendingUpdate.newData.cuit}</li>}
+                                                                                    {pendingUpdate.newData?.tax_status && <li>IVA: {pendingUpdate.newData.tax_status}</li>}
                                                                                 </ul>
-                                                                                <p style={{ fontSize: '0.75rem', marginTop: '10px', opacity: 0.8 }}>Si aceptás, estos datos quedarán guardados en su perfil de cliente para futuros viajes.</p>
                                                                             </div>
-                                                                            <div className="flex gap-10" style={{ flexWrap: 'wrap' }}>
-                                                                                <button
-                                                                                    className="glass-button"
-                                                                                    style={{ background: '#10b981', color: '#fff', fontWeight: 'bold' }}
-                                                                                    onClick={() => handleUpdateCustomerProfile(order.id, pendingUpdate.newData)}
-                                                                                >
-                                                                                    ✅ Actualizar Perfil
-                                                                                </button>
-                                                                                <button
-                                                                                    className="glass-button"
-                                                                                    style={{ background: 'rgba(255,255,255,0.1)' }}
-                                                                                    onClick={() => handleRejectCustomerUpdate(order.id)}
-                                                                                >
-                                                                                    Ignorar
-                                                                                </button>
+                                                                            <div className="flex gap-10 flex-wrap">
+                                                                                <button className="glass-button bg-success font-bold" onClick={() => handleUpdateCustomerProfile(order.id, pendingUpdate.newData)}>✅ Actualizar</button>
+                                                                                <button className="glass-button bg-white-10" onClick={() => handleRejectCustomerUpdate(order.id)}>Ignorar</button>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -659,183 +576,156 @@ export default function AdminPage() {
                                                             return null;
                                                         })()}
 
-                                                        {/* Pricing Breakdown Detail */}
-                                                        {order.pricingBreakdown && order.pricingBreakdown.length > 0 && (
-                                                            <div style={{ padding: '0 20px 15px' }}>
-                                                                <div className="glass-panel" style={{ background: 'rgba(59, 130, 246, 0.05)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '15px' }}>
-                                                                    <div className="glass-label" style={{ fontSize: '0.65rem', color: '#60a5fa', marginBottom: '10px' }}>📊 DETALLE DEL CÁLCULO (PRESUPUESTO INICIAL)</div>
-                                                                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
-                                                                        <thead>
-                                                                            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', color: 'var(--text-secondary)' }}>
-                                                                                <th style={{ textAlign: 'left', padding: '5px' }}>Vehículo / Lógica</th>
-                                                                                <th style={{ textAlign: 'center', padding: '5px' }}>Cant.</th>
-                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>P.Unit</th>
-                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>{order.pricingBreakdown[0]?.type === 'KM' ? 'Km' : 'Hs'}</th>
-                                                                                <th style={{ textAlign: 'right', padding: '5px' }}>Subtotal</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            {order.pricingBreakdown.map((item: any, idx: number) => (
-                                                                                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                                                                                    <td style={{ padding: '8px 5px' }}>
-                                                                                        <div style={{ fontWeight: 'bold' }}>{item.name}</div>
-                                                                                        <div style={{ fontSize: '0.65rem', opacity: 0.6 }}>
-                                                                                            {item.type === 'KM' ? 'Tarifa por Kilómetro' : 'Tarifa por Hora'}
-                                                                                        </div>
-                                                                                    </td>
-                                                                                    <td style={{ textAlign: 'center', padding: '8px 5px' }}>{item.qty}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>${Math.round(item.unitPrice || 0).toLocaleString('es-AR')}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px' }}>{Math.round(item.factor || 0)}</td>
-                                                                                    <td style={{ textAlign: 'right', padding: '8px 5px', fontWeight: 'bold', color: 'white' }}>
-                                                                                        ${Math.round(item.subtotal || 0).toLocaleString('es-AR')}
-                                                                                    </td>
+                                                        {/* Pricing Breakdown Elite */}
+                                                        {(() => {
+                                                            const breakdown = order.pricing_breakdown || order.pricingBreakdown || [];
+                                                            if (breakdown.length === 0) return null;
+                                                            return (
+                                                                <div className="px-20 pb-15">
+                                                                    <div className="glass-panel p-15 bg-blue-05 border-blue-20">
+                                                                        <div className="glass-label text-xs text-blue-400 mb-10">📊 DETALLE DEL PRESUPUESTO</div>
+                                                                        <table className="pricing-table">
+                                                                            <thead>
+                                                                                <tr className="text-secondary">
+                                                                                    <th className="text-left py-5">Vehículo</th>
+                                                                                    <th className="text-center py-5">Cant.</th>
+                                                                                    <th className="text-right py-5">P.Unit</th>
+                                                                                    <th className="text-right py-5">{breakdown[0]?.type === 'KM' ? 'Km' : 'Hs'}</th>
+                                                                                    <th className="text-right py-5">Subtotal</th>
                                                                                 </tr>
-                                                                            ))}
-                                                                            <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                                                                                <td colSpan={4} style={{ textAlign: 'right', padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                                                                                    TOTAL DEL PRESUPUESTO:
-                                                                                </td>
-                                                                                <td style={{ textAlign: 'right', padding: '12px 5px', fontWeight: '900', color: '#60a5fa', fontSize: '1.1rem' }}>
-                                                                                    ${Math.round(order.price || 0).toLocaleString('es-AR')}
-                                                                                </td>
-                                                                            </tr>
-                                                                            {order.pricingBreakdown[0]?.type === 'HOUR' && (
-                                                                                <tr style={{ background: 'rgba(16, 185, 129, 0.05)' }}>
-                                                                                    <td colSpan={5} style={{ padding: '8px 10px', fontSize: '0.7rem', color: '#10b981', textAlign: 'center' }}>
-                                                                                        ✨ Lógica aplicada: Menos de 100km detectados. Se cobra por tiempo/disponibilidad por vehículo.
-                                                                                    </td>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {breakdown.map((item: PricingBreakdownItem, idx: number) => (
+                                                                                    <tr key={idx}>
+                                                                                        <td className="py-8">
+                                                                                            <div className="font-bold">{item.name}</div>
+                                                                                            <div className="text-xs opacity-60">{item.type === 'KM' ? 'Tarifa por Km' : 'Tarifa por Hora'}</div>
+                                                                                        </td>
+                                                                                        <td className="text-center py-8">{item.qty}</td>
+                                                                                        <td className="text-right py-8">${Math.round(item.unitPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">{Math.round(item.factor || 0)}</td>
+                                                                                        <td className="text-right py-8 font-bold text-white">${Math.round(item.subtotal || 0).toLocaleString('es-AR')}</td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                                <tr className="bg-white-02">
+                                                                                    <td colSpan={4} className="text-right p-12 text-secondary text-xs font-bold">TOTAL:</td>
+                                                                                    <td className="text-right p-12 font-black text-blue-400 text-lg">${Math.round(order.price || 0).toLocaleString('es-AR')}</td>
                                                                                 </tr>
-                                                                            )}
-                                                                        </tbody>
-                                                                    </table>
-                                                                    <div style={{ fontSize: '0.65rem', marginTop: '5px', opacity: 0.5, fontStyle: 'italic', textAlign: 'right' }}>
-                                                                        * El cálculo utiliza {Math.round(order.distanceKm || 0)} Km y {order.travelHours} Hs de base.
+                                                                            </tbody>
+                                                                        </table>
+                                                                        <div className="text-xs mt-5 opacity-50 italic text-right">
+                                                                            * Presupuesto basado en {Math.round(order.distance_km || order.distanceKm || 0)} Km y {order.travel_hours || order.travelHours || 0} Hs.
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            );
+                                                        })()}
 
-                                                        <div style={{ padding: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px' }}>
+                                                        <div className="p-20 admin-form-grid">
                                                             <div className="flex-col gap-15">
                                                                 <div>
-                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>📟 INFORMACIÓN DE CARGA</div>
-                                                                    <div style={{ fontSize: '0.85rem', marginTop: '10px', display: 'flex', gap: '5px' }}>
+                                                                    <div className="glass-label text-xs">📟 INFORMACIÓN DE CARGA</div>
+                                                                    <div className="text-sm mt-10 flex gap-5">
                                                                         <strong>Vehículo:</strong>
-                                                                        <div>{renderInLines(formatVehicle(order.vehicle))}</div>
+                                                                        <div className="flex-col">{renderInLines(formatVehicle(order.vehicle))}</div>
                                                                     </div>
-                                                                    <div style={{ fontSize: '0.85rem' }}><strong>Fecha y Hora:</strong> {order.travelDate} ({order.travelTime})</div>
+                                                                    <div className="text-sm"><strong>Fecha:</strong> {order.travel_date || order.travelDate} ({order.travel_time || order.travelTime})</div>
                                                                     {order.observations && (
-                                                                        <div style={{
-                                                                            fontSize: '0.75rem',
-                                                                            marginTop: '10px',
-                                                                            padding: '10px',
-                                                                            background: 'rgba(0,0,0,0.2)',
-                                                                            borderRadius: '8px',
-                                                                            borderLeft: `3px solid ${group.color}`
-                                                                        }}>
+                                                                        <div className="text-xs mt-10 p-10 bg-black-20 rounded-8 border-l-3" style={{ borderLeftColor: group.color }}>
                                                                             <strong>Obs:</strong> {order.observations}
                                                                         </div>
                                                                     )}
                                                                 </div>
 
-                                                                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
-                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>👤 CONTACTO</div>
-                                                                    <div style={{ fontSize: '0.8rem' }}>{order.customerEmail}</div>
-                                                                    <div style={{ fontSize: '0.8rem' }}>{order.customerPhone}</div>
+                                                                <div className="border-t-glass pt-15">
+                                                                    <div className="glass-label text-xs">👤 CONTACTO</div>
+                                                                    <div className="text-sm">{order.customer_email || order.customerEmail}</div>
+                                                                    <div className="text-sm">{order.customer_phone || order.customerPhone}</div>
                                                                 </div>
                                                             </div>
 
                                                             <div className="flex-col gap-15">
                                                                 <div>
-                                                                    <div className="glass-label" style={{ fontSize: '0.6rem' }}>📍 RUTA</div>
-                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', display: 'flex', gap: '5px' }}>
+                                                                    <div className="glass-label text-xs">📍 RUTA</div>
+                                                                    <div className="text-sm mt-5 flex gap-5">
                                                                         <strong>Origen:</strong>
-                                                                        <div>{renderInLines(order.origin)}</div>
+                                                                        <div className="flex-col">{renderInLines(order.origin)}</div>
                                                                     </div>
-                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', display: 'flex', gap: '5px' }}>
+                                                                    <div className="text-sm mt-5 flex gap-5">
                                                                         <strong>Destino:</strong>
-                                                                        <div>{renderInLines(order.destination)}</div>
+                                                                        <div className="flex-col">{renderInLines(order.destination)}</div>
                                                                     </div>
-                                                                    <div style={{ fontSize: '0.8rem', marginTop: '5px', color: 'var(--text-secondary)' }}>
-                                                                        {Math.round(order.distanceKm || 0)} Km | {order.travelHours} hs est.
+                                                                    <div className="text-xs mt-5 text-secondary">
+                                                                        {Math.round(order.distance_km || order.distanceKm || 0)} Km | {order.travel_hours || order.travelHours || 0} hs est.
                                                                     </div>
                                                                 </div>
 
-                                                                {order.driverName && (
-                                                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '15px' }}>
-                                                                        <div className="glass-label" style={{ fontSize: '0.6rem' }}>🚚 CHOFER ASIGNADO</div>
-                                                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>{order.driverName}</div>
-                                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{order.licensePlate} | {order.driverPhone}</div>
+                                                                {(order.driver_name || order.driverName) && (
+                                                                    <div className="border-t-glass pt-15">
+                                                                        <div className="glass-label text-xs">🚚 CHOFER ASIGNADO</div>
+                                                                        <div className="text-sm font-bold">{order.driver_name || order.driverName}</div>
+                                                                        <div className="text-xs text-secondary">{order.license_plate || order.licensePlate} | {order.driver_phone || order.driverPhone}</div>
                                                                     </div>
                                                                 )}
                                                             </div>
 
                                                             <div className="flex-col gap-10">
-                                                                <div className="glass-label" style={{ fontSize: '0.6rem' }}>⚙️ OPERACIONES</div>
-                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
-                                                                    {order.status === 'PENDING' && <button className="glass-button" onClick={() => updateStatus(order.id, 'APPROVED')} style={{ background: '#3b82f6', fontWeight: '800', fontSize: '0.75rem' }}>✅ APROBAR PRESUPUESTO</button>}
-                                                                    {order.status === 'APPROVED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'CONFIRMED')} style={{ background: '#10b981', fontWeight: '800', fontSize: '0.75rem' }}>📅 PROGRAMAR (PENDIENTE)</button>}
-                                                                    {order.status === 'CONFIRMED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'STARTED')} style={{ background: 'var(--accent-gradient)', fontWeight: '800', fontSize: '0.75rem' }}>🚀 INICIAR VIAJE</button>}
-                                                                    {order.status === 'STARTED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'FINISHED')} style={{ background: '#8b5cf6', fontWeight: '800', fontSize: '0.75rem' }}>🏁 FINALIZAR VIAJE</button>}
+                                                                <div className="glass-label text-xs">⚙️ OPERACIONES</div>
+                                                                <div className="flex-col gap-8">
+                                                                    {order.status === 'PENDING' && <button className="glass-button bg-blue font-bold text-xs" onClick={() => updateStatus(order.id, 'APPROVED')}>✅ APROBAR PRESUPUESTO</button>}
+                                                                    {order.status === 'APPROVED' && <button className="glass-button bg-success font-bold text-xs" onClick={() => updateStatus(order.id, 'CONFIRMED')}>📅 PROGRAMAR (PENDIENTE)</button>}
+                                                                    {order.status === 'CONFIRMED' && <button className="glass-button bg-accent-gradient font-bold text-xs" onClick={() => updateStatus(order.id, 'STARTED')}>🚀 INICIAR VIAJE</button>}
+                                                                    {order.status === 'STARTED' && <button className="glass-button bg-purple font-bold text-xs" onClick={() => updateStatus(order.id, 'FINISHED')}>🏁 FINALIZAR VIAJE</button>}
                                                                     {order.status === 'FINISHED' && (
-                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                                            <button className="glass-button" onClick={() => { handleEditClick(order); setActiveTab('ADJUST'); }} style={{ background: 'var(--accent-gradient)', fontWeight: '800', fontSize: '0.75rem' }}>💰 AJUSTAR PRECIO FINAL</button>
-                                                                            <button className="glass-button" onClick={() => updateStatus(order.id, 'INVOICED')} style={{ background: '#ec4899', fontWeight: '800', fontSize: '0.75rem' }}>📄 MARCAR FACTURADO</button>
+                                                                        <div className="flex-col gap-8">
+                                                                            <button className="glass-button bg-accent-gradient font-bold text-xs" onClick={() => { handleEditClick(order); setActiveTab('ADJUST'); }}>💰 AJUSTAR PRECIO FINAL</button>
+                                                                            <button className="glass-button bg-pink font-bold text-xs" onClick={() => updateStatus(order.id, 'INVOICED')}>📄 MARCAR FACTURADO</button>
                                                                         </div>
                                                                     )}
-                                                                    {order.status === 'INVOICED' && <button className="glass-button" onClick={() => updateStatus(order.id, 'PAID')} style={{ background: '#059669', fontWeight: '800', fontSize: '0.75rem' }}>💰 MARCAR COBRADO</button>}
+                                                                    {order.status === 'INVOICED' && <button className="glass-button bg-success-dark font-bold text-xs" onClick={() => updateStatus(order.id, 'PAID')}>💰 MARCAR COBRADO</button>}
+                                                                    <button className="glass-button bg-success font-bold text-xs" onClick={() => sendWhatsApp(order)}>🟢 ENVIAR SEGUIMIENTO WA</button>
                                                                 </div>
 
-                                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '5px' }}>
-                                                                    <button className="glass-button" onClick={() => handleEditClick(order)} style={{ fontSize: '0.75rem', padding: '10px' }}>✏️ Editar</button>
-                                                                    <button className="glass-button" onClick={() => confirmDeleteOrder(order.id, order.customerName)} style={{ fontSize: '0.75rem', padding: '10px', background: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>🗑️ Borrar</button>
+                                                                <div className="admin-form-grid mt-5" style={{ gap: '8px' }}>
+                                                                    <button className="glass-button text-xs p-10" onClick={() => handleEditClick(order)}>✏️ Editar</button>
+                                                                    <button className="glass-button text-xs p-10 bg-error-20 text-error" onClick={() => confirmDeleteOrder(order.id, order.customer_name || order.customerName || '')}>🗑️ Borrar</button>
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        {/* Activity History Section */}
-                                                        {order.activityLog && order.activityLog.length > 0 && (
-                                                            <div style={{ padding: '0 20px 20px' }}>
-                                                                <div className="glass-label" style={{ fontSize: '0.6rem', marginBottom: '15px' }}>📜 HISTORIAL DE ACTIVIDAD</div>
-                                                                <div className="flex-col gap-10">
-                                                                    {order.activityLog.slice().reverse().map((log: any, idx: number) => (
-                                                                        <div key={idx} className="flex gap-15 items-start p-10 rounded-12" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                                                            <div style={{
-                                                                                width: '32px',
-                                                                                height: '32px',
-                                                                                borderRadius: '50%',
-                                                                                background: 'rgba(255,255,255,0.05)',
-                                                                                display: 'flex',
-                                                                                alignItems: 'center',
-                                                                                justifyContent: 'center',
-                                                                                fontSize: '0.9rem',
-                                                                                flexShrink: 0
-                                                                            }}>
-                                                                                {log.type === 'CREATED' ? '✨' :
-                                                                                    log.type === 'APPROVED' ? '✅' :
-                                                                                        log.type === 'CONFIRMED' ? '📅' :
-                                                                                            log.type === 'STARTED' ? '🚀' :
-                                                                                                log.type === 'FINISHED' ? '🏁' :
-                                                                                                    log.type === 'INVOICED' ? '📄' :
-                                                                                                        log.type === 'PAID' ? '💰' : '📝'}
-                                                                            </div>
-                                                                            <div className="flex-col" style={{ flex: 1 }}>
-                                                                                <div className="flex justify-between items-center">
-                                                                                    <span className="text-white text-bold" style={{ fontSize: '0.8rem' }}>{log.label}</span>
-                                                                                    <span className="text-secondary text-xs">{new Date(log.time).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}hs</span>
+                                                        {/* Activity History Elite */}
+                                                        {(() => {
+                                                            const log = order.activity_log || order.activityLog || [];
+                                                            if (log.length === 0) return null;
+                                                            return (
+                                                                <div className="px-20 pb-20">
+                                                                    <div className="glass-label text-xs mb-15">📜 HISTORIAL DE ACTIVIDAD</div>
+                                                                    <div className="flex-col gap-10">
+                                                                        {log.slice().reverse().map((item: ActivityLog, idx: number) => (
+                                                                            <div key={idx} className="flex gap-15 items-start p-10 rounded-12 bg-white-03 border-glass">
+                                                                                <div className="w-32 h-32 rounded-full bg-white-05 flex items-center justify-center text-sm shrink-0">
+                                                                                    {item.type === 'CREATED' ? '✨' :
+                                                                                        item.type === 'APPROVED' ? '✅' :
+                                                                                            item.type === 'CONFIRMED' ? '📅' :
+                                                                                                item.type === 'STARTED' ? '🚀' :
+                                                                                                    item.type === 'FINISHED' ? '🏁' :
+                                                                                                        item.type === 'INVOICED' ? '📄' :
+                                                                                                            item.type === 'PAID' ? '💰' : '📝'}
                                                                                 </div>
-                                                                                {log.observations_fallback && (
-                                                                                    <div className="text-secondary text-xs mt-4">Obs: {log.observations_fallback}</div>
-                                                                                )}
-                                                                                {log.user && (
-                                                                                    <div className="text-accent text-xs mt-2" style={{ opacity: 0.7 }}>Acción por: {log.user}</div>
-                                                                                )}
+                                                                                <div className="flex-col flex-1">
+                                                                                    <div className="flex justify-between items-center">
+                                                                                        <span className="text-white font-bold text-xs">{item.label}</span>
+                                                                                        <span className="text-secondary text-xs">{new Date(item.time).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}hs</span>
+                                                                                    </div>
+                                                                                    {item.observations_fallback && <div className="text-secondary text-xs mt-4">Obs: {item.observations_fallback}</div>}
+                                                                                    {item.user && <div className="text-accent text-xs mt-2 opacity-70">Acción por: {item.user}</div>}
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    ))}
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            );
+                                                        })()}
                                                     </div>
                                                 )}
                                             </div>
@@ -848,327 +738,301 @@ export default function AdminPage() {
                 </div>
             )}
 
-            {/* Modal de Edición */}
+            {/* Modal de Edición Elite */}
             {editingOrder && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(15px)' }}>
-                    <div className="glass-panel" style={{ width: '95%', maxWidth: '800px', padding: '25px', maxHeight: '95vh', overflowY: 'auto' }}>
-                        <div className="flex justify-between items-center mb-20">
-                            <h2 style={{ fontSize: '1.2rem' }}>Editar Pedido <span style={{ fontFamily: 'monospace', opacity: 0.5 }}>{editingOrder.id.substring(0, 8)}</span></h2>
+                <div className="admin-modal-overlay">
+                    <div className="admin-modal-content">
+                        <div className="admin-modal-header">
+                            <h2 className="text-md">
+                                Editar Pedido <span className="font-mono opacity-50">{editingOrder.id.substring(0, 8)}</span>
+                            </h2>
                             <button className="filter-btn" onClick={() => setEditingOrder(null)}>✕</button>
                         </div>
 
-                        {/* Tab Navigation */}
-                        <div className="filter-group" style={{ marginBottom: '25px', display: 'flex', overflowX: 'auto', gap: '5px', paddingBottom: '10px' }}>
-                            <button className={`filter-btn ${activeTab === 'CLIENT' ? 'active' : ''}`} onClick={() => setActiveTab('CLIENT')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>👤 Cliente e IVA</button>
-                            <button className={`filter-btn ${activeTab === 'ROUTE' ? 'active' : ''}`} onClick={() => setActiveTab('ROUTE')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>📍 Ruta y Precio</button>
-                            <button className={`filter-btn ${activeTab === 'LOGISTICS' ? 'active' : ''}`} onClick={() => setActiveTab('LOGISTICS')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>🚚 Chofer y Logística</button>
-                            {(editingOrder.status === 'FINISHED' || editingOrder.status === 'INVOICED' || editingOrder.status === 'PAID') && (
-                                <button className={`filter-btn ${activeTab === 'ADJUST' ? 'active' : ''}`} onClick={() => setActiveTab('ADJUST')} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap', border: '1px solid var(--accent-color)' }}>💰 ADJUSTE FINAL</button>
-                            )}
-                        </div>
-
-                        {/* TAB: CLIENT */}
-                        {activeTab === 'CLIENT' && (
-                            <div className="flex-col gap-20">
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                                    <div>
-                                        <label className="glass-label">Nombre Cliente</label>
-                                        <input type="text" className="glass-input" value={editForm.customerName} onChange={e => setEditForm(p => ({ ...p, customerName: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Email</label>
-                                        <input type="email" className="glass-input" value={editForm.customerEmail} onChange={e => setEditForm(p => ({ ...p, customerEmail: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Teléfono</label>
-                                        <input type="tel" className="glass-input" value={editForm.customerPhone} onChange={e => setEditForm(p => ({ ...p, customerPhone: e.target.value }))} />
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-                                    <div>
-                                        <label className="glass-label">CUIT</label>
-                                        <input type="text" className="glass-input" value={editForm.cuit} onChange={e => setEditForm(p => ({ ...p, cuit: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Condición IVA</label>
-                                        <select
-                                            className="glass-select"
-                                            value={editForm.taxStatus}
-                                            onChange={e => setEditForm(p => ({ ...p, taxStatus: e.target.value }))}
-                                        >
-                                            <option value="">Seleccionar...</option>
-                                            <option value="responsable_inscripto">Responsable Inscripto</option>
-                                            <option value="monotributo">Monotributo</option>
-                                            <option value="exento">Exento</option>
-                                            <option value="consumidor_final">Consumidor Final</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="glass-label">Observaciones Internas</label>
-                                    <textarea className="glass-input" style={{ minHeight: '80px', paddingTop: '10px' }} value={editForm.observations} onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))} />
-                                </div>
+                        <div className="admin-modal-body">
+                            {/* Tab Navigation Elite */}
+                            <div className="admin-tabs-container">
+                                <button className={`filter-btn ${activeTab === 'CLIENT' ? 'active' : ''}`} onClick={() => setActiveTab('CLIENT')}>👤 Cliente e IVA</button>
+                                <button className={`filter-btn ${activeTab === 'ROUTE' ? 'active' : ''}`} onClick={() => setActiveTab('ROUTE')}>📍 Ruta y Precio</button>
+                                <button className={`filter-btn ${activeTab === 'LOGISTICS' ? 'active' : ''}`} onClick={() => setActiveTab('LOGISTICS')}>🚚 Chofer y Logística</button>
+                                {(editingOrder.status === 'FINISHED' || editingOrder.status === 'INVOICED' || editingOrder.status === 'PAID') && (
+                                    <button className={`filter-btn ${activeTab === 'ADJUST' ? 'active' : ''}`} onClick={() => setActiveTab('ADJUST')} style={{ border: '1px solid var(--accent-color)' }}>💰 AJUSTE FINAL</button>
+                                )}
                             </div>
-                        )}
 
-                        {/* TAB: ROUTE */}
-                        {activeTab === 'ROUTE' && (
-                            <div className="flex-col gap-20">
-                                <div style={{ display: 'grid', gap: '15px' }}>
-                                    <div>
+                            {/* TAB: CLIENT */}
+                            {activeTab === 'CLIENT' && (
+                                <div className="flex-col gap-20 animate-fade-in">
+                                    <div className="admin-form-grid">
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Nombre Cliente</label>
+                                            <input type="text" className="glass-input" value={editForm.customerName} onChange={e => setEditForm(p => ({ ...p, customerName: e.target.value }))} />
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Email</label>
+                                            <input type="email" className="glass-input" value={editForm.customerEmail} onChange={e => setEditForm(p => ({ ...p, customerEmail: e.target.value }))} />
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Teléfono</label>
+                                            <input type="tel" className="glass-input" value={editForm.customerPhone} onChange={e => setEditForm(p => ({ ...p, customerPhone: e.target.value }))} />
+                                        </div>
+                                    </div>
+
+                                    <div className="admin-form-grid">
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">CUIT</label>
+                                            <input type="text" className="glass-input" value={editForm.cuit} onChange={e => setEditForm(p => ({ ...p, cuit: e.target.value }))} />
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Condición IVA</label>
+                                            <select
+                                                className="glass-select"
+                                                value={editForm.taxStatus}
+                                                onChange={e => setEditForm(p => ({ ...p, taxStatus: e.target.value }))}
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                <option value="responsable_inscripto">Responsable Inscripto</option>
+                                                <option value="monotributo">Monotributo</option>
+                                                <option value="exento">Exento</option>
+                                                <option value="consumidor_final">Consumidor Final</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="admin-form-group">
+                                        <label className="glass-label">Observaciones Internas</label>
+                                        <textarea className="glass-input h-80 pt-10" value={editForm.observations} onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* TAB: ROUTE */}
+                            {activeTab === 'ROUTE' && (
+                                <div className="flex-col gap-20 animate-fade-in">
+                                    <div className="admin-form-group">
                                         <label className="glass-label">Origen (direcciones separadas por | )</label>
                                         <input type="text" className="glass-input" value={editForm.origin} onChange={e => setEditForm(p => ({ ...p, origin: e.target.value }))} />
                                     </div>
-                                    <div>
+                                    <div className="admin-form-group">
                                         <label className="glass-label">Destino Final</label>
                                         <input type="text" className="glass-input" value={editForm.destination} onChange={e => setEditForm(p => ({ ...p, destination: e.target.value }))} />
                                     </div>
-                                </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '15px' }}>
-                                    <div>
-                                        <label className="glass-label">Fecha</label>
-                                        <input type="date" className="glass-input" value={editForm.travelDate} onChange={e => setEditForm(p => ({ ...p, travelDate: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Franja Horaria</label>
-                                        <select className="glass-select" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))}>
-                                            <option value="manana">Mañana</option>
-                                            <option value="mediodia">Medio día</option>
-                                            <option value="tarde">Tarde</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Vehículo(s)</label>
-                                        <input type="text" className="glass-input" value={editForm.vehicle} onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))} />
-                                    </div>
-                                </div>
-
-                                <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.2)', padding: '20px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                                        <h3 style={{ fontSize: '0.8rem', color: 'var(--accent-color)' }}>💰 AJUSTE DE PRECIO</h3>
-                                        <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>${editForm.price.toLocaleString('es-AR')}</div>
-                                    </div>
-
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                        <div>
-                                            <label className="glass-label">Distancia (Km)</label>
-                                            <input type="number" className="glass-input" value={editForm.distanceKm} onChange={e => {
-                                                const km = Number(e.target.value);
-                                                setEditForm(p => {
-                                                    const newState = { ...p, distanceKm: km };
-                                                    const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                    const vData = (vehiclesData as any[]).find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                    if (vData) {
-                                                        const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                        if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
-                                                        else newState.price = vData.priceKm * km * qty;
-                                                    }
-                                                    return newState;
-                                                });
-                                            }} />
+                                    <div className="admin-form-grid">
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Fecha</label>
+                                            <input type="date" className="glass-input" value={editForm.travelDate} onChange={e => setEditForm(p => ({ ...p, travelDate: e.target.value }))} />
                                         </div>
-                                        <div>
-                                            <label className="glass-label">Horas Estimadas</label>
-                                            <input type="number" className="glass-input" value={editForm.travelHours} onChange={e => {
-                                                const h = Number(e.target.value);
-                                                setEditForm(p => {
-                                                    const newState = { ...p, travelHours: h };
-                                                    const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                    const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                    if (vData && p.distanceKm <= 100) {
-                                                        const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                        newState.price = vData.priceHour * h * qty;
-                                                    }
-                                                    return newState;
-                                                });
-                                            }} />
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Franja Horaria</label>
+                                            <select className="glass-select" value={editForm.travelTime} onChange={e => setEditForm(p => ({ ...p, travelTime: e.target.value }))}>
+                                                <option value="manana">Mañana</option>
+                                                <option value="mediodia">Medio día</option>
+                                                <option value="tarde">Tarde</option>
+                                            </select>
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Vehículo(s)</label>
+                                            <input type="text" className="glass-input" value={editForm.vehicle} onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))} />
                                         </div>
                                     </div>
 
-                                    <div style={{ marginTop: '15px' }}>
-                                        <label className="glass-label">Precio Final Forzado ($)</label>
-                                        <input type="number" className="glass-input" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} />
+                                    <div className="glass-panel p-20 bg-black-20">
+                                        <div className="flex justify-between items-center mb-15">
+                                            <h3 className="text-sm text-accent">💰 AJUSTE DE PRECIO</h3>
+                                            <div className="text-lg font-bold">${editForm.price.toLocaleString('es-AR')}</div>
+                                        </div>
+
+                                        <div className="admin-form-grid">
+                                            <div className="admin-form-group">
+                                                <label className="glass-label">Distancia (Km)</label>
+                                                <input type="number" className="glass-input" value={editForm.distanceKm} onChange={e => {
+                                                    const km = Number(e.target.value);
+                                                    setEditForm(p => {
+                                                        const newState = { ...p, distanceKm: km };
+                                                        const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
+                                                        const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
+                                                        if (vData) {
+                                                            const qty = parseInt(p.vehicle.split('x')[0]) || 1;
+                                                            if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
+                                                            else newState.price = vData.priceKm * km * qty;
+                                                        }
+                                                        return newState;
+                                                    });
+                                                }} />
+                                            </div>
+                                            <div className="admin-form-group">
+                                                <label className="glass-label">Horas Estimadas</label>
+                                                <input type="number" className="glass-input" value={editForm.travelHours} onChange={e => {
+                                                    const h = Number(e.target.value);
+                                                    setEditForm(p => {
+                                                        const newState = { ...p, travelHours: h };
+                                                        const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
+                                                        const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
+                                                        if (vData && p.distanceKm <= 100) {
+                                                            const qty = parseInt(p.vehicle.split('x')[0]) || 1;
+                                                            newState.price = vData.priceHour * h * qty;
+                                                        }
+                                                        return newState;
+                                                    });
+                                                }} />
+                                            </div>
+                                        </div>
+
+                                        <div className="admin-form-group mt-15">
+                                            <label className="glass-label">Precio Final Forzado ($)</label>
+                                            <input type="number" className="glass-input" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* TAB: LOGISTICS */}
-                        {activeTab === 'LOGISTICS' && (
-                            <div className="flex-col gap-20">
-                                <h3 className="text-success" style={{ fontSize: '0.85rem' }}>🚚 ASIGNACIÓN DE CHOFER</h3>
-                                <div className="toggle-group p-5" style={{ maxHeight: '180px', overflowY: 'auto' }}>
-                                    <button
-                                        type="button"
-                                        className={`toggle-btn ${!editForm.driverName ? 'active' : ''}`}
-                                        onClick={() => setEditForm(p => ({ ...p, driverName: '', driverPhone: '', licensePlate: '' }))}
-                                        style={{ minWidth: '80px', padding: '10px', fontSize: '0.75rem' }}
-                                    >
-                                        ❌ Sin Chofer
-                                    </button>
-                                    {drivers.map(d => (
+                            {/* TAB: LOGISTICS */}
+                            {activeTab === 'LOGISTICS' && (
+                                <div className="flex-col gap-20 animate-fade-in">
+                                    <h3 className="text-success text-sm">🚚 ASIGNACIÓN DE CHOFER</h3>
+                                    <div className="toggle-group p-5 h-180 overflow-y-auto">
                                         <button
-                                            key={d.id}
                                             type="button"
-                                            className={`toggle-btn ${editForm.driverName === d.name ? 'active' : ''}`}
-                                            onClick={() => setEditForm(p => ({ ...p, driverName: d.name, driverPhone: d.phone, licensePlate: d.license_plate }))}
-                                            style={{ minWidth: '80px', padding: '10px', fontSize: '0.75rem' }}
+                                            className={`toggle-btn ${!editForm.driverName ? 'active' : ''}`}
+                                            onClick={() => setEditForm(p => ({ ...p, driverName: '', driverPhone: '', licensePlate: '' }))}
                                         >
-                                            {d.name}
+                                            ❌ Sin Chofer
                                         </button>
-                                    ))}
+                                        {drivers.map(d => (
+                                            <button
+                                                key={d.id}
+                                                type="button"
+                                                className={`toggle-btn ${editForm.driverName === d.name ? 'active' : ''}`}
+                                                onClick={() => setEditForm(p => ({ ...p, driverName: d.name, driverPhone: d.phone, licensePlate: d.license_plate }))}
+                                            >
+                                                {d.name}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="admin-form-grid">
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Chofer</label>
+                                            <input type="text" className="glass-input" value={editForm.driverName} onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))} />
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Patente</label>
+                                            <input type="text" className="glass-input" value={editForm.licensePlate} onChange={e => setEditForm(p => ({ ...p, licensePlate: e.target.value }))} />
+                                        </div>
+                                        <div className="admin-form-group">
+                                            <label className="glass-label">Teléfono Chofer</label>
+                                            <input type="tel" className="glass-input" value={editForm.driverPhone} onChange={e => setEditForm(p => ({ ...p, driverPhone: e.target.value }))} />
+                                        </div>
+                                    </div>
                                 </div>
+                            )}
 
-                                <div className="grid-cols-auto">
-                                    <div>
-                                        <label className="glass-label">Chofer</label>
-                                        <input type="text" className="glass-input" value={editForm.driverName} onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Patente</label>
-                                        <input type="text" className="glass-input" value={editForm.licensePlate} onChange={e => setEditForm(p => ({ ...p, licensePlate: e.target.value }))} />
-                                    </div>
-                                    <div>
-                                        <label className="glass-label">Teléfono Chofer</label>
-                                        <input type="tel" className="glass-input" value={editForm.driverPhone} onChange={e => setEditForm(p => ({ ...p, driverPhone: e.target.value }))} />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                            {/* TAB: ADJUST */}
+                            {activeTab === 'ADJUST' && editingOrder && (
+                                <div className="flex-col gap-20 animate-fade-in">
+                                    <h3 className="text-accent text-sm">💰 AJUSTE DE CUENTAS FINAL</h3>
 
-                        {/* TAB: ADJUST */}
-                        {activeTab === 'ADJUST' && editingOrder && (
-                            <div className="flex-col gap-20">
-                                <h3 className="text-accent" style={{ fontSize: '0.85rem' }}>💰 AJUSTE DE CUENTAS FINAL</h3>
-
-                                <div className="glass-panel" style={{ background: 'rgba(0,0,0,0.3)', padding: '20px' }}>
-                                    <div className="flex justify-between items-center mb-10 pb-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                                        <span className="text-secondary">Precio Base Pactado:</span>
-                                        <span style={{ fontWeight: 'bold' }}>${Math.round(editingOrder.price || 0).toLocaleString('es-AR')}</span>
-                                    </div>
-
-                                    {/* Nueva Sección de Calculadora de Extras */}
-                                    <div style={{ marginBottom: '20px', padding: '15px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px' }}>
-                                        <div className="glass-label" style={{ marginBottom: '10px', color: 'var(--accent-color)' }}>➕ SUMAR CARGOS ADICIONALES</div>
-
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
-                                            <div>
-                                                <label className="glass-label">Horas de Demora (minutos)</label>
-                                                <input
-                                                    type="number"
-                                                    className="glass-input"
-                                                    value={editForm.waitingMinutes}
-                                                    onChange={e => {
-                                                        const mins = parseInt(e.target.value) || 0;
-                                                        const vPrice = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0;
-                                                        setEditForm(p => ({ ...p, waitingMinutes: mins }));
-                                                    }}
-                                                />
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '10px', fontWeight: 'bold', color: 'var(--warning-color)' }}>
-                                                + ${Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0)).toLocaleString('es-AR')}
-                                            </div>
+                                    <div className="glass-panel p-20 bg-black-30">
+                                        <div className="flex justify-between items-center mb-10 pb-10 border-b-glass">
+                                            <span className="text-secondary">Precio Base Pactado:</span>
+                                            <span className="font-bold">${Math.round(editingOrder.price || 0).toLocaleString('es-AR')}</span>
                                         </div>
 
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '15px' }}>
-                                            <div>
-                                                <label className="glass-label">Otros conceptos (Peajes, Estacionamiento, etc)</label>
-                                                <input
-                                                    type="text"
-                                                    className="glass-input"
-                                                    placeholder="Concepto..."
-                                                    id="extra-concept"
-                                                />
+                                        <div className="mb-20 p-15 bg-white-03 rounded-12">
+                                            <div className="glass-label mb-10 text-accent">➕ SUMAR CARGOS ADICIONALES</div>
+
+                                            <div className="admin-form-grid mb-15">
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Horas de Demora (minutos)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="glass-input"
+                                                        value={editForm.waitingMinutes}
+                                                        onChange={e => setEditForm(p => ({ ...p, waitingMinutes: parseInt(e.target.value) || 0 }))}
+                                                    />
+                                                </div>
+                                                <div className="flex items-end pb-10 font-bold text-warning">
+                                                    + ${Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0)).toLocaleString('es-AR')}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="glass-label">Monto ($)</label>
-                                                <input
-                                                    type="number"
-                                                    className="glass-input"
-                                                    placeholder="0"
-                                                    id="extra-amount"
-                                                />
+
+                                            <div className="admin-form-grid">
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Otros conceptos (Peajes, Estacionamiento, etc)</label>
+                                                    <input type="text" className="glass-input" placeholder="Concepto..." id="extra-concept" />
+                                                </div>
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Monto ($)</label>
+                                                    <input type="number" className="glass-input" placeholder="0" id="extra-amount" />
+                                                </div>
                                             </div>
+
+                                            <button
+                                                className="glass-button mt-10 p-8 text-xs w-auto"
+                                                onClick={() => {
+                                                    const conceptInput = document.getElementById('extra-concept') as HTMLInputElement;
+                                                    const amountInput = document.getElementById('extra-amount') as HTMLInputElement;
+                                                    const amount = parseInt(amountInput.value) || 0;
+                                                    if (amount > 0) {
+                                                        const lines = editForm.observations ? editForm.observations.split('\n') : [];
+                                                        const newObs = [...lines, `+ ${conceptInput.value || 'Extra'}: $${amount}`].join('\n');
+                                                        setEditForm(p => ({ ...p, observations: newObs, price: p.price + amount }));
+                                                        conceptInput.value = ''; amountInput.value = '';
+                                                    }
+                                                }}
+                                            >
+                                                ➕ Agregar al Total
+                                            </button>
                                         </div>
 
-                                        <button
-                                            className="glass-button"
-                                            style={{ marginTop: '10px', padding: '8px', fontSize: '0.7rem', width: 'auto' }}
-                                            onClick={() => {
-                                                const conceptInput = document.getElementById('extra-concept') as HTMLInputElement;
-                                                const amountInput = document.getElementById('extra-amount') as HTMLInputElement;
-                                                const concept = conceptInput.value;
-                                                const amount = parseInt(amountInput.value) || 0;
-                                                if (amount > 0) {
-                                                    const lines = editForm.observations ? editForm.observations.split('\n') : [];
-                                                    const newObs = [...lines, `+ ${concept || 'Extra'}: $${amount}`].join('\n');
-                                                    setEditForm(p => ({ ...p, observations: newObs, price: p.price + amount }));
-                                                    conceptInput.value = '';
-                                                    amountInput.value = '';
-                                                }
-                                            }}
-                                        >
-                                            ➕ Agregar al Total
-                                        </button>
-                                    </div>
-
-                                    <div className="flex-col gap-10 mt-15">
-                                        <label className="glass-label">Observaciones de cobro / Resumen de extras</label>
-                                        <textarea
-                                            className="glass-input"
-                                            placeholder="Ej: Peajes, carga extra, etc."
-                                            value={editForm.observations}
-                                            onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))}
-                                            style={{ minHeight: '100px' }}
-                                        />
-                                    </div>
-
-                                    <div className="flex-col gap-10 mt-15">
-                                        <label className="glass-label" style={{ fontWeight: 'bold' }}>PRECIO FINAL A FACTURAR ($)</label>
-                                        <div style={{ position: 'relative' }}>
-                                            <span style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', fontSize: '1.2rem' }}>$</span>
-                                            <input
-                                                type="number"
-                                                className="glass-input"
-                                                value={editForm.price}
-                                                onChange={e => setEditForm(p => ({ ...p, price: parseInt(e.target.value) || 0 }))}
-                                                style={{ fontSize: '1.5rem', fontWeight: '900', color: 'var(--success-color)', border: '2px solid var(--success-color)', paddingLeft: '35px' }}
+                                        <div className="admin-form-group mt-15">
+                                            <label className="glass-label">Resumen de extras / Observaciones</label>
+                                            <textarea
+                                                className="glass-input h-100"
+                                                placeholder="Ej: Peajes, carga extra, etc."
+                                                value={editForm.observations}
+                                                onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))}
                                             />
                                         </div>
-                                        <button
-                                            className="filter-btn"
-                                            style={{ alignSelf: 'flex-end', fontSize: '0.65rem' }}
-                                            onClick={() => {
-                                                const base = editingOrder.price;
-                                                const vPrice = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0;
-                                                const waitExtra = Math.round((editForm.waitingMinutes / 60) * vPrice);
-                                                setEditForm(p => ({ ...p, price: base + waitExtra }));
-                                            }}
-                                        >
-                                            ↩️ Restablecer al Base + Demora
-                                        </button>
-                                    </div>
 
-                                    <div className="mt-20 p-15 rounded-12" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                                        <p style={{ fontSize: '0.8rem', textAlign: 'center', margin: 0, fontWeight: 'bold' }}>
+                                        <div className="admin-form-group mt-15">
+                                            <label className="glass-label font-bold">PRECIO FINAL A FACTURAR ($)</label>
+                                            <div className="relative">
+                                                <span className="absolute left-15 top-half transform-y-half font-bold text-lg">$</span>
+                                                <input
+                                                    type="number"
+                                                    className="glass-input text-xl font-black text-success border-2-success pl-40"
+                                                    value={editForm.price}
+                                                    onChange={e => setEditForm(p => ({ ...p, price: parseInt(e.target.value) || 0 }))}
+                                                />
+                                            </div>
+                                            <button
+                                                className="filter-btn self-end text-xs"
+                                                onClick={() => {
+                                                    const base = editingOrder.price;
+                                                    const v = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle);
+                                                    const waitExtra = Math.round((editForm.waitingMinutes / 60) * (v?.priceWaitHour || 0));
+                                                    setEditForm(p => ({ ...p, price: base + waitExtra }));
+                                                }}
+                                            >
+                                                ↩️ Restablecer al Base + Demora
+                                            </button>
+                                        </div>
+
+                                        <div className="mt-20 p-15 bg-success-10 border-success-20 rounded-12 text-center text-sm font-bold">
                                             PRECIO FINAL: $ {Math.round(editForm.price || 0).toLocaleString('es-AR')}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
 
-                        {/* Modal Footer */}
-                        <div className="mt-20 p-20" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                            <div className="flex gap-10">
-                                <button className="glass-button flex-1" style={{ background: 'rgba(255,255,255,0.05)' }} onClick={() => setEditingOrder(null)}>Cancelar</button>
-                                <button className="glass-button flex-2" style={{ fontWeight: 'bold' }} onClick={handleSaveEdit} disabled={saving}>
-                                    {saving ? 'Guardando...' : '💾 GUARDAR CAMBIOS'}
-                                </button>
-                            </div>
+                        <div className="admin-modal-footer">
+                            <button className="glass-button flex-1 bg-white-05" onClick={() => setEditingOrder(null)}>Cancelar</button>
+                            <button className="glass-button flex-2 font-bold" onClick={handleSaveEdit} disabled={saving}>
+                                {saving ? 'Guardando...' : '💾 GUARDAR CAMBIOS'}
+                            </button>
                         </div>
                     </div>
                 </div>

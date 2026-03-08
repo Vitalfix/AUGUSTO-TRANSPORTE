@@ -317,12 +317,14 @@ export async function POST(request: Request) {
             .eq('id', 'notification_emails')
             .maybeSingle();
         const bccEmails = dbSetting?.value ? dbSetting.value.split(',').map((e: string) => e.trim()).filter(Boolean) : [];
+        const mainAdminEmail = bccEmails.length > 0 ? bccEmails[0] : 'vitalfix@gmail.com';
+        const otherAdminEmails = bccEmails.length > 1 ? bccEmails.slice(1) : undefined;
 
         // Admin Notification
         await resend.emails.send({
             from: 'EL CASAL <onboarding@resend.dev>',
-            to: 'vitalfix@gmail.com',
-            bcc: bccEmails.length > 0 ? bccEmails : undefined,
+            to: mainAdminEmail,
+            bcc: otherAdminEmails,
             subject: `Nueva Solicitud: ${id}`,
             html: `
         <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
