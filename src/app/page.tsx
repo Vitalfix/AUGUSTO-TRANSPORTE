@@ -181,24 +181,6 @@ export default function Home() {
       </footer>
 
       <InstallPrompt />
-
-      <style jsx>{`
-        @media (max-width: 600px) {
-           .main-logo-img {
-             max-width: 220px !important;
-           }
-           .glass-panel {
-             padding: 10px 15px !important;
-           }
-           h2 {
-             font-size: 1.1rem !important;
-             margin-bottom: 2px !important;
-           }
-           p {
-             margin-bottom: 5px !important;
-           }
-        }
-      `}</style>
     </div>
   );
 }

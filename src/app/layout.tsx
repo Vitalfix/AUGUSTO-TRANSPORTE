@@ -54,7 +54,6 @@ export default function RootLayout({
             target="_blank"
             rel="noopener noreferrer"
             className="whatsapp-top-bar"
-            style={{ margin: '0 10px' }}
           >
             <div className="whatsapp-top-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
