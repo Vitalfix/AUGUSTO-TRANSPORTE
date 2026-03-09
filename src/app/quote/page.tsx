@@ -498,7 +498,7 @@ export default function QuotePageV2() {
                 <div className="glass-panel" style={{ padding: '50px', maxWidth: '600px', textAlign: 'center' }}>
                     <div style={{ fontSize: '4rem' }}>✉️ ✅</div>
                     <h2 className="text-gradient mt-20 mb-20">Reserva a confirmar</h2>
-                    <p className="mb-20">Nos comunicaremos en breve. Recibirá un email en ({customerEmail}) con el presupuesto formal de EL CASAL.</p>
+                    <p className="mb-20">Nos comunicaremos en breve. Recibirá un email en ({customerEmail}) con el presupuesto formal de EL CASAL. <strong>(Por favor, revise también su carpeta de correo no deseado o SPAM)</strong>.</p>
                     <div className="glass-panel mb-20" style={{ padding: '20px', background: 'rgba(0,0,0,0.3)' }}>
                         <div className="glass-label">Pedido ID</div>
                         <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{orderSuccess}</div>

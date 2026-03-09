@@ -162,6 +162,7 @@ export default function Home() {
             { tag: '🏗️', text: 'Camiones Plancha' },
             { tag: '❄️', text: 'Camiones Refrigerados' },
             { tag: '🚢', text: 'Camiones Portacontenedores' },
+            { tag: '🛵', text: 'Mensajería' },
             { tag: '⚠️', text: 'Cargas Peligrosas' },
           ].map((srv, idx) => (
             <div key={idx} className="service-item">
