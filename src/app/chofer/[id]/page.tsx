@@ -301,7 +301,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
     };
 
     const handleAddComment = async () => {
-        if (!commentInput.trim()) return;
+        if (!commentInput.trim() || !order) return;
         setSendingComment(true);
         try {
             const newEntry = {
