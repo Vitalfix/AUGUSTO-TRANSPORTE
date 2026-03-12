@@ -513,7 +513,6 @@ export default function QuotePageV2() {
         <div className="page-container" style={{ maxWidth: '800px' }}>
             <div className="flex justify-between items-start mb-20">
                 <div>
-                    <Link href="/" style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>← Cancelar</Link>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
                         <h1 className="text-gradient">
                             {corporateClient ? `Panel Corporativo ${corporateClient.name}` : 'Presupuesto Estimativo y Reserva'}
@@ -730,9 +729,14 @@ export default function QuotePageV2() {
                             </div>
                         </div>
 
-                        <button className="glass-button w-full mt-10" onClick={handleNext} disabled={calculatingRoute}>
-                            {calculatingRoute ? 'Calculando...' : 'Siguiente Paso →'}
-                        </button>
+                        <div className="flex gap-20 mt-10">
+                            <Link href="/" style={{ flex: 1, textDecoration: 'none' }}>
+                                <button type="button" className="filter-btn" style={{ width: '100%', background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>✖ Volver</button>
+                            </Link>
+                            <button className="glass-button" style={{ flex: 2 }} onClick={handleNext} disabled={calculatingRoute}>
+                                {calculatingRoute ? 'Calculando...' : 'Siguiente Paso →'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -770,7 +774,7 @@ export default function QuotePageV2() {
                         </div>
 
                         <div className="flex gap-20 mt-10">
-                            <button className="filter-btn" style={{ flex: 1 }} onClick={handlePrev}>← Volver</button>
+                            <button className="filter-btn" style={{ flex: 1, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handlePrev}>← Volver</button>
                             <button className="glass-button" style={{ flex: 2 }} onClick={handleNext} disabled={selectedVehicles.length === 0}>Siguiente Paso →</button>
                         </div>
                     </div>
@@ -871,7 +875,7 @@ export default function QuotePageV2() {
                         </div>
 
                         <div className="flex gap-20 mt-10">
-                            <button type="button" className="filter-btn" style={{ flex: 1 }} onClick={handlePrev}>← Volver</button>
+                            <button type="button" className="filter-btn" style={{ flex: 1, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }} onClick={handlePrev}>← Volver</button>
                             <button type="submit" className="glass-button" style={{ flex: 2, background: 'var(--accent-gradient)', fontSize: '1.2rem', padding: '15px' }} disabled={loading}>
                                 {loading ? 'Enviando...' : '📝 CONFIRMAR Y PEDIR'}
                             </button>
