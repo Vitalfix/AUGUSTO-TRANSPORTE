@@ -65,7 +65,9 @@ export async function POST(request: Request) {
                 tax_status: taxStatus,
                 is_corporate: isCorporate || false,
                 client_slug: clientSlug || null,
-                logo_url: logoUrl || null
+                logo_url: logoUrl || null,
+                has_special_pricing: hasSpecialPricing || false,
+                special_prices: specialPrices || {}
             })
             .select()
             .maybeSingle();
@@ -97,7 +99,9 @@ export async function PATCH(request: Request) {
                 tax_status: taxStatus,
                 is_corporate: isCorporate,
                 client_slug: clientSlug,
-                logo_url: logoUrl
+                logo_url: logoUrl,
+                has_special_pricing: hasSpecialPricing,
+                special_prices: specialPrices
             })
             .eq('id', id)
             .select()
