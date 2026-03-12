@@ -479,7 +479,10 @@ export async function PATCH(request: Request) {
         waitingMinutes, driverId, origin, destination, vehicle, travelDate,
         travelTime, customerName, customerEmail, customerPhone, observations,
         distanceKm, travelHours, cuit, taxStatus, purchaseOrder,
-        estadiaAmount, esperaAmount, ayudantesAmount, adjustComments
+        estadiaAmount, estadiaQty, estadiaPrice, 
+        esperaAmount, esperaQty, esperaPrice, 
+        ayudantesAmount, ayudantesQty, ayudantesPrice, 
+        adjustComments
     } = body;
 
     const updateData: Record<string, unknown> = {};
@@ -507,8 +510,14 @@ export async function PATCH(request: Request) {
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;
     if (purchaseOrder !== undefined) updateData.purchase_order = purchaseOrder;
     if (estadiaAmount !== undefined) updateData.estadia_amount = estadiaAmount;
+    if (estadiaQty !== undefined) updateData.estadia_qty = estadiaQty;
+    if (estadiaPrice !== undefined) updateData.estadia_price = estadiaPrice;
     if (esperaAmount !== undefined) updateData.espera_amount = esperaAmount;
+    if (esperaQty !== undefined) updateData.espera_qty = esperaQty;
+    if (esperaPrice !== undefined) updateData.espera_price = esperaPrice;
     if (ayudantesAmount !== undefined) updateData.ayudantes_amount = ayudantesAmount;
+    if (ayudantesQty !== undefined) updateData.ayudantes_qty = ayudantesQty;
+    if (ayudantesPrice !== undefined) updateData.ayudantes_price = ayudantesPrice;
     if (adjustComments !== undefined) updateData.adjust_comments = adjustComments;
 
     if (body.pricingBreakdown !== undefined) {
