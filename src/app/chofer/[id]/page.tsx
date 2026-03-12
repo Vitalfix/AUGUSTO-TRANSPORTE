@@ -11,6 +11,7 @@ interface Order {
     status: string;
     waitingMinutes: number;
     vehicle: string;
+    activityLog?: any[];
 }
 
 const renderInLines = (text: string | undefined, separator: string | RegExp = /[|,]/) => {
@@ -37,6 +38,9 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
 
     const [extraWaitInput, setExtraWaitInput] = useState('');
     const [observationsInput, setObservationsInput] = useState('');
+
+    const [sendingComment, setSendingComment] = useState(false);
+    const [commentInput, setCommentInput] = useState('');
 
     const addLog = (msg: string) => {
         setGpsLogs(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
@@ -123,7 +127,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                 if ('wakeLock' in navigator) {
                     wakeLock = await (navigator as any).wakeLock.request('screen');
                 }
-            } catch (err) {
+            } catch (err: unknown) {
                 console.warn("Wake Lock failed:", err);
             }
         };
@@ -294,6 +298,45 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                 body: JSON.stringify({ id, status: 'ARRIVED_DESTINATION' }),
             });
         } catch (e) { console.error(e); }
+    };
+
+    const handleAddComment = async () => {
+        if (!commentInput.trim()) return;
+        setSendingComment(true);
+        try {
+            const newEntry = {
+                type: 'CHOFER_COMMENT',
+                label: 'Comentario del Chofer',
+                time: new Date().toISOString(),
+                user: 'Chofer',
+                observations_fallback: commentInput
+            };
+
+            const currentLog = order.activityLog || [];
+            const newLog = [...currentLog, newEntry];
+
+            const res = await fetch('/api/orders', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id,
+                    activity_log: newLog
+                }),
+            });
+
+            if (res.ok) {
+                setCommentInput('');
+                setOrder({ ...order, activityLog: newLog } as any);
+                addLog("✓ Comentario enviado");
+            } else {
+                alert("Error al enviar comentario");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de red");
+        } finally {
+            setSendingComment(false);
+        }
     };
 
     const handleFinishTrip = async () => {
@@ -496,6 +539,31 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                         >
                             📍 FORZAR ACTUALIZACIÓN GPS
                         </button>
+                    </div>
+                )}
+
+                {/* Sección de Comentarios */}
+                {(tripStage !== 'START' && tripStage !== 'FINISHED') && (
+                    <div style={{ marginTop: '30px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px', width: '100%' }}>
+                        <div className="glass-label" style={{ textAlign: 'left', marginBottom: '10px' }}>💬 AGREGAR COMENTARIO / NOTA</div>
+                        <div className="flex gap-10">
+                            <input
+                                className="glass-input"
+                                style={{ flex: 1, fontSize: '0.9rem' }}
+                                placeholder="Escribe algo..."
+                                value={commentInput}
+                                onChange={(e) => setCommentInput(e.target.value)}
+                                disabled={sendingComment}
+                            />
+                            <button
+                                className="glass-button"
+                                style={{ padding: '10px 20px', background: 'var(--accent-gradient)', fontSize: '0.8rem' }}
+                                onClick={handleAddComment}
+                                disabled={sendingComment || !commentInput.trim()}
+                            >
+                                {sendingComment ? '...' : 'Enviar'}
+                            </button>
+                        </div>
                     </div>
                 )}
 

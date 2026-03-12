@@ -380,7 +380,7 @@ export default function AdminPage() {
 
     return (
         <div className="page-container p-10">
-            <AdminHeader title="Control de Viajes" />
+            <AdminHeader title="Control de Viajes" showBack backHref="/" />
 
             {/* Search and Filters Elite */}
             <div className="glass-panel p-15 mb-20">
@@ -649,6 +649,8 @@ export default function AdminPage() {
                                                                     <div className="glass-label text-xs">👤 CONTACTO</div>
                                                                     <div className="text-sm">{order.customer_email || order.customerEmail}</div>
                                                                     <div className="text-sm">{order.customer_phone || order.customerPhone}</div>
+                                                                    {order.cuit && <div className="text-sm mt-5"><strong>CUIT:</strong> {order.cuit}</div>}
+                                                                    {order.tax_status && <div className="text-sm"><strong>Condición:</strong> {order.tax_status}</div>}
                                                                 </div>
                                                             </div>
 

@@ -698,7 +698,23 @@ export default function QuotePageV2() {
                         <div className="flex gap-20 items-start">
                             <div style={{ flex: 1.2 }}>
                                 <label className="glass-label">Fecha de Carga</label>
-                                <input type="date" className="glass-input" value={travelDate} onChange={e => setTravelDate(e.target.value)} min={minDateString} style={{ colorScheme: 'dark' }} />
+                                <input 
+                                    type="date" 
+                                    className="glass-input" 
+                                    value={travelDate} 
+                                    onChange={e => setTravelDate(e.target.value)} 
+                                    min={minDateString} 
+                                    style={{ 
+                                        colorScheme: 'dark',
+                                        fontSize: '1.2rem',
+                                        padding: '18px',
+                                        textAlign: 'center',
+                                        cursor: 'pointer',
+                                        height: 'auto'
+                                    }} 
+                                    onKeyDown={(e) => e.preventDefault()}
+                                    onClick={(e) => (e.target as any).showPicker?.()}
+                                />
                                 <div style={{ fontSize: '0.65rem', marginTop: '6px', opacity: 0.8, lineHeight: '1.2' }}>
                                     48hs min. anticipación. <br />
                                     Para hoy/mañana: <a href="https://wa.me/5491150443328" style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Contacto urgente ↗</a>

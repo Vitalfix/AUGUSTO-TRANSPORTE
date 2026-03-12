@@ -266,7 +266,7 @@ export default function AdminLocationsPage() {
 
     return (
         <div className="page-container" style={{ maxWidth: '900px' }}>
-            <AdminHeader title="Gestionar Direcciones Fijas" />
+            <AdminHeader title="Gestionar Direcciones Fijas" showBack backHref="/admin" />
 
             <div className="glass-panel mb-30 animate-fade-in" style={{ padding: '30px' }}>
                 <h3 className="mb-25 flex items-center gap-10">

@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 
 interface AdminHeaderProps {
     title: string;
+    showBack?: boolean;
+    backHref?: string;
 }
 
-export default function AdminHeader({ title }: AdminHeaderProps) {
+export default function AdminHeader({ title, showBack, backHref }: AdminHeaderProps) {
     const [menuOpen, setMenuOpen] = useState(false);
     const router = useRouter();
 
@@ -67,7 +69,24 @@ export default function AdminHeader({ title }: AdminHeaderProps) {
 
     return (
         <div className="flex justify-between items-center mb-20">
-            <h1 className="text-gradient" style={{ fontSize: '1.4rem', margin: 0 }}>{title}</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                {(showBack || backHref) && (
+                    <button 
+                        onClick={() => backHref ? router.push(backHref) : router.back()}
+                        className="glass-button"
+                        style={{ 
+                            padding: '8px 12px', 
+                            fontSize: '0.8rem', 
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid var(--glass-border)',
+                            minWidth: 'auto'
+                        }}
+                    >
+                        ⬅️ Volver
+                    </button>
+                )}
+                <h1 className="text-gradient" style={{ fontSize: '1.4rem', margin: 0 }}>{title}</h1>
+            </div>
 
             <div style={{ position: 'relative' }}>
                 <button

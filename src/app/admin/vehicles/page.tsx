@@ -179,7 +179,7 @@ export default function VehiclesPage() {
 
     return (
         <div className="page-container" style={{ padding: '15px' }}>
-            <AdminHeader title="Gestión de Flota" />
+            <AdminHeader title="Gestión de Flota" showBack backHref="/admin" />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 

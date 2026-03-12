@@ -145,7 +145,7 @@ export default function GeneralSettingsPage() {
 
     return (
         <div className="page-container" style={{ padding: '15px' }}>
-            <AdminHeader title="Configuración del Sistema" />
+            <AdminHeader title="Configuración del Sistema" showBack backHref="/admin" />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 

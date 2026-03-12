@@ -207,7 +207,7 @@ export default function DriverManagementPage() {
 
     return (
         <div className="page-container">
-            <AdminHeader title="Gestión de Choferes" />
+            <AdminHeader title="Gestión de Choferes" showBack backHref="/admin" />
 
             <div className="flex-col gap-30" style={{ width: '100%' }}>
                 {/* Form to New Driver */}

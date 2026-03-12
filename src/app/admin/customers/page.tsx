@@ -288,7 +288,7 @@ export default function CustomerManagementPage() {
 
     return (
         <div className="page-container">
-            <AdminHeader title="Clientes" />
+            <AdminHeader title="Clientes" showBack backHref="/admin" />
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
                 <button
                     className="glass-button"

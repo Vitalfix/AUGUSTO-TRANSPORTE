@@ -139,7 +139,7 @@ export default function RecycleBinPage() {
 
     return (
         <div className="page-container">
-            <AdminHeader title="Papelera de Reciclaje" />
+            <AdminHeader title="Papelera de Reciclaje" showBack backHref="/admin" />
 
             <div className="glass-panel" style={{ padding: '20px', marginBottom: '20px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
                 <p style={{ fontSize: '0.85rem', color: '#ef4444', textAlign: 'center' }}>
