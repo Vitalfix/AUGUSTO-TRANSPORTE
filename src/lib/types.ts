@@ -51,6 +51,10 @@ export interface Order {
   travel_hours?: number;
   observations?: string;
   tax_status?: string;
+  estadia_amount?: number;
+  espera_amount?: number;
+  ayudantes_amount?: number;
+  adjust_comments?: string;
   pricing_breakdown?: {
     name: string;
     qty: number;
@@ -71,6 +75,10 @@ export interface Order {
   distanceKm?: number;
   travelHours?: number;
   waitingMinutes?: number;
+  estadiaAmount?: number;
+  esperaAmount?: number;
+  ayudantesAmount?: number;
+  adjustComments?: string;
   activityLog?: ActivityLog[];
   pricingBreakdown?: PricingBreakdownItem[];
   taxStatus?: string;

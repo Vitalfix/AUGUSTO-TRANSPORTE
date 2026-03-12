@@ -55,7 +55,11 @@ export default function AdminPage() {
         travelTime: '',
         distanceKm: 0,
         travelHours: 0,
-        waitingMinutes: 0
+        waitingMinutes: 0,
+        estadiaAmount: 0,
+        esperaAmount: 0,
+        ayudantesAmount: 0,
+        adjustComments: ''
     });
     const [vehiclesData, setVehiclesData] = useState<VehiclePricing[]>([]);
     const [saving, setSaving] = useState(false);
@@ -315,7 +319,11 @@ export default function AdminPage() {
             travelTime: order.travel_time || order.travelTime || '',
             distanceKm: order.distance_km || order.distanceKm || 0,
             travelHours: order.travel_hours || order.travelHours || 0,
-            waitingMinutes: order.waiting_minutes || order.waitingMinutes || 0
+            waitingMinutes: order.waiting_minutes || order.waitingMinutes || 0,
+            estadiaAmount: order.estadia_amount || order.estadiaAmount || 0,
+            esperaAmount: order.espera_amount || order.esperaAmount || 0,
+            ayudantesAmount: order.ayudantes_amount || order.ayudantesAmount || 0,
+            adjustComments: order.adjust_comments || order.adjustComments || ''
         });
     };
 
@@ -958,6 +966,45 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
 
+                                            <div className="admin-form-grid mb-15">
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Estadía ($)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="glass-input"
+                                                        value={editForm.estadiaAmount}
+                                                        onChange={e => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setEditForm(p => ({ ...p, estadiaAmount: val, price: p.price - p.estadiaAmount + val }));
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Espera ($)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="glass-input"
+                                                        value={editForm.esperaAmount}
+                                                        onChange={e => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setEditForm(p => ({ ...p, esperaAmount: val, price: p.price - p.esperaAmount + val }));
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="admin-form-group">
+                                                    <label className="glass-label">Ayudantes ($)</label>
+                                                    <input
+                                                        type="number"
+                                                        className="glass-input"
+                                                        value={editForm.ayudantesAmount}
+                                                        onChange={e => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            setEditForm(p => ({ ...p, ayudantesAmount: val, price: p.price - p.ayudantesAmount + val }));
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+
                                             <div className="admin-form-grid">
                                                 <div className="admin-form-group">
                                                     <label className="glass-label">Otros conceptos (Peajes, Estacionamiento, etc)</label>
@@ -988,10 +1035,20 @@ export default function AdminPage() {
                                         </div>
 
                                         <div className="admin-form-group mt-15">
-                                            <label className="glass-label">Resumen de extras / Observaciones</label>
+                                            <label className="glass-label">Comentarios para el Cliente (llegará por Email)</label>
                                             <textarea
                                                 className="glass-input h-100"
-                                                placeholder="Ej: Peajes, carga extra, etc."
+                                                placeholder="Ej: Se agregó estadía por lluvia, etc."
+                                                value={editForm.adjustComments}
+                                                onChange={e => setEditForm(p => ({ ...p, adjustComments: e.target.value }))}
+                                            />
+                                        </div>
+
+                                        <div className="admin-form-group mt-15">
+                                            <label className="glass-label">Notas Internas / Historial Extras</label>
+                                            <textarea
+                                                className="glass-input h-80"
+                                                placeholder="Notas solo para administración..."
                                                 value={editForm.observations}
                                                 onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))}
                                             />
@@ -1013,11 +1070,15 @@ export default function AdminPage() {
                                                 onClick={() => {
                                                     const base = editingOrder.price;
                                                     const v = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle);
-                                                    const waitExtra = Math.round((editForm.waitingMinutes / 60) * (v?.priceWaitHour || 0));
-                                                    setEditForm(p => ({ ...p, price: base + waitExtra }));
+                                                    const waitExtraFromMinutes = Math.round((editForm.waitingMinutes / 60) * (v?.priceWaitHour || 0));
+                                                    setEditForm(p => ({ 
+                                                        ...p, 
+                                                        price: base + waitExtraFromMinutes + p.estadiaAmount + p.esperaAmount + p.ayudantesAmount,
+                                                        // Note: We don't reset the amounts themselves here, just recalculate the total based on current amounts + base
+                                                    }));
                                                 }}
                                             >
-                                                ↩️ Restablecer al Base + Demora
+                                                ↩️ Recalcular Total (Base + Extras)
                                             </button>
                                         </div>
 

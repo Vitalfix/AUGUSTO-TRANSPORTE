@@ -88,6 +88,10 @@ export async function GET(request: Request) {
         distanceKm: o.distance_km ? Math.round(o.distance_km) : 0,
         travelHours: o.travel_hours,
         purchaseOrder: o.purchase_order,
+        estadiaAmount: o.estadia_amount || 0,
+        esperaAmount: o.espera_amount || 0,
+        ayudantesAmount: o.ayudantes_amount || 0,
+        adjustComments: o.adjust_comments || '',
         pricingBreakdown: (o.pricing_breakdown || []).map((item: PricingBreakdownItem) => ({
             ...item,
             unitPrice: Math.round(item.unitPrice || 0),
@@ -474,7 +478,8 @@ export async function PATCH(request: Request) {
         id, status, lat, lng, price, driverName, driverPhone, licensePlate,
         waitingMinutes, driverId, origin, destination, vehicle, travelDate,
         travelTime, customerName, customerEmail, customerPhone, observations,
-        distanceKm, travelHours, cuit, taxStatus, purchaseOrder
+        distanceKm, travelHours, cuit, taxStatus, purchaseOrder,
+        estadiaAmount, esperaAmount, ayudantesAmount, adjustComments
     } = body;
 
     const updateData: Record<string, unknown> = {};
@@ -501,6 +506,11 @@ export async function PATCH(request: Request) {
     if (cuit !== undefined) updateData.cuit = cuit;
     if (taxStatus !== undefined) updateData.tax_status = taxStatus;
     if (purchaseOrder !== undefined) updateData.purchase_order = purchaseOrder;
+    if (estadiaAmount !== undefined) updateData.estadia_amount = estadiaAmount;
+    if (esperaAmount !== undefined) updateData.espera_amount = esperaAmount;
+    if (ayudantesAmount !== undefined) updateData.ayudantes_amount = ayudantesAmount;
+    if (adjustComments !== undefined) updateData.adjust_comments = adjustComments;
+
     if (body.pricingBreakdown !== undefined) {
         updateData.pricing_breakdown = body.pricingBreakdown.map((item: PricingBreakdownItem) => ({
             ...item,
@@ -552,8 +562,8 @@ export async function PATCH(request: Request) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-    // Notificaciones
-    if (status === 'CONFIRMED' && data.customer_email) {
+    // EMAIL 2: Pedido Aprobado o Confirmado (Programado)
+    if ((status === 'CONFIRMED' || status === 'APPROVED') && data.customer_email) {
         try {
             await transporter.sendMail({
                 from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
@@ -562,30 +572,43 @@ export async function PATCH(request: Request) {
                 html: `
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                         <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; color: white;">
+                            <img src="https://transport-app-lilac-beta.vercel.app/logo.jpg" alt="EL CASAL" style="max-width: 150px; border-radius: 8px; margin-bottom: 10px; background: white; padding: 5px;">
                             <h1 style="margin: 0; font-size: 24px;">EL CASAL</h1>
-                            <p style="margin: 10px 0 0; opacity: 0.9;">¡Tu viaje ha sido programado!</p>
+                            <p style="margin: 10px 0 0; opacity: 0.9;">¡Tu presupuesto ha sido aprobado!</p>
                         </div>
                         <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
-                            <h2 style="color: #10b981; margin-top: 0;">Reserva Confirmada ✅</h2>
+                            <h2 style="color: #10b981; margin-top: 0;">Presupuesto Final Confirmado ✅</h2>
                             <p>Hola <strong>${data.customer_name}</strong>,</p>
-                            <p>Tu servicio para el día <strong>${data.travel_date}</strong> a las <strong>${data.travel_time}</strong> ha sido confirmado exitosamente.</p>
+                            <p>Tu servicio ha sido revisado y confirmado exitosamente para el día <strong>${data.travel_date}</strong> (${data.travel_time}).</p>
                             
                             <div style="padding: 20px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin: 25px 0;">
-                                <h3 style="margin-top: 0; font-size: 16px; color: #64748b;">DETALLES DEL TRASLADO:</h3>
-                                <p style="margin: 5px 0;"><strong>👤 Chofer:</strong> ${data.driver_name || 'Asignado'}</p>
-                                <p style="margin: 5px 0;"><strong>🚛 Vehículo:</strong> ${data.license_plate ? 'Patente ' + data.license_plate : 'En camino'}</p>
-                                <p style="margin: 5px 0;"><strong>💰 Costo final:</strong> $${data.price.toLocaleString('es-AR')}</p>
+                                <h3 style="margin-top: 0; font-size: 16px; color: #64748b;">DETALLE DEL SERVICIO:</h3>
+                                <p style="margin: 5px 0;"><strong>🚛 Vehículo:</strong> ${data.vehicle}</p>
+                                <p style="margin: 5px 0;"><strong>📍 Oirgen:</strong> ${data.origin}</p>
+                                <p style="margin: 5px 0;"><strong>🏁 Destino:</strong> ${data.destination}</p>
+                                ${data.estadia_amount > 0 ? `<p style="margin: 5px 0;"><strong>➕ Estadía:</strong> $${data.estadia_amount.toLocaleString('es-AR')}</p>` : ''}
+                                ${data.espera_amount > 0 ? `<p style="margin: 5px 0;"><strong>➕ Espera:</strong> $${data.espera_amount.toLocaleString('es-AR')}</p>` : ''}
+                                ${data.ayudantes_amount > 0 ? `<p style="margin: 5px 0;"><strong>➕ Ayudantes:</strong> $${data.ayudantes_amount.toLocaleString('es-AR')}</p>` : ''}
+                                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;" />
+                                <p style="margin: 5px 0; font-size: 1.2rem; color: #059669;"><strong>💰 TOTAL FINAL: $${data.price.toLocaleString('es-AR')}</strong></p>
                             </div>
+
+                            ${data.adjust_comments ? `
+                            <div style="margin: 20px 0; padding: 15px; background: #fefce8; border-radius: 10px; border-left: 4px solid #facc15;">
+                                <p style="margin: 0;"><strong>💬 Comentarios:</strong><br/>
+                                    <span style="color: #854d0e;">${data.adjust_comments.replace(/\n/g, '<br/>')}</span>
+                                </p>
+                            </div>` : ''}
 
                             <div style="margin: 30px 0; text-align: center;">
                                 <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Accedé al seguimiento satelital y detalles aquí:</p>
-                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">SEGUIMIENTO EN VIVO</a>
+                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">VER MI PEDIDO</a>
                             </div>
 
                             <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
                             
                             <div style="font-size: 0.75rem; color: #94a3b8; text-align: center; line-height: 1.4; margin-bottom: 20px;">
-                                                <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados en este sitio son de carácter estimativo e informativo. No constituyen una oferta contractual vinculante y están sujetos a revisión y confirmación manual por parte de EL CASAL. Ni los propietarios del servicio ni los desarrolladores de la plataforma se responsabilizan por errores, variaciones de tarifas, fallos técnicos o el uso de la información aquí proporcionada. El uso de esta web implica la aceptación de estos términos.
+                                <strong>Aviso Legal:</strong> Todos los presupuestos no incluyen seguro. Los presupuestos generados aquí son revisados manualmente y confirmados según disponibilidad. 
                             </div>
 
                             <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
@@ -593,22 +616,48 @@ export async function PATCH(request: Request) {
                     </div>
                 `
             });
-        } catch (e) { console.error("Error email confirmado", e); }
+        } catch (e) { console.error("Error Email 2 (Confirmado/Aprobado)", e); }
     }
 
-    // Notificaciones de llegada (DESACTIVADAS PARA AHORRAR CUOTA DE EMAILS)
-    /* 
-    if ((status === 'ARRIVED_ORIGIN' || status === 'ARRIVED_DESTINATION') && data.customer_email) {
-       ...
-    } 
-    */
-
-    // Notificación de Inicio (DESACTIVADA PARA AHORRAR CUOTA DE EMAILS)
-    /*
+    // EMAIL 3: Viaje Iniciado
     if (status === 'STARTED' && data.customer_email) {
-       ...
+        try {
+            await transporter.sendMail({
+                from: `"EL CASAL" <${process.env.EMAIL_USER}>`,
+                to: data.customer_email,
+                subject: `¡Tu pedido está en camino! - ID ${id}`,
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 30px; text-align: center; color: white;">
+                             <img src="https://transport-app-lilac-beta.vercel.app/logo.jpg" alt="EL CASAL" style="max-width: 150px; border-radius: 8px; margin-bottom: 10px; background: white; padding: 5px;">
+                            <h1 style="margin: 0; font-size: 24px;">EL CASAL</h1>
+                            <p style="margin: 10px 0 0; opacity: 0.9;">Viaje iniciado en tiempo real</p>
+                        </div>
+                        <div style="padding: 30px; color: #1e293b; line-height: 1.6;">
+                            <h2 style="color: #3b82f6; margin-top: 0;">🚀 Cargamento en Camino</h2>
+                            <p>Hola <strong>${data.customer_name}</strong>,</p>
+                            <p>Te informamos que tu pedido con ID <strong>${id}</strong> ha iniciado su recorrido hacia el destino.</p>
+                            
+                            <div style="padding: 20px; background: #eff6ff; border-radius: 10px; border: 1px solid #bfdbfe; margin: 25px 0;">
+                                <h3 style="margin-top: 0; font-size: 16px; color: #1e40af;">INFORMACIÓN DEL VIAJE:</h3>
+                                <p style="margin: 5px 0;"><strong>👤 Chofer a cargo:</strong> ${data.driver_name || 'Personal asignado'}</p>
+                                <p style="margin: 5px 0;"><strong>🚛 Patente Vehículo:</strong> ${data.license_plate || 'Sin especificar'}</p>
+                                <p style="margin: 5px 0;"><strong>📍 Desde:</strong> ${data.origin.split('|')[0]}</p>
+                                <p style="margin: 5px 0;"><strong>🏁 Hacia:</strong> ${data.destination.split('|')[0]}</p>
+                            </div>
+
+                            <div style="margin: 30px 0; text-align: center;">
+                                <p style="font-size: 14px; color: #64748b; margin-bottom: 15px;">Seguí la ubicación satelital del camión aquí:</p>
+                                <a href="https://transport-app-lilac-beta.vercel.app/tracking/${id}" style="display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);">MAPA EN VIVO</a>
+                            </div>
+
+                            <p style="text-align: center;">Atentamente,<br/><strong>El equipo de EL CASAL</strong></p>
+                        </div>
+                    </div>
+                `
+            });
+        } catch (e) { console.error("Error Email 3 (Iniciado)", e); }
     }
-    */
 
     // Notificación de Fin de Viaje (DESACTIVADA PARA AHORRAR CUOTA DE EMAILS)
     /*

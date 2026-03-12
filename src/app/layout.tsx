@@ -67,7 +67,7 @@ export default function RootLayout({
                 <span className="whatsapp-top-text" style={{ fontSize: '1rem' }}>URGENTE 1150443328 (0-24HS)</span>
               </div>
               <span style={{ fontSize: '0.8rem', color: 'white', fontWeight: 'bold', opacity: 0.9, letterSpacing: '0.5px' }}>
-                (Toca aquí para enviar un mensaje)
+                (Toca aquí para chatear con nosotros)
               </span>
             </div>
           </a>
