@@ -52,8 +52,14 @@ export interface Order {
   observations?: string;
   tax_status?: string;
   estadia_amount?: number;
+  estadia_qty?: number;
+  estadia_price?: number;
   espera_amount?: number;
+  espera_qty?: number;
+  espera_price?: number;
   ayudantes_amount?: number;
+  ayudantes_qty?: number;
+  ayudantes_price?: number;
   adjust_comments?: string;
   pricing_breakdown?: {
     name: string;
@@ -76,8 +82,14 @@ export interface Order {
   travelHours?: number;
   waitingMinutes?: number;
   estadiaAmount?: number;
+  estadiaQty?: number;
+  estadiaPrice?: number;
   esperaAmount?: number;
+  esperaQty?: number;
+  esperaPrice?: number;
   ayudantesAmount?: number;
+  ayudantesQty?: number;
+  ayudantesPrice?: number;
   adjustComments?: string;
   activityLog?: ActivityLog[];
   pricingBreakdown?: PricingBreakdownItem[];
