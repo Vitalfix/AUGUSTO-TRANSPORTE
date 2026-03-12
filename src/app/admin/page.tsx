@@ -34,7 +34,7 @@ export default function AdminPage() {
     const [password, setPassword] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-    const [activeTab, setActiveTab] = useState<'CLIENT' | 'ROUTE' | 'LOGISTICS' | 'ADJUST'>('CLIENT');
+    const [activeTab, setActiveTab] = useState<'ROUTE' | 'LOGISTICS' | 'ADJUST'>('ROUTE');
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<Order['status'] | 'ALL'>('ALL');
     const [editForm, setEditForm] = useState({
@@ -752,7 +752,6 @@ export default function AdminPage() {
                         <div className="admin-modal-body">
                             {/* Tab Navigation Elite */}
                             <div className="admin-tabs-container">
-                                <button className={`filter-btn ${activeTab === 'CLIENT' ? 'active' : ''}`} onClick={() => setActiveTab('CLIENT')}>👤 Cliente e IVA</button>
                                 <button className={`filter-btn ${activeTab === 'ROUTE' ? 'active' : ''}`} onClick={() => setActiveTab('ROUTE')}>📍 Ruta y Precio</button>
                                 <button className={`filter-btn ${activeTab === 'LOGISTICS' ? 'active' : ''}`} onClick={() => setActiveTab('LOGISTICS')}>🚚 Chofer y Logística</button>
                                 {(editingOrder.status === 'FINISHED' || editingOrder.status === 'INVOICED' || editingOrder.status === 'PAID') && (
@@ -760,51 +759,6 @@ export default function AdminPage() {
                                 )}
                             </div>
 
-                            {/* TAB: CLIENT */}
-                            {activeTab === 'CLIENT' && (
-                                <div className="flex-col gap-20 animate-fade-in">
-                                    <div className="admin-form-grid">
-                                        <div className="admin-form-group">
-                                            <label className="glass-label">Nombre Cliente</label>
-                                            <input type="text" className="glass-input" value={editForm.customerName} onChange={e => setEditForm(p => ({ ...p, customerName: e.target.value }))} />
-                                        </div>
-                                        <div className="admin-form-group">
-                                            <label className="glass-label">Email</label>
-                                            <input type="email" className="glass-input" value={editForm.customerEmail} onChange={e => setEditForm(p => ({ ...p, customerEmail: e.target.value }))} />
-                                        </div>
-                                        <div className="admin-form-group">
-                                            <label className="glass-label">Teléfono</label>
-                                            <input type="tel" className="glass-input" value={editForm.customerPhone} onChange={e => setEditForm(p => ({ ...p, customerPhone: e.target.value }))} />
-                                        </div>
-                                    </div>
-
-                                    <div className="admin-form-grid">
-                                        <div className="admin-form-group">
-                                            <label className="glass-label">CUIT</label>
-                                            <input type="text" className="glass-input" value={editForm.cuit} onChange={e => setEditForm(p => ({ ...p, cuit: e.target.value }))} />
-                                        </div>
-                                        <div className="admin-form-group">
-                                            <label className="glass-label">Condición IVA</label>
-                                            <select
-                                                className="glass-select"
-                                                value={editForm.taxStatus}
-                                                onChange={e => setEditForm(p => ({ ...p, taxStatus: e.target.value }))}
-                                            >
-                                                <option value="">Seleccionar...</option>
-                                                <option value="responsable_inscripto">Responsable Inscripto</option>
-                                                <option value="monotributo">Monotributo</option>
-                                                <option value="exento">Exento</option>
-                                                <option value="consumidor_final">Consumidor Final</option>
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <div className="admin-form-group">
-                                        <label className="glass-label">Observaciones Internas</label>
-                                        <textarea className="glass-input h-80 pt-10" value={editForm.observations} onChange={e => setEditForm(p => ({ ...p, observations: e.target.value }))} />
-                                    </div>
-                                </div>
-                            )}
 
                             {/* TAB: ROUTE */}
                             {activeTab === 'ROUTE' && (
@@ -833,7 +787,38 @@ export default function AdminPage() {
                                         </div>
                                         <div className="admin-form-group">
                                             <label className="glass-label">Vehículo(s)</label>
-                                            <input type="text" className="glass-input" value={editForm.vehicle} onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))} />
+                                            <div className="flex flex-wrap gap-10 mt-5 p-10 bg-black-20 rounded-12 h-100 overflow-y-auto" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                                                {vehiclesData.map(v => {
+                                                    const isSelected = editForm.vehicle.split(',').map(s => s.trim()).includes(v.name);
+                                                    return (
+                                                        <button
+                                                            key={v.id}
+                                                            type="button"
+                                                            className={`filter-btn text-xs ${isSelected ? 'active' : ''}`}
+                                                            style={{ padding: '4px 10px' }}
+                                                            onClick={() => {
+                                                                const selected = editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean);
+                                                                let newList;
+                                                                if (isSelected) {
+                                                                    newList = selected.filter(s => s !== v.name);
+                                                                } else {
+                                                                    newList = [...selected, v.name];
+                                                                }
+                                                                setEditForm(p => ({ ...p, vehicle: newList.join(', ') }));
+                                                            }}
+                                                        >
+                                                            {v.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                            <input
+                                                type="text"
+                                                className="glass-input mt-8 opacity-60 text-xs"
+                                                placeholder="Vehículos seleccionados..."
+                                                value={editForm.vehicle}
+                                                onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))}
+                                            />
                                         </div>
                                     </div>
 
@@ -914,7 +899,23 @@ export default function AdminPage() {
                                     <div className="admin-form-grid">
                                         <div className="admin-form-group">
                                             <label className="glass-label">Chofer</label>
-                                            <input type="text" className="glass-input" value={editForm.driverName} onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))} />
+                                            <input
+                                                type="text"
+                                                className={`glass-input ${editForm.driverName ? 'opacity-70 bg-black-20' : ''}`}
+                                                value={editForm.driverName}
+                                                onChange={e => setEditForm(p => ({ ...p, driverName: e.target.value }))}
+                                                readOnly={!!editForm.driverName}
+                                                style={{ cursor: editForm.driverName ? 'not-allowed' : 'text' }}
+                                            />
+                                            {editForm.driverName && (
+                                                <button
+                                                    type="button"
+                                                    className="text-xs text-secondary mt-5 underline"
+                                                    onClick={() => setEditForm(p => ({ ...p, driverName: '', driverPhone: '', licensePlate: '' }))}
+                                                >
+                                                    ↩️ Cambiar chofer
+                                                </button>
+                                            )}
                                         </div>
                                         <div className="admin-form-group">
                                             <label className="glass-label">Patente</label>

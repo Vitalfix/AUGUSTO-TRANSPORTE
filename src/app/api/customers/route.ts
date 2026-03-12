@@ -109,8 +109,9 @@ export async function PATCH(request: Request) {
 
         if (error) throw error;
         return NextResponse.json(data);
-    } catch (error: unknown) {
-        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
+    } catch (err: any) {
+        console.error("PATCH Customer Error:", err);
+        return NextResponse.json({ error: err.message || String(err) }, { status: 500 });
     }
 }
 
