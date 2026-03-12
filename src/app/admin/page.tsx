@@ -855,42 +855,60 @@ export default function AdminPage() {
                                         <div className="admin-form-grid">
                                             <div className="admin-form-group">
                                                 <label className="glass-label">Distancia (Km)</label>
-                                                <input type="number" className="glass-input" value={editForm.distanceKm} onChange={e => {
-                                                    const km = Number(e.target.value);
-                                                    setEditForm(p => {
-                                                        const newState = { ...p, distanceKm: km };
-                                                        const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                        const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                        if (vData) {
-                                                            const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                            if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
-                                                            else newState.price = vData.priceKm * km * qty;
-                                                        }
-                                                        return newState;
-                                                    });
-                                                }} />
+                                                <input 
+                                                    type="number" 
+                                                    className="glass-input" 
+                                                    value={editForm.distanceKm} 
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => {
+                                                        const km = Number(e.target.value);
+                                                        setEditForm(p => {
+                                                            const newState = { ...p, distanceKm: km };
+                                                            const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
+                                                            const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
+                                                            if (vData) {
+                                                                const qty = parseInt(p.vehicle.split('x')[0]) || 1;
+                                                                if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
+                                                                else newState.price = vData.priceKm * km * qty;
+                                                            }
+                                                            return newState;
+                                                        });
+                                                    }} 
+                                                />
                                             </div>
                                             <div className="admin-form-group">
                                                 <label className="glass-label">Horas Estimadas</label>
-                                                <input type="number" className="glass-input" value={editForm.travelHours} onChange={e => {
-                                                    const h = Number(e.target.value);
-                                                    setEditForm(p => {
-                                                        const newState = { ...p, travelHours: h };
-                                                        const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                        const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                        if (vData && p.distanceKm <= 100) {
-                                                            const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                            newState.price = vData.priceHour * h * qty;
-                                                        }
-                                                        return newState;
-                                                    });
-                                                }} />
+                                                <input 
+                                                    type="number" 
+                                                    className="glass-input" 
+                                                    value={editForm.travelHours} 
+                                                    onFocus={e => e.target.select()}
+                                                    onChange={e => {
+                                                        const h = Number(e.target.value);
+                                                        setEditForm(p => {
+                                                            const newState = { ...p, travelHours: h };
+                                                            const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
+                                                            const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
+                                                            if (vData && p.distanceKm <= 100) {
+                                                                const qty = parseInt(p.vehicle.split('x')[0]) || 1;
+                                                                newState.price = vData.priceHour * h * qty;
+                                                            }
+                                                            return newState;
+                                                        });
+                                                    }} 
+                                                />
                                             </div>
                                         </div>
 
                                         <div className="admin-form-group mt-15">
                                             <label className="glass-label">Precio Final Forzado ($)</label>
-                                            <input type="number" className="glass-input" value={editForm.price} onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} />
+                                            <input 
+                                                type="number" 
+                                                className="glass-input" 
+                                                value={editForm.price} 
+                                                onFocus={e => e.target.select()}
+                                                onChange={e => setEditForm(p => ({ ...p, price: Number(e.target.value) }))} 
+                                            />
                                         </div>
 
                                         <div className="mt-20">
@@ -913,6 +931,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.estadiaQty || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const qty = parseInt(e.target.value) || 0;
                                                                     const price = editForm.estadiaPrice || 0;
@@ -927,6 +946,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.estadiaPrice || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const price = parseInt(e.target.value) || 0;
                                                                     const qty = editForm.estadiaQty || 0;
@@ -944,6 +964,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.esperaQty || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const qty = parseInt(e.target.value) || 0;
                                                                     const price = editForm.esperaPrice || 0;
@@ -958,6 +979,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.esperaPrice || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const price = parseInt(e.target.value) || 0;
                                                                     const qty = editForm.esperaQty || 0;
@@ -975,6 +997,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.ayudantesQty || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const qty = parseInt(e.target.value) || 0;
                                                                     const price = editForm.ayudantesPrice || 0;
@@ -989,6 +1012,7 @@ export default function AdminPage() {
                                                                 type="number"
                                                                 className="glass-input"
                                                                 value={editForm.ayudantesPrice || 0}
+                                                                onFocus={e => e.target.select()}
                                                                 onChange={e => {
                                                                     const price = parseInt(e.target.value) || 0;
                                                                     const qty = editForm.ayudantesQty || 0;
