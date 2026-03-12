@@ -640,42 +640,42 @@ export default function AdminPage() {
                                                                                     </tr>
                                                                                 ))}
 
-                                                                                {(order.estadia_qty > 0 || (order as any).estadiaQty > 0) && (
+                                                                                {(Number(order.estadia_qty || (order as any).estadiaQty || 0) > 0) && (
                                                                                     <tr>
                                                                                         <td className="py-8">
                                                                                             <div className="font-bold">Estadía</div>
                                                                                             <div className="text-xs opacity-60">Cargo por día</div>
                                                                                         </td>
                                                                                         <td className="text-center py-8">{order.estadia_qty || (order as any).estadiaQty}</td>
-                                                                                        <td className="text-right py-8">${Math.round(order.estadia_price || (order as any).estadiaPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">${Math.round(Number(order.estadia_price || (order as any).estadiaPrice || 0)).toLocaleString('es-AR')}</td>
                                                                                         <td className="text-right py-8">-</td>
-                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.estadia_amount || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(Number(order.estadia_amount || (order as any).estadiaAmount || 0)).toLocaleString('es-AR')}</td>
                                                                                     </tr>
                                                                                 )}
 
-                                                                                {(order.espera_qty > 0 || (order as any).esperaQty > 0) && (
+                                                                                {(Number(order.espera_qty || (order as any).esperaQty || 0) > 0) && (
                                                                                     <tr>
                                                                                         <td className="py-8">
                                                                                             <div className="font-bold">Espera</div>
                                                                                             <div className="text-xs opacity-60">Cargo por hora</div>
                                                                                         </td>
                                                                                         <td className="text-center py-8">{order.espera_qty || (order as any).esperaQty}</td>
-                                                                                        <td className="text-right py-8">${Math.round(order.espera_price || (order as any).esperaPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">${Math.round(Number(order.espera_price || (order as any).esperaPrice || 0)).toLocaleString('es-AR')}</td>
                                                                                         <td className="text-right py-8">-</td>
-                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.espera_amount || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(Number(order.espera_amount || (order as any).esperaAmount || 0)).toLocaleString('es-AR')}</td>
                                                                                     </tr>
                                                                                 )}
 
-                                                                                {(order.ayudantes_qty > 0 || (order as any).ayudantesQty > 0) && (
+                                                                                {(Number(order.ayudantes_qty || (order as any).ayudantesQty || 0) > 0) && (
                                                                                     <tr>
                                                                                         <td className="py-8">
                                                                                             <div className="font-bold">Ayudantes</div>
                                                                                             <div className="text-xs opacity-60">Asistencia de carga</div>
                                                                                         </td>
                                                                                         <td className="text-center py-8">{order.ayudantes_qty || (order as any).ayudantesQty}</td>
-                                                                                        <td className="text-right py-8">${Math.round(order.ayudantes_price || (order as any).ayudantesPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">${Math.round(Number(order.ayudantes_price || (order as any).ayudantesPrice || 0)).toLocaleString('es-AR')}</td>
                                                                                         <td className="text-right py-8">-</td>
-                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.ayudantes_amount || (order as any).ayudantesAmount || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(Number(order.ayudantes_amount || (order as any).ayudantesAmount || 0)).toLocaleString('es-AR')}</td>
                                                                                     </tr>
                                                                                 )}
                                                                                 <tr className="bg-white-02">
