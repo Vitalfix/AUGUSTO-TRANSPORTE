@@ -116,7 +116,7 @@ export default function InstallPrompt() {
                                 fontSize: '18px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyCenter: 'center',
+                                justifyContent: 'center',
                                 color: 'inherit'
                             }}
                         >✕</button>

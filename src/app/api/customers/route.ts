@@ -109,8 +109,8 @@ export async function PATCH(request: Request) {
 
         if (error) throw error;
         return NextResponse.json(data);
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
 
@@ -125,7 +125,7 @@ export async function PUT(request: Request) {
         const { data: customers } = await supabase.from('customers').select('*');
         if (!customers) return NextResponse.json({ count: 0 });
 
-        const groups: any = {};
+        const groups: Record<string, any[]> = {};
         customers.forEach(c => {
             const nameKey = c.name.toLowerCase().trim();
             if (!groups[nameKey]) groups[nameKey] = [];
@@ -156,8 +156,8 @@ export async function PUT(request: Request) {
         }
 
         return NextResponse.json({ success: true, mergedCount });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
 
@@ -201,7 +201,7 @@ export async function DELETE(request: Request) {
         }
 
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error: unknown) {
+        return NextResponse.json({ error: error instanceof Error ? error.message : String(error) }, { status: 500 });
     }
 }
