@@ -629,6 +629,45 @@ export default function AdminPage() {
                                                                                         <td className="text-right py-8 font-bold text-white">${Math.round(item.subtotal || 0).toLocaleString('es-AR')}</td>
                                                                                     </tr>
                                                                                 ))}
+
+                                                                                {(order.estadia_qty > 0 || (order as any).estadiaQty > 0) && (
+                                                                                    <tr>
+                                                                                        <td className="py-8">
+                                                                                            <div className="font-bold">Estadía</div>
+                                                                                            <div className="text-xs opacity-60">Cargo por día</div>
+                                                                                        </td>
+                                                                                        <td className="text-center py-8">{order.estadia_qty || (order as any).estadiaQty}</td>
+                                                                                        <td className="text-right py-8">${Math.round(order.estadia_price || (order as any).estadiaPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">-</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.estadia_amount || 0).toLocaleString('es-AR')}</td>
+                                                                                    </tr>
+                                                                                )}
+
+                                                                                {(order.espera_qty > 0 || (order as any).esperaQty > 0) && (
+                                                                                    <tr>
+                                                                                        <td className="py-8">
+                                                                                            <div className="font-bold">Espera</div>
+                                                                                            <div className="text-xs opacity-60">Cargo por hora</div>
+                                                                                        </td>
+                                                                                        <td className="text-center py-8">{order.espera_qty || (order as any).esperaQty}</td>
+                                                                                        <td className="text-right py-8">${Math.round(order.espera_price || (order as any).esperaPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">-</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.espera_amount || 0).toLocaleString('es-AR')}</td>
+                                                                                    </tr>
+                                                                                )}
+
+                                                                                {(order.ayudantes_qty > 0 || (order as any).ayudantesQty > 0) && (
+                                                                                    <tr>
+                                                                                        <td className="py-8">
+                                                                                            <div className="font-bold">Ayudantes</div>
+                                                                                            <div className="text-xs opacity-60">Asistencia de carga</div>
+                                                                                        </td>
+                                                                                        <td className="text-center py-8">{order.ayudantes_qty || (order as any).ayudantesQty}</td>
+                                                                                        <td className="text-right py-8">${Math.round(order.ayudantes_price || (order as any).ayudantesPrice || 0).toLocaleString('es-AR')}</td>
+                                                                                        <td className="text-right py-8">-</td>
+                                                                                        <td className="text-right py-8 font-bold text-success">${Math.round(order.ayudantes_amount || (order as any).ayudantesAmount || 0).toLocaleString('es-AR')}</td>
+                                                                                    </tr>
+                                                                                )}
                                                                                 <tr className="bg-white-02">
                                                                                     <td colSpan={4} className="text-right p-12 text-secondary text-xs font-bold">TOTAL:</td>
                                                                                     <td className="text-right p-12 font-black text-blue-400 text-lg">${Math.round(order.price || 0).toLocaleString('es-AR')}</td>
@@ -663,8 +702,12 @@ export default function AdminPage() {
                                                                     <div className="glass-label text-xs">👤 CONTACTO</div>
                                                                     <div className="text-sm">{order.customer_email || order.customerEmail}</div>
                                                                     <div className="text-sm">{order.customer_phone || order.customerPhone}</div>
-                                                                    {order.cuit && <div className="text-sm mt-5"><strong>CUIT:</strong> {order.cuit}</div>}
-                                                                    {order.tax_status && <div className="text-sm"><strong>Condición:</strong> {order.tax_status}</div>}
+                                                                    <div className="text-sm mt-5">
+                                                                        <strong>CUIT:</strong> <span className={!order.cuit ? 'text-error opacity-70 italic' : ''}>{order.cuit || 'No ingresado'}</span>
+                                                                    </div>
+                                                                    <div className="text-sm">
+                                                                        <strong>Condición Fiscal:</strong> <span className={!order.tax_status ? 'text-error opacity-70 italic' : ''}>{order.tax_status || 'No ingresada'}</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
 
