@@ -358,7 +358,17 @@ export default function AdminPage() {
                 body: JSON.stringify({
                     id: editingOrder.id,
                     ...editForm,
-                    driverId: selectedD ? selectedD.id : null
+                    driverId: selectedD ? selectedD.id : null,
+                    // Aseguramos que los nombres de campos coincidan con lo que la API espera
+                    estadiaQty: editForm.estadiaQty,
+                    estadiaPrice: editForm.estadiaPrice,
+                    estadiaAmount: editForm.estadiaAmount,
+                    esperaQty: editForm.esperaQty,
+                    esperaPrice: editForm.esperaPrice,
+                    esperaAmount: editForm.esperaAmount,
+                    ayudantesQty: editForm.ayudantesQty,
+                    ayudantesPrice: editForm.ayudantesPrice,
+                    ayudantesAmount: editForm.ayudantesAmount
                 })
             });
             if (res.ok) {
@@ -1236,15 +1246,15 @@ export default function AdminPage() {
                                             </div>
                                             <button
                                                 className="filter-btn self-end text-xs"
+                                                type="button"
                                                 onClick={() => {
                                                     const base = editingOrder.price;
                                                     const v = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle);
                                                     const waitExtraFromMinutes = Math.round((editForm.waitingMinutes / 60) * (v?.priceWaitHour || 0));
-                                                    setEditForm(p => ({ 
-                                                        ...p, 
-                                                        price: base + waitExtraFromMinutes + p.estadiaAmount + p.esperaAmount + p.ayudantesAmount,
-                                                        // Note: We don't reset the amounts themselves here, just recalculate the total based on current amounts + base
-                                                    }));
+                                                    
+                                                    // El total es: Base + Demora (minutos) + Estadias + Esperas + Ayudantes
+                                                    const newTotal = base + waitExtraFromMinutes + (editForm.estadiaAmount || 0) + (editForm.esperaAmount || 0) + (editForm.ayudantesAmount || 0);
+                                                    setEditForm(p => ({ ...p, price: newTotal }));
                                                 }}
                                             >
                                                 ↩️ Recalcular Total (Base + Extras)
