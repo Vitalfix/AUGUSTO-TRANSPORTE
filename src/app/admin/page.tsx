@@ -1244,10 +1244,10 @@ export default function AdminPage() {
                                                             value={editForm.estadiaQty || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.estadiaPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                                const qtyVal = parseInt(e.target.value) || 0;
+                                                                const pVal = editForm.estadiaPrice || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, estadiaQty: qtyVal, estadiaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, estadiaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1259,10 +1259,10 @@ export default function AdminPage() {
                                                             value={editForm.estadiaPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
-                                                                const qty = editForm.estadiaQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, estadiaPrice: price, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                                const pVal = parseInt(e.target.value) || 0;
+                                                                const qtyVal = editForm.estadiaQty || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, estadiaPrice: pVal, estadiaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, estadiaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1277,10 +1277,10 @@ export default function AdminPage() {
                                                             value={editForm.esperaQty || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.esperaPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                                const qtyVal = parseInt(e.target.value) || 0;
+                                                                const pVal = editForm.esperaPrice || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, esperaQty: qtyVal, esperaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, esperaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1292,10 +1292,10 @@ export default function AdminPage() {
                                                             value={editForm.esperaPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
-                                                                const qty = editForm.esperaQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, esperaPrice: price, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                                const pVal = parseInt(e.target.value) || 0;
+                                                                const qtyVal = editForm.esperaQty || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, esperaPrice: pVal, esperaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, esperaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1310,10 +1310,10 @@ export default function AdminPage() {
                                                             value={editForm.ayudantesQty || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.ayudantesPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                                const qtyVal = parseInt(e.target.value) || 0;
+                                                                const pVal = editForm.ayudantesPrice || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, ayudantesQty: qtyVal, ayudantesAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, ayudantesAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1325,10 +1325,10 @@ export default function AdminPage() {
                                                             value={editForm.ayudantesPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
-                                                                const qty = editForm.ayudantesQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, ayudantesPrice: price, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                                const pVal = parseInt(e.target.value) || 0;
+                                                                const qtyVal = editForm.ayudantesQty || 0;
+                                                                const newAmount = qtyVal * pVal;
+                                                                setEditForm(p => ({ ...p, ayudantesPrice: pVal, ayudantesAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, ayudantesAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1403,13 +1403,8 @@ export default function AdminPage() {
                                                 className="filter-btn self-end text-xs"
                                                 type="button"
                                                 onClick={() => {
-                                                    const base = editingOrder.price;
-                                                    const v = vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle);
-                                                    const waitExtraFromMinutes = Math.round((editForm.waitingMinutes / 60) * (v?.priceWaitHour || 0));
-                                                    
-                                                    // El total es: Base + Demora (minutos) + Estadias + Esperas + Ayudantes
-                                                    const newTotal = base + waitExtraFromMinutes + (editForm.estadiaAmount || 0) + (editForm.esperaAmount || 0) + (editForm.ayudantesAmount || 0);
-                                                    setEditForm(p => ({ ...p, price: newTotal }));
+                                                    const waitExtraFromMinutes = Math.round((editForm.waitingMinutes / 60) * (vehiclesData.find(v => v.name.toLowerCase() === editingOrder.vehicle.toLowerCase() || v.id === editingOrder.vehicle)?.priceWaitHour || 0));
+                                                    setEditForm(p => ({ ...p, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, p) + waitExtraFromMinutes }));
                                                 }}
                                             >
                                                 ↩️ Recalcular Total (Base + Extras)
