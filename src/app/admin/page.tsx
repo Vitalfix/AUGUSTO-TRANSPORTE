@@ -71,15 +71,19 @@ export default function AdminPage() {
     const [saving, setSaving] = useState(false);
 
     const calculateTotal = (km: number, hours: number, vStr: string, current: any) => {
-        const vehicles = vStr.split(',').map(s => s.trim()).filter(Boolean);
+        const vehicles = vStr.split(/[|,]/).map(s => s.trim()).filter(Boolean);
         let base = 0;
         vehicles.forEach(entry => {
             let q = 1;
             let name = entry;
-            if (entry.includes('x ')) {
-                const parts = entry.split('x ');
+            if (entry.toLowerCase().includes('x ')) {
+                const parts = entry.toLowerCase().split('x ');
                 q = parseInt(parts[0]) || 1;
-                name = parts[1].trim();
+                name = entry.substring(entry.toLowerCase().indexOf('x ') + 2).trim();
+            } else if (entry.toLowerCase().includes('x')) {
+                const parts = entry.toLowerCase().split('x');
+                q = parseInt(parts[0]) || 1;
+                name = entry.substring(entry.toLowerCase().indexOf('x') + 1).trim();
             }
             const data = vehiclesData.find(v => v.name === name);
             if (data) {
@@ -89,6 +93,38 @@ export default function AdminPage() {
         });
         const extras = (current.estadiaAmount || 0) + (current.esperaAmount || 0) + (current.ayudantesAmount || 0);
         return Math.round(base + extras);
+    };
+
+    const generateBreakdownItems = (km: number, hours: number, vStr: string) => {
+        const vehicles = vStr.split(/[|,]/).map(s => s.trim()).filter(Boolean);
+        const breakdown: PricingBreakdownItem[] = [];
+        vehicles.forEach(entry => {
+            let q = 1;
+            let name = entry;
+            if (entry.toLowerCase().includes('x ')) {
+                const parts = entry.toLowerCase().split('x ');
+                q = parseInt(parts[0]) || 1;
+                name = entry.substring(entry.toLowerCase().indexOf('x ') + 2).trim();
+            } else if (entry.toLowerCase().includes('x')) {
+                const parts = entry.toLowerCase().split('x');
+                q = parseInt(parts[0]) || 1;
+                name = entry.substring(entry.toLowerCase().indexOf('x') + 1).trim();
+            }
+            const data = vehiclesData.find(v => v.name === name);
+            if (data) {
+                const factor = km <= 100 ? hours : km;
+                const unitPrice = km <= 100 ? data.priceHour : data.priceKm;
+                breakdown.push({
+                    name: name,
+                    qty: q,
+                    unitPrice: unitPrice,
+                    factor: factor,
+                    subtotal: unitPrice * factor * q,
+                    type: km <= 100 ? 'HOUR' : 'KM'
+                });
+            }
+        });
+        return breakdown;
     };
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
@@ -370,6 +406,8 @@ export default function AdminPage() {
             // Find selected driver info if any (case insensitive)
             const selectedD = drivers.find(d => d.name.toLowerCase() === editForm.driverName.toLowerCase());
 
+            const breakdown = generateBreakdownItems(editForm.distanceKm, editForm.travelHours, editForm.vehicle);
+
             const res = await fetch('/api/orders', {
                 method: 'PATCH',
                 headers: {
@@ -379,6 +417,7 @@ export default function AdminPage() {
                 body: JSON.stringify({
                     id: editingOrder.id,
                     ...editForm,
+                    pricingBreakdown: breakdown,
                     driverId: selectedD ? selectedD.id : null,
                     // Aseguramos que los nombres de campos coincidan con lo que la API espera
                     estadiaQty: editForm.estadiaQty,
@@ -896,14 +935,14 @@ export default function AdminPage() {
                                         <div className="admin-form-group">
                                             <label className="glass-label">Vehículos Seleccionados (X para borrar)</label>
                                             <div className="flex flex-wrap gap-8 mb-10">
-                                                {editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean).map((vName, idx) => (
+                                                {editForm.vehicle.split(/[|,]/).map(s => s.trim()).filter(Boolean).map((vName, idx) => (
                                                     <div key={idx} className="flex items-center gap-5 px-10 py-5 bg-accent-gradient rounded-full text-xs font-bold shadow-lg animate-fade-in">
                                                         {vName}
                                                         <button 
                                                             type="button" 
-                                                            className="hover:scale-120 transition-transform opacity-70 hover:opacity-100"
+                                                            className="hover:scale-120 transition-transform opacity-70 hover:opacity-100 p-2"
                                                             onClick={() => {
-                                                                const selected = editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean);
+                                                                const selected = editForm.vehicle.split(/[|,]/).map(s => s.trim()).filter(Boolean);
                                                                 selected.splice(idx, 1);
                                                                 const newList = selected.join(', ');
                                                                 setEditForm(p => ({
@@ -917,7 +956,7 @@ export default function AdminPage() {
                                                         </button>
                                                     </div>
                                                 ))}
-                                                {editForm.vehicle.split(',').filter(Boolean).length === 0 && (
+                                                {editForm.vehicle.split(/[|,]/).filter(Boolean).length === 0 && (
                                                     <div className="text-xs opacity-40 italic py-5">Ningún vehículo seleccionado</div>
                                                 )}
                                             </div>
@@ -930,8 +969,8 @@ export default function AdminPage() {
                                                         type="button"
                                                         className="glass-button text-xs py-5 px-10 border-blue-20 hover:bg-blue-20"
                                                         onClick={() => {
-                                                            const selected = editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean);
-                                                            const newList = [...selected, v.name].join(', ');
+                                                            const selected = editForm.vehicle.split(/[|,]/).map(s => s.trim()).filter(Boolean);
+                                                            const newList = [...selected, `1 x ${v.name}`].join(', ');
                                                             setEditForm(p => ({
                                                                 ...p,
                                                                 vehicle: newList,
