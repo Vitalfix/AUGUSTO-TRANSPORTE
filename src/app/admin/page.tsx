@@ -776,7 +776,7 @@ export default function AdminPage() {
                                                                         <strong>CUIT:</strong> <span className={!order.cuit ? 'text-error opacity-70 italic' : ''}>{order.cuit || 'No ingresado'}</span>
                                                                     </div>
                                                                     <div className="text-sm">
-                                                                        <strong>Condición Fiscal:</strong> <span className={!order.tax_status ? 'text-error opacity-70 italic' : ''}>{order.tax_status || 'No ingresada'}</span>
+                                                                        <strong>Condición Fiscal:</strong> <span className={!(order.taxStatus || order.tax_status) ? 'text-error opacity-70 italic' : ''}>{order.taxStatus || order.tax_status || 'No ingresada'}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
