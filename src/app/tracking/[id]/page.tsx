@@ -11,7 +11,7 @@ export interface Order {
     origin?: string;
     destination: string;
     price: number;
-    status: 'PENDING' | 'STARTED' | 'FINISHED';
+    status: 'PENDING' | 'APPROVED' | 'CONFIRMED' | 'STARTED' | 'FINISHED' | 'INVOICED' | 'PAID';
     customerName: string;
     lat?: number;
     lng?: number;
@@ -288,10 +288,41 @@ export default function TrackingPage() {
         );
     }
 
-    let progressWidth = '0%';
-    if (order.status === 'PENDING') progressWidth = '10%';
-    if (order.status === 'STARTED') progressWidth = '50%';
-    if (order.status === 'FINISHED') progressWidth = '100%';
+    const getStatusLabel = (s: string) => {
+        switch (s) {
+            case 'PENDING': return '⏳ Pendiente de Aprobación';
+            case 'APPROVED': return '✅ Presupuesto Aprobado';
+            case 'CONFIRMED': return '📅 Viaje Confirmado y Programado';
+            case 'STARTED': return '🚚 En Ruta / En Tránsito';
+            case 'FINISHED': return '🏁 Viaje Finalizado';
+            case 'INVOICED': return '📄 Proceso de Facturación';
+            case 'PAID': return '💰 Viaje Pagado y Completado';
+            default: return '📦 Pedido Recibido';
+        }
+    };
+
+    const getProgressWidth = (s: string) => {
+        switch (s) {
+            case 'PENDING': return '15%';
+            case 'APPROVED': return '30%';
+            case 'CONFIRMED': return '45%';
+            case 'STARTED': return '75%';
+            case 'FINISHED':
+            case 'INVOICED':
+            case 'PAID': return '100%';
+            default: return '0%';
+        }
+    };
+
+    const progressWidth = getProgressWidth(order.status);
+    const statusLabel = getStatusLabel(order.status);
+    const isActive = (states: string[]) => states.includes(order.status);
+    const isPast = (states: string[], target: string) => {
+        const orderOfStates = ['PENDING', 'APPROVED', 'CONFIRMED', 'STARTED', 'FINISHED', 'INVOICED', 'PAID'];
+        const currentIdx = orderOfStates.indexOf(target);
+        const orderIdx = orderOfStates.indexOf(order.status);
+        return orderIdx >= currentIdx;
+    };
 
     return (
         <div className="page-container" style={{ maxWidth: '800px', padding: '20px', minHeight: '100vh', display: 'flex', flexDirection: 'column', gap: '20px', margin: '0 auto' }}>
@@ -313,9 +344,9 @@ export default function TrackingPage() {
                     <div style={{ marginBottom: '30px', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', letterSpacing: '2px', marginBottom: '5px' }}>ESTADO DEL ENVÍO</div>
                         <h3 style={{ fontSize: '1.6rem' }} className="text-gradient">
-                            {order.status === 'PENDING' ? 'Recibido' : order.status === 'STARTED' ? 'En Tránsito 🚚' : 'Finalizado ✅'}
+                            {statusLabel}
                         </h3>
-                        {order.status !== 'PENDING' && (
+                        {order.status === 'STARTED' && (
                             <div style={{ marginTop: '10px', fontSize: '1.2rem', fontFamily: 'monospace', fontWeight: 'bold', color: 'var(--accent-color)' }}>
                                 ⏱️ {elapsedTime}
                             </div>
@@ -327,20 +358,28 @@ export default function TrackingPage() {
                             <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: 'var(--accent-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>📋</div>
                             <div>
                                 <div style={{ fontSize: '1rem', fontWeight: 'bold' }}>Orden Recibida</div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Estamos preparando el despacho.</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Hemos recibido tu presupuesto / pedido.</div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', opacity: order.status !== 'PENDING' ? 1 : 0.3 }}>
-                            <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: order.status !== 'PENDING' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>🚚</div>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', opacity: isPast([], 'APPROVED') ? 1 : 0.3 }}>
+                            <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: isPast([], 'APPROVED') ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>✅</div>
+                            <div>
+                                <div style={{ fontSize: '1rem', fontWeight: 'bold' }}>Aprobado y Programado</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>El viaje ya está confirmado para su ejecución.</div>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', opacity: order.status === 'STARTED' ? 1 : 0.3 }}>
+                            <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: order.status === 'STARTED' ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>🚚</div>
                             <div>
                                 <div style={{ fontSize: '1rem', fontWeight: 'bold' }}>En Ruta</div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>El vehículo está viajando a {formatDestination(order.destination)}.</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>El vehículo se encuentra viajando a destino.</div>
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', opacity: order.status === 'FINISHED' ? 1 : 0.3 }}>
-                            <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: order.status === 'FINISHED' ? 'var(--success-color)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>🏁</div>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'center', opacity: isPast([], 'FINISHED') ? 1 : 0.3 }}>
+                            <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: isPast([], 'FINISHED') ? 'var(--success-color)' : 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>🏁</div>
                             <div>
                                 <div style={{ fontSize: '1rem', fontWeight: 'bold' }}>Entregado</div>
                                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Viaje completado exitosamente.</div>
@@ -446,7 +485,7 @@ export default function TrackingPage() {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
                                                 <div style={{ fontWeight: i === 0 ? 'bold' : 'normal', color: i === 0 ? 'white' : 'var(--text-secondary)' }}>{log.label}</div>
                                                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
-                                                    {new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(log.time).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}hs
                                                 </div>
                                             </div>
                                             {i === 0 && <div style={{ fontSize: '0.65rem', color: 'var(--accent-color)', fontWeight: 'bold' }}>ÚLTIMO EVENTO</div>}
@@ -500,13 +539,7 @@ export default function TrackingPage() {
                 </div>
             </div>
 
-            {order.driverPhone && order.status === 'STARTED' && (
-                <a href={`tel:${order.driverPhone}`} style={{ textDecoration: 'none' }}>
-                    <button className="glass-button" style={{ width: '100%', background: 'var(--success-color)', padding: '15px', color: 'white' }}>
-                        📞 LLAMAR AL CHOFER
-                    </button>
-                </a>
-            )}
+
 
             <style jsx global>{`
                 @keyframes pulse {
