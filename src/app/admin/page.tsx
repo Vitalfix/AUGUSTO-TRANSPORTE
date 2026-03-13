@@ -745,22 +745,15 @@ export default function AdminPage() {
                                                                     </div>
                                                                 )}
 
-                                                                {/* Comentarios del Chofer en Resumen */}
-                                                                {(() => {
-                                                                    const log = order.activity_log || order.activityLog || [];
-                                                                    const driverComments = log.filter((l: any) => l.type === 'CHOFER_COMMENT');
-                                                                    if (driverComments.length === 0) return null;
-                                                                    return (
-                                                                        <div className="border-t-glass pt-15">
-                                                                            <div className="glass-label text-xs">💬 COMENTARIOS DEL CHOFER</div>
-                                                                            {driverComments.map((c: any, i: number) => (
-                                                                                <div key={i} className="text-xs mt-5 p-8 bg-blue-10 rounded-8 border-l-3 border-blue-400">
-                                                                                    <strong>{new Date(c.time).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}:</strong> {c.observations_fallback}
-                                                                                </div>
-                                                                            ))}
+                                                                {/* Notas del Viaje del Chofer (Google Keep Style) */}
+                                                                {(order.driver_notes || order.driverNotes) && (
+                                                                    <div className="border-t-glass pt-15">
+                                                                        <div className="glass-label text-xs mb-10">📝 NOTAS DEL VIAJE (Chofer)</div>
+                                                                        <div className="text-xs p-12 bg-blue-10 rounded-12 border-l-3 border-blue-400 whitespace-pre-wrap leading-relaxed">
+                                                                            {order.driver_notes || order.driverNotes}
                                                                         </div>
-                                                                    );
-                                                                })()}
+                                                                    </div>
+                                                                )}
                                                             </div>
 
                                                             <div className="flex-col gap-10">

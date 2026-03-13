@@ -98,6 +98,7 @@ export async function GET(request: Request) {
         ayudantesQty: o.ayudantes_qty || 0,
         ayudantesPrice: o.ayudantes_price || 0,
         adjustComments: o.adjust_comments || '',
+        driverNotes: o.driver_notes || '',
         pricingBreakdown: (o.pricing_breakdown || []).map((item: PricingBreakdownItem) => ({
             ...item,
             unitPrice: Math.round(item.unitPrice || 0),
@@ -471,7 +472,7 @@ export async function PATCH(request: Request) {
 
     if (!isAdmin) {
         // Allow driver updates for specific fields ONLY (GPS, Status, Wait Time, etc.)
-        const allowedDriverFields = ['id', 'status', 'lat', 'lng', 'waitingMinutes', 'activityLog', 'activity_log'];
+        const allowedDriverFields = ['id', 'status', 'lat', 'lng', 'waitingMinutes', 'activityLog', 'activity_log', 'driverNotes', 'driver_notes'];
         const bodyKeys = Object.keys(body);
 
         const hasUnauthorizedFields = bodyKeys.some(key => !allowedDriverFields.includes(key));
@@ -488,7 +489,7 @@ export async function PATCH(request: Request) {
         estadiaAmount, estadiaQty, estadiaPrice, 
         esperaAmount, esperaQty, esperaPrice, 
         ayudantesAmount, ayudantesQty, ayudantesPrice, 
-        adjustComments
+        adjustComments, driverNotes
     } = body;
 
     const updateData: Record<string, unknown> = {};
@@ -525,6 +526,7 @@ export async function PATCH(request: Request) {
     if (ayudantesQty !== undefined) updateData.ayudantes_qty = ayudantesQty;
     if (ayudantesPrice !== undefined) updateData.ayudantes_price = ayudantesPrice;
     if (adjustComments !== undefined) updateData.adjust_comments = adjustComments;
+    if (driverNotes !== undefined) updateData.driver_notes = driverNotes;
 
     if (body.pricingBreakdown !== undefined) {
         updateData.pricing_breakdown = body.pricingBreakdown.map((item: PricingBreakdownItem) => ({

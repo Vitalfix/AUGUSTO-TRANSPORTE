@@ -61,6 +61,7 @@ export interface Order {
   ayudantes_qty?: number;
   ayudantes_price?: number;
   adjust_comments?: string;
+  driver_notes?: string;
   pricing_breakdown?: {
     name: string;
     qty: number;
@@ -91,6 +92,7 @@ export interface Order {
   ayudantesQty?: number;
   ayudantesPrice?: number;
   adjustComments?: string;
+  driverNotes?: string;
   activityLog?: ActivityLog[];
   pricingBreakdown?: PricingBreakdownItem[];
   taxStatus?: string;

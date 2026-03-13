@@ -28,6 +28,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
         driverPhone: data.driver_phone,
         licensePlate: data.license_plate,
         waitingMinutes: data.waiting_minutes,
+        driverNotes: data.driver_notes || '',
         originLat: data.origin_lat,
         originLng: data.origin_lng,
         destLat: data.dest_lat,

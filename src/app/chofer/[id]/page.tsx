@@ -12,6 +12,7 @@ interface Order {
     waitingMinutes: number;
     vehicle: string;
     activityLog?: any[];
+    driverNotes?: string;
 }
 
 const renderInLines = (text: string | undefined, separator: string | RegExp = /[|,]/) => {
@@ -41,6 +42,8 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
 
     const [sendingComment, setSendingComment] = useState(false);
     const [commentInput, setCommentInput] = useState('');
+    const [driverNotes, setDriverNotes] = useState('');
+    const [savingNotes, setSavingNotes] = useState(false);
 
     const addLog = (msg: string) => {
         setGpsLogs(prev => [new Date().toLocaleTimeString() + ": " + msg, ...prev].slice(0, 5));
@@ -87,6 +90,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                     setStatus('idle');
                 }
                 setWaitMinutes(data.waiting_minutes || 0);
+                setDriverNotes(data.driverNotes || '');
             } catch (e) {
                 console.error(e);
             }
@@ -339,6 +343,27 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
         }
     };
 
+    const handleSaveNotes = async () => {
+        setSavingNotes(true);
+        try {
+            const res = await fetch('/api/orders', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, driverNotes }),
+            });
+            if (res.ok) {
+                addLog("✓ Notas actualizadas");
+            } else {
+                alert("Error al guardar notas");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de red");
+        } finally {
+            setSavingNotes(false);
+        }
+    };
+
     const handleFinishTrip = async () => {
         setTripStage('FINISHED');
         setStatus('idle');
@@ -538,6 +563,45 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                             }}
                         >
                             📍 FORZAR ACTUALIZACIÓN GPS
+                        </button>
+                    </div>
+                )}
+
+                {/* Sección de Notas del Viaje (Tipo Google Keep) */}
+                {(tripStage !== 'START' && tripStage !== 'FINISHED') && (
+                    <div style={{ marginTop: '30px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px', width: '100%', textAlign: 'left' }}>
+                        <div className="glass-label" style={{ marginBottom: '10px' }}>📝 NOTAS DEL VIAJE (Guardado automático)</div>
+                        <div style={{ position: 'relative' }}>
+                            <textarea
+                                className="glass-input"
+                                style={{ 
+                                    width: '100%', 
+                                    minHeight: '150px', 
+                                    fontSize: '0.9rem', 
+                                    lineHeight: '1.5',
+                                    padding: '15px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    resize: 'none',
+                                    borderRadius: '12px'
+                                }}
+                                placeholder="Escribe aquí detalles importantes, muelle de carga, nros de precinto, etc..."
+                                value={driverNotes}
+                                onChange={(e) => setDriverNotes(e.target.value)}
+                                onBlur={handleSaveNotes}
+                            />
+                            {savingNotes && (
+                                <div style={{ position: 'absolute', right: '10px', bottom: '10px', fontSize: '0.7rem', color: 'var(--accent-color)' }}>
+                                    Guardando...
+                                </div>
+                            )}
+                        </div>
+                        <button 
+                            className="glass-button" 
+                            style={{ width: '100%', marginTop: '10px', padding: '10px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)' }}
+                            onClick={handleSaveNotes}
+                            disabled={savingNotes}
+                        >
+                            {savingNotes ? 'Guardando...' : '💾 GUARDAR NOTAS'}
                         </button>
                     </div>
                 )}
