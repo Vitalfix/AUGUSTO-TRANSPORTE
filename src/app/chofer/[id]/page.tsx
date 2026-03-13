@@ -40,8 +40,6 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
     const [extraWaitInput, setExtraWaitInput] = useState('');
     const [observationsInput, setObservationsInput] = useState('');
 
-    const [sendingComment, setSendingComment] = useState(false);
-    const [commentInput, setCommentInput] = useState('');
     const [driverNotes, setDriverNotes] = useState('');
     const [savingNotes, setSavingNotes] = useState(false);
 
@@ -304,44 +302,6 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
         } catch (e) { console.error(e); }
     };
 
-    const handleAddComment = async () => {
-        if (!commentInput.trim() || !order) return;
-        setSendingComment(true);
-        try {
-            const newEntry = {
-                type: 'CHOFER_COMMENT',
-                label: 'Comentario del Chofer',
-                time: new Date().toISOString(),
-                user: 'Chofer',
-                observations_fallback: commentInput
-            };
-
-            const currentLog = order.activityLog || [];
-            const newLog = [...currentLog, newEntry];
-
-            const res = await fetch('/api/orders', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id,
-                    activity_log: newLog
-                }),
-            });
-
-            if (res.ok) {
-                setCommentInput('');
-                setOrder({ ...order, activityLog: newLog } as any);
-                addLog("✓ Comentario enviado");
-            } else {
-                alert("Error al enviar comentario");
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Error de red");
-        } finally {
-            setSendingComment(false);
-        }
-    };
 
     const handleSaveNotes = async () => {
         setSavingNotes(true);
@@ -606,30 +566,7 @@ export default function DriverPage(props: { params: Promise<{ id: string }> }) {
                     </div>
                 )}
 
-                {/* Sección de Comentarios */}
-                {(tripStage !== 'START' && tripStage !== 'FINISHED') && (
-                    <div style={{ marginTop: '30px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px', width: '100%' }}>
-                        <div className="glass-label" style={{ textAlign: 'left', marginBottom: '10px' }}>💬 AGREGAR COMENTARIO / NOTA</div>
-                        <div className="flex gap-10">
-                            <input
-                                className="glass-input"
-                                style={{ flex: 1, fontSize: '0.9rem' }}
-                                placeholder="Escribe algo..."
-                                value={commentInput}
-                                onChange={(e) => setCommentInput(e.target.value)}
-                                disabled={sendingComment}
-                            />
-                            <button
-                                className="glass-button"
-                                style={{ padding: '10px 20px', background: 'var(--accent-gradient)', fontSize: '0.8rem' }}
-                                onClick={handleAddComment}
-                                disabled={sendingComment || !commentInput.trim()}
-                            >
-                                {sendingComment ? '...' : 'Enviar'}
-                            </button>
-                        </div>
-                    </div>
-                )}
+
 
                 <Link href="/" style={{ display: 'block', marginTop: '30px', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.8rem' }}>
                     ← Salir del Modo Chofer
