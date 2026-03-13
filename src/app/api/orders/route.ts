@@ -471,7 +471,7 @@ export async function PATCH(request: Request) {
 
     if (!isAdmin) {
         // Allow driver updates for specific fields ONLY (GPS, Status, Wait Time, etc.)
-        const allowedDriverFields = ['id', 'status', 'lat', 'lng', 'waitingMinutes', 'activityLog'];
+        const allowedDriverFields = ['id', 'status', 'lat', 'lng', 'waitingMinutes', 'activityLog', 'activity_log'];
         const bodyKeys = Object.keys(body);
 
         const hasUnauthorizedFields = bodyKeys.some(key => !allowedDriverFields.includes(key));

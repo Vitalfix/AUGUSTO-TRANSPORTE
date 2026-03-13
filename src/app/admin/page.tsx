@@ -744,6 +744,23 @@ export default function AdminPage() {
                                                                         <div className="text-xs text-secondary">{order.license_plate || order.licensePlate} | {order.driver_phone || order.driverPhone}</div>
                                                                     </div>
                                                                 )}
+
+                                                                {/* Comentarios del Chofer en Resumen */}
+                                                                {(() => {
+                                                                    const log = order.activity_log || order.activityLog || [];
+                                                                    const driverComments = log.filter((l: any) => l.type === 'CHOFER_COMMENT');
+                                                                    if (driverComments.length === 0) return null;
+                                                                    return (
+                                                                        <div className="border-t-glass pt-15">
+                                                                            <div className="glass-label text-xs">💬 COMENTARIOS DEL CHOFER</div>
+                                                                            {driverComments.map((c: any, i: number) => (
+                                                                                <div key={i} className="text-xs mt-5 p-8 bg-blue-10 rounded-8 border-l-3 border-blue-400">
+                                                                                    <strong>{new Date(c.time).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}:</strong> {c.observations_fallback}
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    );
+                                                                })()}
                                                             </div>
 
                                                             <div className="flex-col gap-10">
