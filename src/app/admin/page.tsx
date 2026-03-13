@@ -71,7 +71,7 @@ export default function AdminPage() {
     const [saving, setSaving] = useState(false);
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
-    const [showExtraFields, setShowExtraFields] = useState(false);
+
 
     const toggleExpand = (id: string) => {
         setExpandedOrders(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -308,7 +308,7 @@ export default function AdminPage() {
 
     const handleEditClick = (order: Order) => {
         setEditingOrder(order);
-        setShowExtraFields(false);
+
         setEditForm({
             price: order.price,
             driverName: order.driver_name || order.driverName || '',
@@ -965,118 +965,107 @@ export default function AdminPage() {
                                         </div>
 
                                         <div className="mt-20">
-                                            <button 
-                                                type="button" 
-                                                className="glass-button w-full mb-15 flex justify-between items-center" 
-                                                style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--accent-color)' }}
-                                                onClick={() => setShowExtraFields(!showExtraFields)}
-                                            >
-                                                <span>➕ CARGOS ADICIONALES (Estadía, Espera, Ayudantes)</span>
-                                                <span>{showExtraFields ? '🔼' : '🔽'}</span>
-                                            </button>
-
-                                            {showExtraFields && (
-                                                <div className="p-15 bg-blue-10 rounded-12 border-blue-20 animate-fade-in" style={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                                                    <div className="admin-form-grid mb-15">
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Estadía (Días)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.estadiaQty || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const qty = parseInt(e.target.value) || 0;
-                                                                    const price = editForm.estadiaPrice || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: p.price - p.estadiaAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Precio Estadía ($)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.estadiaPrice || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const price = parseInt(e.target.value) || 0;
-                                                                    const qty = editForm.estadiaQty || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, estadiaPrice: price, estadiaAmount: newAmount, price: p.price - p.estadiaAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
+                                            <div className="p-15 bg-blue-10 rounded-12 border-blue-20 animate-fade-in" style={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                <div className="glass-label mb-15 text-accent">➕ CARGOS ADICIONALES (Estadía, Espera, Ayudantes)</div>
+                                                <div className="admin-form-grid mb-15">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Estadía (Días)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.estadiaQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.estadiaPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
                                                     </div>
-
-                                                    <div className="admin-form-grid mb-15">
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Espera (Horas)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.esperaQty || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const qty = parseInt(e.target.value) || 0;
-                                                                    const price = editForm.esperaPrice || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: p.price - p.esperaAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Precio Espera ($)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.esperaPrice || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const price = parseInt(e.target.value) || 0;
-                                                                    const qty = editForm.esperaQty || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, esperaPrice: price, esperaAmount: newAmount, price: p.price - p.esperaAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="admin-form-grid">
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Ayudantes (Cant)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.ayudantesQty || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const qty = parseInt(e.target.value) || 0;
-                                                                    const price = editForm.ayudantesPrice || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: p.price - p.ayudantesAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
-                                                        <div className="admin-form-group">
-                                                            <label className="glass-label text-xs">Precio Ayudante ($)</label>
-                                                            <input
-                                                                type="number"
-                                                                className="glass-input"
-                                                                value={editForm.ayudantesPrice || 0}
-                                                                onFocus={e => e.target.select()}
-                                                                onChange={e => {
-                                                                    const price = parseInt(e.target.value) || 0;
-                                                                    const qty = editForm.ayudantesQty || 0;
-                                                                    const newAmount = qty * price;
-                                                                    setEditForm(p => ({ ...p, ayudantesPrice: price, ayudantesAmount: newAmount, price: p.price - p.ayudantesAmount + newAmount }));
-                                                                }}
-                                                            />
-                                                        </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Estadía ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.estadiaPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.estadiaQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, estadiaPrice: price, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
                                                     </div>
                                                 </div>
-                                            )}
+
+                                                <div className="admin-form-grid mb-15">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Espera (Horas)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.esperaQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.esperaPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Espera ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.esperaPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.esperaQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, esperaPrice: price, estadiaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="admin-form-grid">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Ayudantes (Cant)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.ayudantesQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.ayudantesPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Ayudante ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.ayudantesPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.ayudantesQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, ayudantesPrice: price, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1168,22 +1157,113 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="admin-form-group mt-15 p-10 bg-black-20 rounded-8">
-                                                <div className="text-xs text-secondary mb-5">Resumen de Extras (Editables en solapa Ruta):</div>
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Estadía ({editForm.estadiaQty}):</span>
-                                                    <span>${editForm.estadiaAmount?.toLocaleString('es-AR')}</span>
+                                            <div className="admin-form-group mt-15 p-15 bg-blue-10 rounded-12 border-blue-20" style={{ border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                                                <div className="glass-label mb-15 text-accent">➕ DESGLOSE DE CARGOS ADICIONALES</div>
+                                                
+                                                <div className="admin-form-grid mb-15">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Estadía (Días)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.estadiaQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.estadiaPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Estadía ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.estadiaPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.estadiaQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, estadiaPrice: price, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Espera ({editForm.esperaQty}):</span>
-                                                    <span>${editForm.esperaAmount?.toLocaleString('es-AR')}</span>
+
+                                                <div className="admin-form-grid mb-15">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Espera (Horas)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.esperaQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.esperaPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Espera ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.esperaPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.esperaQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, esperaPrice: price, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="flex justify-between text-sm">
-                                                    <span>Ayudantes ({editForm.ayudantesQty}):</span>
-                                                    <span>${editForm.ayudantesAmount?.toLocaleString('es-AR')}</span>
+
+                                                <div className="admin-form-grid mb-15">
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Ayudantes (Cant)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.ayudantesQty || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const qty = parseInt(e.target.value) || 0;
+                                                                const price = editForm.ayudantesPrice || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="admin-form-group">
+                                                        <label className="glass-label text-xs">Precio Ayudante ($)</label>
+                                                        <input
+                                                            type="number"
+                                                            className="glass-input"
+                                                            value={editForm.ayudantesPrice || 0}
+                                                            onFocus={e => e.target.select()}
+                                                            onChange={e => {
+                                                                const price = parseInt(e.target.value) || 0;
+                                                                const qty = editForm.ayudantesQty || 0;
+                                                                const newAmount = qty * price;
+                                                                setEditForm(p => ({ ...p, ayudantesPrice: price, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-between items-center p-10 bg-black-20 rounded-8 font-bold text-success text-sm">
+                                                    <span>Total Extras:</span>
+                                                    <span>$ {((editForm.estadiaAmount || 0) + (editForm.esperaAmount || 0) + (editForm.ayudantesAmount || 0)).toLocaleString('es-AR')}</span>
                                                 </div>
                                             </div>
-
                                             <div className="admin-form-grid">
                                                 <div className="admin-form-group">
                                                     <label className="glass-label">Otros conceptos (Peajes, Estacionamiento, etc)</label>
