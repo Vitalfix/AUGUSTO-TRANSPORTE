@@ -69,6 +69,27 @@ export default function AdminPage() {
     });
     const [vehiclesData, setVehiclesData] = useState<VehiclePricing[]>([]);
     const [saving, setSaving] = useState(false);
+
+    const calculateTotal = (km: number, hours: number, vStr: string, current: any) => {
+        const vehicles = vStr.split(',').map(s => s.trim()).filter(Boolean);
+        let base = 0;
+        vehicles.forEach(entry => {
+            let q = 1;
+            let name = entry;
+            if (entry.includes('x ')) {
+                const parts = entry.split('x ');
+                q = parseInt(parts[0]) || 1;
+                name = parts[1].trim();
+            }
+            const data = vehiclesData.find(v => v.name === name);
+            if (data) {
+                if (km <= 100) base += data.priceHour * hours * q;
+                else base += data.priceKm * km * q;
+            }
+        });
+        const extras = (current.estadiaAmount || 0) + (current.esperaAmount || 0) + (current.ayudantesAmount || 0);
+        return Math.round(base + extras);
+    };
     const [drivers, setDrivers] = useState<Driver[]>([]);
     const [expandedOrders, setExpandedOrders] = useState<string[]>([]);
 
@@ -873,39 +894,55 @@ export default function AdminPage() {
                                             </select>
                                         </div>
                                         <div className="admin-form-group">
-                                            <label className="glass-label">Vehículo(s)</label>
-                                            <div className="flex flex-wrap gap-10 mt-5 p-10 bg-black-20 rounded-12 h-100 overflow-y-auto" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-                                                {vehiclesData.map(v => {
-                                                    const isSelected = editForm.vehicle.split(',').map(s => s.trim()).includes(v.name);
-                                                    return (
-                                                        <button
-                                                            key={v.id}
-                                                            type="button"
-                                                            className={`filter-btn text-xs ${isSelected ? 'active' : ''}`}
-                                                            style={{ padding: '4px 10px' }}
+                                            <label className="glass-label">Vehículos Seleccionados (X para borrar)</label>
+                                            <div className="flex flex-wrap gap-8 mb-10">
+                                                {editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean).map((vName, idx) => (
+                                                    <div key={idx} className="flex items-center gap-5 px-10 py-5 bg-accent-gradient rounded-full text-xs font-bold shadow-lg animate-fade-in">
+                                                        {vName}
+                                                        <button 
+                                                            type="button" 
+                                                            className="hover:scale-120 transition-transform opacity-70 hover:opacity-100"
                                                             onClick={() => {
                                                                 const selected = editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean);
-                                                                let newList;
-                                                                if (isSelected) {
-                                                                    newList = selected.filter(s => s !== v.name);
-                                                                } else {
-                                                                    newList = [...selected, v.name];
-                                                                }
-                                                                setEditForm(p => ({ ...p, vehicle: newList.join(', ') }));
+                                                                selected.splice(idx, 1);
+                                                                const newList = selected.join(', ');
+                                                                setEditForm(p => ({
+                                                                    ...p,
+                                                                    vehicle: newList,
+                                                                    price: calculateTotal(p.distanceKm, p.travelHours, newList, p)
+                                                                }));
                                                             }}
                                                         >
-                                                            {v.name}
+                                                            ✕
                                                         </button>
-                                                    );
-                                                })}
+                                                    </div>
+                                                ))}
+                                                {editForm.vehicle.split(',').filter(Boolean).length === 0 && (
+                                                    <div className="text-xs opacity-40 italic py-5">Ningún vehículo seleccionado</div>
+                                                )}
                                             </div>
-                                            <input
-                                                type="text"
-                                                className="glass-input mt-8 opacity-60 text-xs"
-                                                placeholder="Vehículos seleccionados..."
-                                                value={editForm.vehicle}
-                                                onChange={e => setEditForm(p => ({ ...p, vehicle: e.target.value }))}
-                                            />
+
+                                            <label className="glass-label text-xs opacity-60">+ Agregar Vehículo</label>
+                                            <div className="flex flex-wrap gap-10 mt-5 p-12 bg-black-20 rounded-16 border-glass overflow-y-auto" style={{ maxHeight: '120px' }}>
+                                                {vehiclesData.map(v => (
+                                                    <button
+                                                        key={v.id}
+                                                        type="button"
+                                                        className="glass-button text-xs py-5 px-10 border-blue-20 hover:bg-blue-20"
+                                                        onClick={() => {
+                                                            const selected = editForm.vehicle.split(',').map(s => s.trim()).filter(Boolean);
+                                                            const newList = [...selected, v.name].join(', ');
+                                                            setEditForm(p => ({
+                                                                ...p,
+                                                                vehicle: newList,
+                                                                price: calculateTotal(p.distanceKm, p.travelHours, newList, p)
+                                                            }));
+                                                        }}
+                                                    >
+                                                        + {v.name}
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -925,17 +962,11 @@ export default function AdminPage() {
                                                     onFocus={e => e.target.select()}
                                                     onChange={e => {
                                                         const km = Number(e.target.value);
-                                                        setEditForm(p => {
-                                                            const newState = { ...p, distanceKm: km };
-                                                            const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                            const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                            if (vData) {
-                                                                const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                                if (km <= 100) newState.price = vData.priceHour * p.travelHours * qty;
-                                                                else newState.price = vData.priceKm * km * qty;
-                                                            }
-                                                            return newState;
-                                                        });
+                                                        setEditForm(p => ({
+                                                            ...p,
+                                                            distanceKm: km,
+                                                            price: calculateTotal(km, p.travelHours, p.vehicle, p)
+                                                        }));
                                                     }} 
                                                 />
                                             </div>
@@ -948,16 +979,11 @@ export default function AdminPage() {
                                                     onFocus={e => e.target.select()}
                                                     onChange={e => {
                                                         const h = Number(e.target.value);
-                                                        setEditForm(p => {
-                                                            const newState = { ...p, travelHours: h };
-                                                            const mainVehicle = p.vehicle.split('x ').length > 1 ? p.vehicle.split('x ')[1].trim() : p.vehicle;
-                                                            const vData = vehiclesData.find(v => v.name === mainVehicle || v.id === p.vehicle);
-                                                            if (vData && p.distanceKm <= 100) {
-                                                                const qty = parseInt(p.vehicle.split('x')[0]) || 1;
-                                                                newState.price = vData.priceHour * h * qty;
-                                                            }
-                                                            return newState;
-                                                        });
+                                                        setEditForm(p => ({
+                                                            ...p,
+                                                            travelHours: h,
+                                                            price: calculateTotal(p.distanceKm, h, p.vehicle, p)
+                                                        }));
                                                     }} 
                                                 />
                                             </div>
@@ -987,9 +1013,9 @@ export default function AdminPage() {
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
                                                                 const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.estadiaPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                                const pVal = editForm.estadiaPrice || 0;
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, estadiaQty: qty, estadiaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, estadiaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1001,10 +1027,10 @@ export default function AdminPage() {
                                                             value={editForm.estadiaPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
+                                                                const pVal = parseInt(e.target.value) || 0;
                                                                 const qty = editForm.estadiaQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, estadiaPrice: price, estadiaAmount: newAmount, price: p.price - (p.estadiaAmount || 0) + newAmount }));
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, estadiaPrice: pVal, estadiaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, estadiaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1020,9 +1046,9 @@ export default function AdminPage() {
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
                                                                 const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.esperaPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                                const pVal = editForm.esperaPrice || 0;
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, esperaQty: qty, esperaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, esperaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1034,10 +1060,10 @@ export default function AdminPage() {
                                                             value={editForm.esperaPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
+                                                                const pVal = parseInt(e.target.value) || 0;
                                                                 const qty = editForm.esperaQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, esperaPrice: price, estadiaAmount: newAmount, price: p.price - (p.esperaAmount || 0) + newAmount }));
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, esperaPrice: pVal, esperaAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, esperaAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1053,9 +1079,9 @@ export default function AdminPage() {
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
                                                                 const qty = parseInt(e.target.value) || 0;
-                                                                const price = editForm.ayudantesPrice || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                                const pVal = editForm.ayudantesPrice || 0;
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, ayudantesQty: qty, ayudantesAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, ayudantesAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
@@ -1067,10 +1093,10 @@ export default function AdminPage() {
                                                             value={editForm.ayudantesPrice || 0}
                                                             onFocus={e => e.target.select()}
                                                             onChange={e => {
-                                                                const price = parseInt(e.target.value) || 0;
+                                                                const pVal = parseInt(e.target.value) || 0;
                                                                 const qty = editForm.ayudantesQty || 0;
-                                                                const newAmount = qty * price;
-                                                                setEditForm(p => ({ ...p, ayudantesPrice: price, ayudantesAmount: newAmount, price: p.price - (p.ayudantesAmount || 0) + newAmount }));
+                                                                const newAmount = qty * pVal;
+                                                                setEditForm(p => ({ ...p, ayudantesPrice: pVal, ayudantesAmount: newAmount, price: calculateTotal(p.distanceKm, p.travelHours, p.vehicle, { ...p, ayudantesAmount: newAmount }) }));
                                                             }}
                                                         />
                                                     </div>
