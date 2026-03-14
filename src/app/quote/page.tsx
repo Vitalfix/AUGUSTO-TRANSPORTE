@@ -202,6 +202,10 @@ export default function QuotePageV2() {
     const [customerPhone2, setCustomerPhone2] = useState('');
     const [taxStatus, setTaxStatus] = useState('responsable_inscripto');
     const [observations, setObservations] = useState('');
+    const [isAdminOverride, setIsAdminOverride] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [adminPassword, setAdminPassword] = useState('');
+    const [authLoading, setAuthLoading] = useState(false);
     const [purchaseOrder, setPurchaseOrder] = useState('');
 
     // Real distance and route logic
@@ -408,6 +412,38 @@ export default function QuotePageV2() {
 
     const calculation = calculateTotalDetails();
     const price = calculation.total;
+
+    const verifyAdmin = async () => {
+        if (!adminPassword) return;
+        setAuthLoading(true);
+        try {
+            const res = await fetch('/api/auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', password: adminPassword })
+            });
+            if (res.ok) {
+                setIsAuthorized(true);
+                setAdminPassword('');
+            } else {
+                alert("Contraseña de administrador incorrecta");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error al verificar contraseña");
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+
+    const handleAdminToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const checked = e.target.checked;
+        setIsAdminOverride(checked);
+        if (!checked) {
+            setIsAuthorized(false);
+            setAdminPassword('');
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -696,27 +732,68 @@ export default function QuotePageV2() {
 
                         <div className="flex gap-20 items-start">
                             <div style={{ flex: 1.2 }}>
-                                <label className="glass-label">Fecha de Carga</label>
+                                <div className="flex justify-between items-center mb-5">
+                                    <label className="glass-label mb-0">Fecha de Carga</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', opacity: isAuthorized ? 1 : 0.6, cursor: 'pointer', color: isAuthorized ? 'var(--success-color)' : 'inherit' }}>
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isAdminOverride} 
+                                            onChange={handleAdminToggle}
+                                        />
+                                        {isAuthorized ? '🔓 Admin' : 'Admin'}
+                                    </label>
+                                </div>
+
+                                {isAdminOverride && !isAuthorized && (
+                                    <div className="flex gap-5 mb-10">
+                                        <input 
+                                            type="password" 
+                                            placeholder="Password Admin" 
+                                            className="glass-input" 
+                                            style={{ fontSize: '0.75rem', padding: '8px' }}
+                                            value={adminPassword}
+                                            onChange={e => setAdminPassword(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && verifyAdmin()}
+                                        />
+                                        <button 
+                                            type="button" 
+                                            className="filter-btn" 
+                                            style={{ fontSize: '0.75rem', padding: '8px' }}
+                                            onClick={verifyAdmin}
+                                            disabled={authLoading}
+                                        >
+                                            {authLoading ? '...' : 'OK'}
+                                        </button>
+                                    </div>
+                                )}
+
                                 <input 
                                     type="date" 
                                     className="glass-input" 
                                     value={travelDate} 
                                     onChange={e => setTravelDate(e.target.value)} 
-                                    min={minDateString} 
+                                    min={isAuthorized ? new Date().toISOString().split('T')[0] : minDateString} 
                                     style={{ 
                                         colorScheme: 'dark',
                                         fontSize: '1.2rem',
                                         padding: '18px',
                                         textAlign: 'center',
                                         cursor: 'pointer',
-                                        height: 'auto'
+                                        height: 'auto',
+                                        borderColor: isAuthorized ? 'var(--success-color)' : 'var(--glass-border)'
                                     }} 
                                     onKeyDown={(e) => e.preventDefault()}
                                     onClick={(e) => (e.target as any).showPicker?.()}
                                 />
                                 <div style={{ fontSize: '0.65rem', marginTop: '6px', opacity: 0.8, lineHeight: '1.2' }}>
-                                    48hs min. anticipación. <br />
-                                    Para hoy/mañana: <a href="https://wa.me/5491150443328" style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Contacto urgente ↗</a>
+                                    {isAuthorized ? (
+                                        <span style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>✓ Permiso de administrador activo.</span>
+                                    ) : (
+                                        <>
+                                            48hs min. anticipación. <br />
+                                            Para hoy/mañana: <a href="https://wa.me/5491150443328" style={{ color: 'var(--success-color)', fontWeight: 'bold' }}>Contacto urgente ↗</a>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <div style={{ flex: 1 }}>
